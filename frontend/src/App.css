@@ -1,0 +1,192 @@
+/* ===============================
+   AutoSphere Advanced Theme
+================================ */
+@import './styles/autosphere-theme.css';
+
+/* -------------------------------
+   App Container
+-------------------------------- */
+.App {
+  font-family: var(--autosphere-font-primary);
+  color: var(--autosphere-charcoal);
+  background-color: var(--autosphere-white);
+  min-height: 100vh;
+  padding-top: 80px;
+}
+
+@media (max-width: 768px) {
+  .App {
+    padding-top: 90px;
+  }
+}
+
+@media (max-width: 480px) {
+  .App {
+    padding-top: 120px;
+  }
+}
+
+/* -------------------------------
+   Header
+-------------------------------- */
+.App-header {
+  background: linear-gradient(135deg, var(--autosphere-dark-grey) 0%, var(--autosphere-charcoal) 100%);
+  padding: var(--autosphere-space-6);
+  color: var(--autosphere-white);
+  box-shadow: var(--autosphere-shadow-md);
+}
+
+.App-header h1 {
+  margin: 0 0 var(--autosphere-space-2) 0;
+  font-size: var(--autosphere-text-4xl);
+  font-weight: var(--autosphere-weight-bold);
+  letter-spacing: -0.02em;
+}
+
+.App-header p {
+  margin: 0;
+  font-size: var(--autosphere-text-lg);
+  font-weight: var(--autosphere-weight-regular);
+  opacity: 0.9;
+  color: var(--autosphere-silver);
+}
+
+/* -------------------------------
+   Main Content
+-------------------------------- */
+main {
+  padding: var(--autosphere-space-6);
+  min-height: calc(100vh - 140px);
+  background-color: var(--autosphere-white);
+}
+
+/* -------------------------------
+   Global Links
+-------------------------------- */
+a {
+  color: var(--autosphere-dark-grey);
+  text-decoration: none;
+  transition: var(--autosphere-transition-fast);
+}
+
+a:hover {
+  color: var(--autosphere-charcoal);
+}
+
+/* -------------------------------
+   Forms (input, textarea, select)
+-------------------------------- */
+input,
+textarea,
+select {
+  font-family: var(--autosphere-font-primary);
+  border: 1px solid var(--autosphere-silver);
+  border-radius: var(--autosphere-radius-md);
+  padding: var(--autosphere-space-3);
+  transition: var(--autosphere-transition-fast);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--autosphere-dark-grey);
+  box-shadow: 0 0 0 2px rgba(44, 44, 44, 0.1);
+}
+
+/* -------------------------------
+   Buttons
+-------------------------------- */
+.btn {
+  padding: 0.55rem 1.4rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  border: 1px solid var(--autosphere-dark-grey);
+  background: #ffffff;
+  color: var(--autosphere-charcoal);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.btn:hover {
+  background: var(--autosphere-silver);
+  color: var(--autosphere-charcoal);
+}
+
+.btn.danger {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+/* -------------------------------
+   Footer – Horizontal Layout
+-------------------------------- */
+footer {
+  background-color: var(--autosphere-white);
+  border-top: 1px solid var(--autosphere-silver);
+  padding: var(--autosphere-space-5) var(--autosphere-space-6);
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--autosphere-space-4);
+  flex-wrap: wrap;
+}
+
+/* Left Section */
+.footer-left {
+  font-size: var(--autosphere-text-sm);
+  color: var(--autosphere-dark-grey);
+}
+
+/* Middle Links */
+.footer-links {
+  display: flex;
+  gap: var(--autosphere-space-4);
+}
+
+.footer-links a {
+  font-size: var(--autosphere-text-sm);
+  color: var(--autosphere-dark-grey);
+  transition: var(--autosphere-transition-fast);
+}
+
+.footer-links a:hover {
+  color: var(--autosphere-charcoal);
+}
+
+/* Right Section */
+.footer-right {
+  display: flex;
+  gap: var(--autosphere-space-3);
+}
+
+.footer-right a {
+  font-size: var(--autosphere-text-sm);
+  color: var(--autosphere-dark-grey);
+  transition: var(--autosphere-transition-fast);
+}
+
+.footer-right a:hover {
+  color: var(--autosphere-charcoal);
+}
+
+/* -------------------------------
+   Responsive Footer
+-------------------------------- */
+@media (max-width: 768px) {
+  .footer-container {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .footer-links,
+  .footer-right {
+    justify-content: center;
+    margin-top: var(--autosphere-space-3);
+  }
+}

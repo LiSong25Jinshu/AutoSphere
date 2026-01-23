@@ -1,0 +1,350 @@
+/* Vehicle Insights Styles */
+.vehicle-insights-page {
+  min-height: 100vh;
+  background: #f8f9fa;
+  padding: 2rem 0;
+}
+
+.insights-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* Header */
+.insights-header {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.insights-header h1 {
+  margin: 0 0 0.5rem 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.insights-header .subtitle {
+  margin: 0;
+  color: #666;
+  font-size: 1.125rem;
+}
+
+/* Insights Grid */
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.insight-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.insight-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.card-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.insight-card h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.card-value {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1976d2;
+}
+
+.card-value.status-good {
+  color: #2e7d32;
+}
+
+.card-value.status-healthy {
+  color: #2e7d32;
+}
+
+.card-value.status-warning {
+  color: #f57c00;
+}
+
+.card-value.status-critical {
+  color: #d32f2f;
+}
+
+/* Alerts Section */
+.alerts-section {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid #f57c00;
+}
+
+.alerts-section h2 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.alert-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #fff3e0;
+  border-radius: 8px;
+  border: 1px solid #ffcc02;
+}
+
+.alert-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.alert-text {
+  color: #e65100;
+  font-weight: 500;
+}
+
+/* Performance Metrics */
+.performance-section {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.performance-section h2 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.performance-chart {
+  height: 300px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  font-size: 1.125rem;
+}
+
+/* Maintenance Schedule */
+.maintenance-section {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.maintenance-section h2 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.maintenance-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.maintenance-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #1976d2;
+}
+
+.maintenance-item.overdue {
+  border-left-color: #d32f2f;
+  background: #ffebee;
+}
+
+.maintenance-item.upcoming {
+  border-left-color: #f57c00;
+  background: #fff3e0;
+}
+
+.maintenance-info h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.maintenance-info p {
+  margin: 0;
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.maintenance-status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.maintenance-status.completed {
+  background: #e8f5e8;
+  color: #2e7d32;
+}
+
+.maintenance-status.overdue {
+  background: #ffebee;
+  color: #d32f2f;
+}
+
+.maintenance-status.upcoming {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+/* Action Buttons */
+.insights-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+
+.btn.primary {
+  background: #1976d2;
+  color: white;
+}
+
+.btn.primary:hover {
+  background: #1565c0;
+  transform: translateY(-2px);
+}
+
+.btn.secondary {
+  background: transparent;
+  color: #1976d2;
+  border: 2px solid #1976d2;
+}
+
+.btn.secondary:hover {
+  background: #1976d2;
+  color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .insights-container {
+    padding: 0 1rem;
+  }
+  
+  .insights-header {
+    padding: 1.5rem;
+  }
+  
+  .insights-header h1 {
+    font-size: 2rem;
+  }
+  
+  .insights-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .insight-card {
+    padding: 1.5rem;
+  }
+  
+  .alerts-section,
+  .performance-section,
+  .maintenance-section {
+    padding: 1.5rem;
+  }
+  
+  .maintenance-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .insights-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .btn {
+    width: 100%;
+    max-width: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  .vehicle-insights-page {
+    padding: 1rem 0;
+  }
+  
+  .insights-header h1 {
+    font-size: 1.75rem;
+  }
+  
+  .card-icon {
+    font-size: 2.5rem;
+  }
+  
+  .card-value {
+    font-size: 1.25rem;
+  }
+  
+  .alert-item {
+    padding: 0.75rem;
+  }
+}

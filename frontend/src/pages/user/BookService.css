@@ -1,0 +1,157 @@
+/* Full page background */
+.book-service-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f5f5f5; /* light grey */
+  padding: 20px;
+}
+
+/* Glass-style card */
+.book-service-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 40px 30px;
+  width: 100%;
+  max-width: 600px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  text-align: center;
+}
+
+.book-service-card h1 {
+  margin-bottom: 10px;
+  color: #111; /* black */
+  font-size: 28px;
+}
+
+.book-service-card .subtitle {
+  color: #555; /* dark grey */
+  margin-bottom: 30px;
+  font-size: 16px;
+}
+
+/* Form */
+.book-service-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  text-align: left;
+}
+
+.book-service-form label {
+  font-weight: bold;
+  color: #111;
+  display: block;
+}
+
+.required {
+  color: red;
+  margin-left: 4px;
+}
+
+/* Service selection grid */
+.service-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.service-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 15px;
+  background: #eaeaea; /* light grey */
+  border-radius: 15px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.service-card img {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 10px;
+}
+
+.service-card p {
+  font-weight: bold;
+  color: #111;
+}
+
+.service-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+}
+
+.service-card.selected {
+  border-color: #111; /* highlight selected service */
+}
+
+/* Inputs & textarea */
+.book-service-form input,
+.book-service-form textarea {
+  margin-top: 5px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  color: #111;
+  background-color: #fff;
+  width: 100%;
+  resize: none;
+}
+
+.book-service-form textarea {
+  min-height: 80px;
+}
+
+/* Buttons */
+.form-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: flex-end;
+}
+
+.btn {
+  padding: 12px 20px;
+  font-weight: bold;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.btn.primary {
+  background-color: #111; /* black */
+  color: #fff;
+}
+
+.btn.primary:hover {
+  background-color: #333;
+  transform: translateY(-2px);
+}
+
+.btn.secondary {
+  background-color: #e0e0e0; /* light grey */
+  color: #111;
+}
+
+.btn.secondary:hover {
+  background-color: #ccc;
+  transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .book-service-card {
+    padding: 30px 20px;
+  }
+
+  .service-options {
+    grid-template-columns: 1fr;
+  }
+}

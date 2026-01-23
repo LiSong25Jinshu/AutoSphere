@@ -1,0 +1,71 @@
+/* Navbar container */
+.navbar {
+  width: 100%;
+  background-color: #2c2c2c; /* dark grey */
+  padding: 15px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* Logo styling */
+.navbar .logo a {
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.navbar .logo a:hover {
+  color: #ccc;
+}
+
+/* Navbar links */
+.navbar .nav-links {
+  list-style: none;
+  display: flex;
+  gap: 25px;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar .nav-links li a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* Hover effect */
+.navbar .nav-links li a:hover {
+  background-color: #fff;
+  color: #2c2c2c;
+}
+
+/* Responsive: stack links on small screens */
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 15px 20px;
+  }
+
+  .navbar .nav-links {
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .navbar .nav-links li a {
+    width: 100%;
+    text-align: left;
+  }
+}
