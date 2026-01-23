@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # AutoSphere Web
 
 AutoSphere Web is a comprehensive automotive platform that integrates vehicle sales, rentals, maintenance booking, and car wash services into a unified web application. The system leverages AI-powered recommendations to enhance user decision-making and provides seamless communication between customers, dealers, and service providers.
@@ -137,3 +138,7 @@ autosphere-web/
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+=======
+# AutoSphere
+AI-based car management system
+>>>>>>> d4f5c6938c25ae0738854c52aeca44d9c4945952
