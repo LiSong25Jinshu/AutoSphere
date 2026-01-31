@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import './styles/tesla-theme.css';
 import Footer from './components/Footer';
@@ -13,8 +13,10 @@ import UserInventory from './pages/user/Inventory';
 import VehicleInsights from './pages/user/VehicleInsights';
 import UserSettings from './pages/user/Settings';
 import BookService from './pages/user/BookService';
+import AICarFinder from './pages/AICarFinder';
 
-// Import public pages
+// Import admin pages
+import AdminJobs from './pages/admin/Jobs';
 import LandingPage from './pages/public/LandingPage';
 import About from './pages/public/About';
 import Contact from './pages/public/Contact';
@@ -660,50 +662,85 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   return children;
 };
 
-// Navigation Component
-function Navigation() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+// Helper function to determine if route should use dashboard layout
+const isDashboardRoute = (path) => {
+  const dashboardRoutes = [
+    '/dashboard',
+    '/admin-dashboard', 
+    '/dealer-dashboard',
+    '/service-provider-dashboard',
+    '/appointments',
+    '/inventory',
+    '/user-messages',
+    '/notifications',
+    '/profile',
+    '/settings',
+    '/jobs',
+    '/vehicle-insights',
+    '/book-service',
+    '/ai-car-finder'
+  ];
+  return dashboardRoutes.includes(path);
+};
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
+// Wrapper component for dashboard routes
+const DashboardRoute = ({ children, requiredRole }) => {
+  return (
+    <ProtectedRoute requiredRole={requiredRole}>
+      <DashboardLayout>
+        {children}
+      </DashboardLayout>
+    </ProtectedRoute>
+  );
+};
+
+// Import UserDropdown component
+import UserDropdown from './components/UserDropdown';
+import DashboardLayout from './components/DashboardLayout';
+
+// Navigation Component (for public pages only)
+function Navigation() {
+  const { user } = useAuth();
+
+  // Don't show navigation on dashboard pages - they have their own header
+  const location = useLocation();
+  if (isDashboardRoute(location.pathname)) {
+    return null;
+  }
 
   return (
     <nav className="autosphere-nav">
       <div className="autosphere-nav-content">
-        <Link to="/" className="autosphere-logo">
-          AutoSphere
-        </Link>
+        {/* Brand Logo - Positioned in Top Left */}
+        <div className="autosphere-nav-brand">
+          <Link to="/" className="autosphere-logo">
+            AutoSphere
+          </Link>
+        </div>
         
         <div className="autosphere-nav-links">
-          <Link to="/" className="autosphere-nav-link">Home</Link>
-          <Link to="/vehicles" className="autosphere-nav-link">Vehicles</Link>
-          <Link to="/about" className="autosphere-nav-link">About</Link>
-          <Link to="/contact" className="autosphere-nav-link">Contact</Link>
-          
-          {user ? (
+          {!user ? (
+            // Before Login: Logo | Home | Vehicles | About | Contact | Login | Sign Up
+            <>
+              <Link to="/" className="autosphere-nav-link">Home</Link>
+              <Link to="/vehicles" className="autosphere-nav-link">Vehicles</Link>
+              <Link to="/about" className="autosphere-nav-link">About</Link>
+              <Link to="/contact" className="autosphere-nav-link">Contact</Link>
+              <Link to="/login" className="autosphere-nav-link">Login</Link>
+              <Link to="/register" className="autosphere-nav-btn autosphere-nav-btn-register">Sign Up</Link>
+            </>
+          ) : (
+            // After Login on public pages: Logo | Dashboard | Vehicles | Appointments | Inventory | Messages | 🔔 | 👤 Avatar ▼
             <>
               <Link to="/dashboard" className="autosphere-nav-link">Dashboard</Link>
+              <Link to="/vehicles" className="autosphere-nav-link">Vehicles</Link>
               <Link to="/appointments" className="autosphere-nav-link">Appointments</Link>
               <Link to="/inventory" className="autosphere-nav-link">Inventory</Link>
               <Link to="/user-messages" className="autosphere-nav-link">Messages</Link>
-              <Link to="/notifications" className="autosphere-nav-link">Notifications</Link>
-              {user.role === 'admin' && (
-                <Link to="/admin-dashboard" className="autosphere-nav-link">Admin</Link>
-              )}
-              <button 
-                onClick={handleLogout}
-                className="autosphere-nav-btn autosphere-nav-btn-logout"
-              >
-                Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="autosphere-nav-link">Login</Link>
-              <Link to="/register" className="autosphere-nav-btn autosphere-nav-btn-register">Register</Link>
+              <Link to="/notifications" className="autosphere-nav-icon-link" title="Notifications">
+                🔔
+              </Link>
+              <UserDropdown />
             </>
           )}
         </div>
@@ -712,140 +749,166 @@ function Navigation() {
   );
 }
 
+function AppContent() {
+  const location = useLocation();
+  const showFooter = !isDashboardRoute(location.pathname);
+  const isDashboard = isDashboardRoute(location.pathname);
+
+  return (
+    <div className={`App ${isDashboard ? 'dashboard-app' : ''}`} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Navigation />
+      <main style={{ flex: 1 }}>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/vehicles" element={<VehiclesPage />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          
+          {/* Dashboard Routes with Sidebar */}
+          <Route 
+            path="/dashboard" 
+            element={
+              <DashboardRoute>
+                <UserDashboardPage />
+              </DashboardRoute>
+            } 
+          />
+          <Route 
+            path="/profile" 
+            element={
+              <DashboardRoute>
+                <UserProfile />
+              </DashboardRoute>
+            } 
+          />
+          <Route 
+            path="/appointments" 
+            element={
+              <DashboardRoute>
+                <UserAppointments />
+              </DashboardRoute>
+            } 
+          />
+          <Route 
+            path="/user-messages" 
+            element={
+              <DashboardRoute>
+                <UserMessages />
+              </DashboardRoute>
+            } 
+          />
+          <Route 
+            path="/notifications" 
+            element={
+              <DashboardRoute>
+                <UserNotifications />
+              </DashboardRoute>
+            } 
+          />
+          <Route 
+            path="/inventory" 
+            element={
+              <DashboardRoute>
+                <UserInventory />
+              </DashboardRoute>
+            } 
+          />
+          <Route 
+            path="/ai-car-finder" 
+            element={
+              <DashboardRoute>
+                <AICarFinder />
+              </DashboardRoute>
+            } 
+          />
+          <Route 
+            path="/vehicle-insights" 
+            element={
+              <DashboardRoute>
+                <VehicleInsights />
+              </DashboardRoute>
+            } 
+          />
+          <Route 
+            path="/settings" 
+            element={
+              <DashboardRoute>
+                <UserSettings />
+              </DashboardRoute>
+            } 
+          />
+          <Route 
+            path="/book-service" 
+            element={
+              <DashboardRoute>
+                <BookService />
+              </DashboardRoute>
+            } 
+          />
+          <Route 
+            path="/messages" 
+            element={
+              <DashboardRoute>
+                <MessagesPage />
+              </DashboardRoute>
+            } 
+          />
+          <Route 
+            path="/bookings" 
+            element={
+              <DashboardRoute>
+                <BookingsPage />
+              </DashboardRoute>
+            } 
+          />
+          
+          {/* Role-based Dashboard Routes */}
+          <Route 
+            path="/admin-dashboard" 
+            element={
+              <DashboardRoute requiredRole="admin">
+                <AdminDashboard />
+              </DashboardRoute>
+            } 
+          />
+          <Route 
+            path="/jobs" 
+            element={
+              <DashboardRoute requiredRole="admin">
+                <AdminJobs />
+              </DashboardRoute>
+            } 
+          />
+          <Route 
+            path="/dealer-dashboard" 
+            element={
+              <DashboardRoute requiredRole="dealer">
+                <DealerDashboard />
+              </DashboardRoute>
+            } 
+          />
+          <Route 
+            path="/service-provider-dashboard" 
+            element={
+              <DashboardRoute requiredRole="service-provider">
+                <ServiceProviderDashboard />
+              </DashboardRoute>
+            } 
+          />
+        </Routes>
+      </main>
+      {showFooter && <Footer />}
+    </div>
+  );
+}
+
 function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="App" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-          <Navigation />
-          <main style={{ flex: 1 }}>
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/vehicles" element={<VehiclesPage />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              
-              {/* Protected Routes */}
-              <Route 
-                path="/dashboard" 
-                element={
-                  <ProtectedRoute>
-                    <UserDashboardPage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/profile" 
-                element={
-                  <ProtectedRoute>
-                    <UserProfile />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/appointments" 
-                element={
-                  <ProtectedRoute>
-                    <UserAppointments />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/user-messages" 
-                element={
-                  <ProtectedRoute>
-                    <UserMessages />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/notifications" 
-                element={
-                  <ProtectedRoute>
-                    <UserNotifications />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/inventory" 
-                element={
-                  <ProtectedRoute>
-                    <UserInventory />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/vehicle-insights" 
-                element={
-                  <ProtectedRoute>
-                    <VehicleInsights />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/settings" 
-                element={
-                  <ProtectedRoute>
-                    <UserSettings />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/book-service" 
-                element={
-                  <ProtectedRoute>
-                    <BookService />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/messages" 
-                element={
-                  <ProtectedRoute>
-                    <MessagesPage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/bookings" 
-                element={
-                  <ProtectedRoute>
-                    <BookingsPage />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Role-based Routes */}
-              <Route 
-                path="/admin-dashboard" 
-                element={
-                  <ProtectedRoute requiredRole="admin">
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/dealer-dashboard" 
-                element={
-                  <ProtectedRoute requiredRole="dealer">
-                    <DealerDashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/service-provider-dashboard" 
-                element={
-                  <ProtectedRoute requiredRole="service-provider">
-                    <ServiceProviderDashboard />
-                  </ProtectedRoute>
-                } 
-              />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
+        <AppContent />
       </Router>
     </AuthProvider>
   );

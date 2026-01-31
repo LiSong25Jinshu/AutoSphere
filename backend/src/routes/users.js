@@ -1,14 +1,394 @@
 import express from 'express';
+import { body, query, validationResult } from 'express-validator';
+import { Op } from 'sequelize';
+import { authenticateToken, requireRole, requireAdmin } from '../middleware/auth.js';
+import User from '../models/User.js';
+import { hashPassword } from '../utils/password.js';
 
 const router = express.Router();
 
-// Placeholder routes - will be implemented in later tasks
-router.get('/profile', (req, res) => {
-  res.status(501).json({ message: 'Get profile endpoint - to be implemented' });
+// Get user profile
+router.get('/profile', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: user.toJSON(),
+    });
+
+  } catch (error) {
+    console.error('Get profile error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
 });
 
-router.put('/profile', (req, res) => {
-  res.status(501).json({ message: 'Update profile endpoint - to be implemented' });
+// Update user profile
+router.put('/profile', [
+  body('firstName').optional().trim().isLength({ min: 2, max: 100 }),
+  body('lastName').optional().trim().isLength({ min: 2, max: 100 }),
+  body('phone').optional().trim().isLength({ min: 10, max: 20 }),
+  body('email').optional().isEmail().normalizeEmail(),
+], authenticateToken, async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    const user = await User.findByPk(req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Check if email is being changed and if it's already taken
+    if (req.body.email && req.body.email !== user.email) {
+      const existingUser = await User.findByEmail(req.body.email);
+      if (existingUser) {
+        return res.status(409).json({
+          success: false,
+          message: 'Email already in use'
+        });
+      }
+    }
+
+    // Update allowed fields
+    const allowedFields = ['firstName', 'lastName', 'phone', 'email'];
+    const updateData = {};
+    
+    allowedFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        updateData[field] = req.body[field];
+      }
+    });
+
+    await user.update(updateData);
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: user.toJSON(),
+    });
+
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Change password
+router.patch('/change-password', [
+  body('currentPassword').notEmpty().withMessage('Current password is required'),
+  body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters'),
+], authenticateToken, async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    const user = await User.findByPk(req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Verify current password
+    const isValidPassword = await user.validatePassword(req.body.currentPassword);
+    if (!isValidPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Current password is incorrect'
+      });
+    }
+
+    // Update password
+    await user.setPassword(req.body.newPassword);
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Password changed successfully',
+    });
+
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Get all users (admin only)
+router.get('/', [
+  query('page').optional().isInt({ min: 1 }),
+  query('limit').optional().isInt({ min: 1, max: 100 }),
+  query('role').optional().isIn(['user', 'dealer', 'service_provider', 'admin']),
+  query('search').optional().trim(),
+], authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+
+    const whereClause = {};
+    
+    if (req.query.role) {
+      whereClause.role = req.query.role;
+    }
+
+    if (req.query.search) {
+      const searchTerm = `%${req.query.search}%`;
+      whereClause[Op.or] = [
+        { firstName: { [Op.iLike]: searchTerm } },
+        { lastName: { [Op.iLike]: searchTerm } },
+        { email: { [Op.iLike]: searchTerm } },
+      ];
+    }
+
+    const users = await User.findAll({
+      where: whereClause,
+      attributes: { exclude: ['passwordHash'] },
+      order: [['createdAt', 'DESC']],
+      limit,
+      offset,
+    });
+
+    const totalCount = await User.count({ where: whereClause });
+
+    res.json({
+      success: true,
+      data: users,
+      pagination: {
+        page,
+        limit,
+        total: totalCount,
+        pages: Math.ceil(totalCount / limit),
+      },
+    });
+
+  } catch (error) {
+    console.error('Get users error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Get user by ID (admin only)
+router.get('/:id', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    
+    if (isNaN(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid user ID'
+      });
+    }
+
+    const user = await User.findByPk(userId, {
+      attributes: { exclude: ['passwordHash'] },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: user,
+    });
+
+  } catch (error) {
+    console.error('Get user error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Update user role (admin only)
+router.patch('/:id/role', [
+  body('role').isIn(['user', 'dealer', 'service_provider', 'admin']),
+], authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    const userId = parseInt(req.params.id);
+    
+    if (isNaN(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid user ID'
+      });
+    }
+
+    const user = await User.findByPk(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Prevent admin from changing their own role
+    if (user.id === req.user.id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot change your own role'
+      });
+    }
+
+    await user.update({ role: req.body.role });
+
+    res.json({
+      success: true,
+      message: 'User role updated successfully',
+      data: user.toJSON(),
+    });
+
+  } catch (error) {
+    console.error('Update user role error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Deactivate/activate user (admin only)
+router.patch('/:id/status', [
+  body('isActive').isBoolean(),
+], authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    const userId = parseInt(req.params.id);
+    
+    if (isNaN(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid user ID'
+      });
+    }
+
+    const user = await User.findByPk(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Prevent admin from deactivating themselves
+    if (user.id === req.user.id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot change your own status'
+      });
+    }
+
+    await user.update({ isActive: req.body.isActive });
+
+    res.json({
+      success: true,
+      message: `User ${req.body.isActive ? 'activated' : 'deactivated'} successfully`,
+      data: user.toJSON(),
+    });
+
+  } catch (error) {
+    console.error('Update user status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Get service providers (public endpoint for booking)
+router.get('/service-providers/list', async (req, res) => {
+  try {
+    const serviceProviders = await User.findAll({
+      where: { 
+        role: 'service_provider',
+        isVerified: true,
+      },
+      attributes: ['id', 'firstName', 'lastName', 'email', 'phone'],
+      order: [['firstName', 'ASC']],
+    });
+
+    res.json({
+      success: true,
+      data: serviceProviders,
+    });
+
+  } catch (error) {
+    console.error('Get service providers error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
 });
 
 export default router;

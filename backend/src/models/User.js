@@ -1,4 +1,4 @@
-import { DataTypes } from 'sequelize';
+import { DataTypes, Op } from 'sequelize';
 import { sequelize } from '../config/database.js';
 import { hashPassword, comparePassword } from '../utils/password.js';
 
@@ -170,7 +170,7 @@ User.findByVerificationToken = async function(token) {
     where: {
       emailVerificationToken: token,
       emailVerificationExpires: {
-        [DataTypes.Op.gt]: new Date(),
+        [Op.gt]: new Date(),
       },
     },
   });
@@ -181,7 +181,7 @@ User.findByPasswordResetToken = async function(token) {
     where: {
       passwordResetToken: token,
       passwordResetExpires: {
-        [DataTypes.Op.gt]: new Date(),
+        [Op.gt]: new Date(),
       },
     },
   });
