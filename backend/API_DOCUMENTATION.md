@@ -28,7 +28,7 @@ Register a new user account.
   "password": "password123",
   "firstName": "John",
   "lastName": "Doe",
-  "phone": "+1234567890",
+  "phone": "+2334567890",
   "role": "user" // optional: "user", "dealer", "service_provider"
 }
 ```

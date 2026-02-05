@@ -1,25 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import {
-  Box,
-  Paper,
-  TextField,
-  Button,
-  Typography,
-  Alert,
-  InputAdornment,
-  IconButton,
-  Divider,
-  Container,
-} from '@mui/material';
-import {
-  Visibility,
-  VisibilityOff,
-  Email,
-  Lock,
-} from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useAuthOperations } from '../hooks/useAuthOperations';
+import GoogleLoginButton from './GoogleLoginButton';
+import '../pages/public/Auth.css';
 
 const LoginForm = () => {
   const navigate = useNavigate();
@@ -105,144 +89,113 @@ const LoginForm = () => {
   };
 
   return (
-    <Container component="main" maxWidth="sm">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Paper
-          elevation={3}
-          sx={{
-            padding: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            width: '100%',
-          }}
-        >
-          <Typography component="h1" variant="h4" gutterBottom>
-            Sign In
-          </Typography>
-          
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Welcome back to AutoSphere
-          </Typography>
+    <div className="auth-page">
+      <div className="auth-container">
+        <div className="auth-card">
+          <div className="auth-header">
+            <h1>Sign In</h1>
+            <p>Welcome back to AutoSphere</p>
+          </div>
 
           {(error || loginError) && (
-            <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
+            <div className="error-message">
               {error || loginError}
-            </Alert>
+            </div>
           )}
 
-          <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="email"
-              label="Email Address"
-              name="email"
-              autoComplete="email"
-              autoFocus
-              value={formData.email}
-              onChange={handleInputChange}
-              error={!!validationErrors.email}
-              helperText={validationErrors.email}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Email />
-                  </InputAdornment>
-                ),
-              }}
-            />
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label htmlFor="email">Email Address</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                className={`form-input ${validationErrors.email ? 'error' : ''}`}
+                placeholder="Enter your email"
+                value={formData.email}
+                onChange={handleInputChange}
+                autoComplete="email"
+                autoFocus
+                required
+              />
+              {validationErrors.email && (
+                <span className="error-message">{validationErrors.email}</span>
+              )}
+            </div>
             
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="Password"
-              type={showPassword ? 'text' : 'password'}
-              id="password"
-              autoComplete="current-password"
-              value={formData.password}
-              onChange={handleInputChange}
-              error={!!validationErrors.password}
-              helperText={validationErrors.password}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Lock />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle password visibility"
-                      onClick={togglePasswordVisibility}
-                      edge="end"
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
+            <div className="form-group">
+              <label htmlFor="password">Password</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  id="password"
+                  name="password"
+                  className={`form-input ${validationErrors.password ? 'error' : ''}`}
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  autoComplete="current-password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={togglePasswordVisibility}
+                  aria-label="Toggle password visibility"
+                >
+                  {showPassword ? '👁️' : '👁️‍🗨️'}
+                </button>
+              </div>
+              {validationErrors.password && (
+                <span className="error-message">{validationErrors.password}</span>
+              )}
+            </div>
 
-            <Button
+            <button
               type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ mt: 3, mb: 2 }}
+              className="btn primary full-width"
               disabled={isSubmitting}
             >
               {isSubmitting ? 'Signing In...' : 'Sign In'}
-            </Button>
+            </button>
 
-            <Box sx={{ textAlign: 'center' }}>
-              <Link
-                to="/forgot-password"
-                style={{ textDecoration: 'none', color: 'inherit' }}
-              >
-                <Typography variant="body2" color="primary" sx={{ mb: 1 }}>
-                  Forgot your password?
-                </Typography>
+            <div className="auth-divider">
+              <span>OR</span>
+            </div>
+
+            <GoogleLoginButton 
+              disabled={isSubmitting}
+            />
+
+            <div className="form-options">
+              <Link to="/forgot-password" className="forgot-link">
+                Forgot your password?
               </Link>
-            </Box>
+            </div>
 
-            <Divider sx={{ my: 2 }}>
-              <Typography variant="body2" color="text.secondary">
-                OR
-              </Typography>
-            </Divider>
-
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="body2" color="text.secondary">
+            <div className="auth-footer">
+              <p>
                 Don't have an account?{' '}
-                <Link
-                  to="/register"
-                  style={{ textDecoration: 'none' }}
-                >
-                  <Typography
-                    component="span"
-                    variant="body2"
-                    color="primary"
-                    sx={{ fontWeight: 'medium' }}
-                  >
-                    Sign up here
-                  </Typography>
+                <Link to="/register" className="auth-link">
+                  Sign up here
                 </Link>
-              </Typography>
-            </Box>
-          </Box>
-        </Paper>
-      </Box>
-    </Container>
+              </p>
+            </div>
+          </form>
+        </div>
+
+        <div className="auth-info">
+          <h2>Join AutoSphere</h2>
+          <ul>
+            <li>Browse and purchase vehicles from trusted dealers</li>
+            <li>Book automotive services with certified providers</li>
+            <li>Get AI-powered vehicle recommendations</li>
+            <li>Connect with automotive professionals</li>
+            <li>Access exclusive deals and offers</li>
+          </ul>
+        </div>
+      </div>
+    </div>
   );
 };
 

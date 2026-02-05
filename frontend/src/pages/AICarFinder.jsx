@@ -50,7 +50,7 @@ const AICarFinder = () => {
     },
     {
       id: 3,
-      make: 'Tesla',
+      make: 'BMW',
       model: 'Model 3',
       year: 2023,
       price: '$38,990',

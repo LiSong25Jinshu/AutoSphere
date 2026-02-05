@@ -1,12 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { vi } from 'vitest';
 import Footer from './Footer';
-
-// Mock the AutoSphere icons
-vi.mock('./icons/AutoSphereIcons', () => ({
-  CarIcon: ({ size, className }) => <div data-testid="car-icon" className={className} style={{ width: size, height: size }}>🚗</div>
-}));
 
 const FooterWrapper = ({ children }) => (
   <BrowserRouter>
@@ -14,54 +8,35 @@ const FooterWrapper = ({ children }) => (
   </BrowserRouter>
 );
 
-describe('Footer Component', () => {
-  test('renders compact footer with brand logo', () => {
+describe('Auto-Style Footer Component', () => {
+  test('renders Auto-style footer with minimal design', () => {
     render(
       <FooterWrapper>
         <Footer />
       </FooterWrapper>
     );
 
-    expect(screen.getByText('AutoSphere')).toBeInTheDocument();
-    expect(screen.getByText('Your complete automotive platform')).toBeInTheDocument();
+    // Check for Auto-style footer container
+    const footer = screen.getByRole('contentinfo');
+    expect(footer).toHaveClass('auto-footer');
   });
 
-  test('renders quick navigation links', () => {
+  test('renders footer navigation links', () => {
     render(
       <FooterWrapper>
         <Footer />
       </FooterWrapper>
     );
 
-    expect(screen.getByText('Vehicles')).toBeInTheDocument();
+    // Check for Auto-style minimal navigation links
     expect(screen.getByText('About')).toBeInTheDocument();
     expect(screen.getByText('Contact')).toBeInTheDocument();
-    expect(screen.getByText('Help')).toBeInTheDocument();
+    expect(screen.getByText('Privacy')).toBeInTheDocument();
+    expect(screen.getByText('Terms')).toBeInTheDocument();
+    expect(screen.getByText('Support')).toBeInTheDocument();
   });
 
-  test('renders contact information', () => {
-    render(
-      <FooterWrapper>
-        <Footer />
-      </FooterWrapper>
-    );
-
-    expect(screen.getByText('📞 +233 55 008 6700')).toBeInTheDocument();
-    expect(screen.getByText('📧 support@autosphere.com')).toBeInTheDocument();
-  });
-
-  test('renders social media links', () => {
-    render(
-      <FooterWrapper>
-        <Footer />
-      </FooterWrapper>
-    );
-
-    const socialLinks = screen.getAllByRole('link', { name: /Follow us on/ });
-    expect(socialLinks).toHaveLength(4); // Facebook, Twitter, LinkedIn, Instagram
-  });
-
-  test('renders copyright information', () => {
+  test('renders copyright information with current year', () => {
     render(
       <FooterWrapper>
         <Footer />
@@ -69,44 +44,67 @@ describe('Footer Component', () => {
     );
 
     const currentYear = new Date().getFullYear();
-    expect(screen.getByText(`© ${currentYear} AutoSphere`)).toBeInTheDocument();
+    expect(screen.getByText(`AutoSphere © ${currentYear}`)).toBeInTheDocument();
   });
 
-  test('renders legal links', () => {
+  test('renders region selector', () => {
     render(
       <FooterWrapper>
         <Footer />
       </FooterWrapper>
     );
 
-    expect(screen.getByText('Privacy')).toBeInTheDocument();
-    expect(screen.getByText('Terms')).toBeInTheDocument();
+    expect(screen.getByText('🌍 Global')).toBeInTheDocument();
   });
 
-  test('contact links have correct attributes', () => {
+  test('footer links have correct navigation paths', () => {
     render(
       <FooterWrapper>
         <Footer />
       </FooterWrapper>
     );
 
-    const phoneLink = screen.getByText('📞 +233 55 008 6700').closest('a');
-    const emailLink = screen.getByText('📧 support@autosphere.com').closest('a');
+    const aboutLink = screen.getByText('About').closest('a');
+    const contactLink = screen.getByText('Contact').closest('a');
+    const privacyLink = screen.getByText('Privacy').closest('a');
+    const termsLink = screen.getByText('Terms').closest('a');
+    const supportLink = screen.getByText('Support').closest('a');
 
-    expect(phoneLink).toHaveAttribute('href', 'tel:+233 55 008 6700');
-    expect(emailLink).toHaveAttribute('href', 'mailto:support@autosphere.com');
+    expect(aboutLink).toHaveAttribute('href', '/about');
+    expect(contactLink).toHaveAttribute('href', '/contact');
+    expect(privacyLink).toHaveAttribute('href', '/privacy');
+    expect(termsLink).toHaveAttribute('href', '/terms');
+    expect(supportLink).toHaveAttribute('href', '/help');
   });
 
-  test('social links have correct attributes', () => {
+  test('footer has Auto-style CSS classes', () => {
     render(
       <FooterWrapper>
         <Footer />
       </FooterWrapper>
     );
 
-    const facebookLink = screen.getByLabelText('Follow us on Facebook');
-    expect(facebookLink).toHaveAttribute('href', 'https://facebook.com/autosphere');
-    expect(facebookLink).toHaveAttribute('target', '_blank');
-    expect(facebookLink).toHaveAttribute('rel', 'noopener noreferrer');
+    const footer = screen.getByRole('contentinfo');
+    const footerContent = footer.querySelector('.auto-footer-content');
+    const footerLinks = footer.querySelector('.auto-footer-links');
+    const footerCopyright = footer.querySelector('.auto-footer-copyright');
+    const footerRegion = footer.querySelector('.auto-footer-region');
+
+    expect(footer).toHaveClass('auto-footer');
+    expect(footerContent).toBeInTheDocument();
+    expect(footerLinks).toBeInTheDocument();
+    expect(footerCopyright).toBeInTheDocument();
+    expect(footerRegion).toBeInTheDocument();
+  });
+
+  test('footer links have Auto-style CSS classes', () => {
+    render(
+      <FooterWrapper>
+        <Footer />
+      </FooterWrapper>
+    );
+
+    const aboutLink = screen.getByText('About').closest('a');
+    expect(aboutLink).toHaveClass('auto-footer-link');
   });
 });

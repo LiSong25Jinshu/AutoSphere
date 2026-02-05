@@ -1,34 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import {
-  Box,
-  Paper,
-  TextField,
-  Button,
-  Typography,
-  Alert,
-  InputAdornment,
-  IconButton,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormHelperText,
-  Divider,
-  Container,
-  Grid,
-} from '@mui/material';
-import {
-  Visibility,
-  VisibilityOff,
-  Email,
-  Lock,
-  Person,
-  Phone,
-  Business,
-} from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useAuthOperations } from '../hooks/useAuthOperations';
+import '../pages/public/Auth.css';
+import './WhyAutoSphere.css';
 
 const RegisterForm = () => {
   const navigate = useNavigate();
@@ -62,6 +37,7 @@ const RegisterForm = () => {
     clearError();
     setRegistrationError('');
   }, [clearError, formData]);
+
   const validateForm = () => {
     const errors = {};
 
@@ -167,288 +143,212 @@ const RegisterForm = () => {
     setShowConfirmPassword(!showConfirmPassword);
   };
 
-  const getRoleIcon = (role) => {
-    switch (role) {
-      case 'dealer':
-        return <Business />;
-      case 'service_provider':
-        return <Business />;
-      default:
-        return <Person />;
-    }
-  };
   return (
-    <Container component="main" maxWidth="md">
-      <Box
-        sx={{
-          marginTop: 4,
-          marginBottom: 4,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Paper
-          elevation={3}
-          sx={{
-            padding: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            width: '100%',
-          }}
-        >
-          <Typography component="h1" variant="h4" gutterBottom>
-            Create Account
-          </Typography>
-          
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3, textAlign: 'center' }}>
-            Join AutoSphere to access vehicle sales, rentals, and services
-          </Typography>
+    <div className="auth-page">
+      <div className="auth-container">
+        <div className="auth-card">
+          <div className="auth-header">
+            <h1>Create Account</h1>
+            <p>Join AutoSphere to access vehicle sales, rentals, and services</p>
+          </div>
 
           {(error || registrationError) && (
-            <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
+            <div className="error-message">
               {error || registrationError}
-            </Alert>
+            </div>
           )}
 
           {registrationSuccess && (
-            <Alert severity="success" sx={{ width: '100%', mb: 2 }}>
+            <div className="success-message">
               {registrationSuccess}
-            </Alert>
+            </div>
           )}
 
-          <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
-            <Grid container spacing={2}>
-              {/* First Name */}
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  required
-                  fullWidth
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="firstName">First Name</label>
+                <input
+                  type="text"
                   id="firstName"
-                  label="First Name"
                   name="firstName"
-                  autoComplete="given-name"
-                  autoFocus
+                  className={`form-input ${validationErrors.firstName ? 'error' : ''}`}
+                  placeholder="Enter your first name"
                   value={formData.firstName}
                   onChange={handleInputChange}
-                  error={!!validationErrors.firstName}
-                  helperText={validationErrors.firstName}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Person />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Grid>
-
-              {/* Last Name */}
-              <Grid item xs={12} sm={6}>
-                <TextField
+                  autoComplete="given-name"
+                  autoFocus
                   required
-                  fullWidth
+                />
+                {validationErrors.firstName && (
+                  <span className="error-message">{validationErrors.firstName}</span>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="lastName">Last Name</label>
+                <input
+                  type="text"
                   id="lastName"
-                  label="Last Name"
                   name="lastName"
-                  autoComplete="family-name"
+                  className={`form-input ${validationErrors.lastName ? 'error' : ''}`}
+                  placeholder="Enter your last name"
                   value={formData.lastName}
                   onChange={handleInputChange}
-                  error={!!validationErrors.lastName}
-                  helperText={validationErrors.lastName}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Person />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Grid>
-              {/* Email */}
-              <Grid item xs={12}>
-                <TextField
+                  autoComplete="family-name"
                   required
-                  fullWidth
-                  id="email"
-                  label="Email Address"
-                  name="email"
-                  autoComplete="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  error={!!validationErrors.email}
-                  helperText={validationErrors.email}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Email />
-                      </InputAdornment>
-                    ),
-                  }}
                 />
-              </Grid>
+                {validationErrors.lastName && (
+                  <span className="error-message">{validationErrors.lastName}</span>
+                )}
+              </div>
+            </div>
 
-              {/* Phone */}
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
+            <div className="form-group">
+              <label htmlFor="email">Email Address</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                className={`form-input ${validationErrors.email ? 'error' : ''}`}
+                placeholder="Enter your email"
+                value={formData.email}
+                onChange={handleInputChange}
+                autoComplete="email"
+                required
+              />
+              {validationErrors.email && (
+                <span className="error-message">{validationErrors.email}</span>
+              )}
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="phone">Phone Number (Optional)</label>
+                <input
+                  type="tel"
                   id="phone"
-                  label="Phone Number (Optional)"
                   name="phone"
-                  autoComplete="tel"
+                  className={`form-input ${validationErrors.phone ? 'error' : ''}`}
+                  placeholder="Enter your phone number"
                   value={formData.phone}
                   onChange={handleInputChange}
-                  error={!!validationErrors.phone}
-                  helperText={validationErrors.phone}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Phone />
-                      </InputAdornment>
-                    ),
-                  }}
+                  autoComplete="tel"
                 />
-              </Grid>
+                {validationErrors.phone && (
+                  <span className="error-message">{validationErrors.phone}</span>
+                )}
+              </div>
 
-              {/* Role Selection */}
-              <Grid item xs={12} sm={6}>
-                <FormControl 
-                  fullWidth 
-                  required 
-                  error={!!validationErrors.role}
+              <div className="form-group">
+                <label htmlFor="role">Account Type</label>
+                <select
+                  id="role"
+                  name="role"
+                  className={`form-select ${validationErrors.role ? 'error' : ''}`}
+                  value={formData.role}
+                  onChange={handleInputChange}
+                  required
                 >
-                  <InputLabel id="role-label">Account Type</InputLabel>
-                  <Select
-                    labelId="role-label"
-                    id="role"
-                    name="role"
-                    value={formData.role}
-                    label="Account Type"
-                    onChange={handleInputChange}
-                    startAdornment={
-                      <InputAdornment position="start">
-                        {getRoleIcon(formData.role)}
-                      </InputAdornment>
-                    }
-                  >
-                    <MenuItem value="user">Customer</MenuItem>
-                    <MenuItem value="dealer">Dealer</MenuItem>
-                    <MenuItem value="service_provider">Service Provider</MenuItem>
-                  </Select>
-                  {validationErrors.role && (
-                    <FormHelperText>{validationErrors.role}</FormHelperText>
-                  )}
-                </FormControl>
-              </Grid>
-              {/* Password */}
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  required
-                  fullWidth
-                  name="password"
-                  label="Password"
-                  type={showPassword ? 'text' : 'password'}
-                  id="password"
-                  autoComplete="new-password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  error={!!validationErrors.password}
-                  helperText={validationErrors.password}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Lock />
-                      </InputAdornment>
-                    ),
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          aria-label="toggle password visibility"
-                          onClick={togglePasswordVisibility}
-                          edge="end"
-                        >
-                          {showPassword ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Grid>
+                  <option value="user">Customer</option>
+                  <option value="dealer">Dealer</option>
+                  <option value="service_provider">Service Provider</option>
+                </select>
+                {validationErrors.role && (
+                  <span className="error-message">{validationErrors.role}</span>
+                )}
+              </div>
+            </div>
 
-              {/* Confirm Password */}
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  required
-                  fullWidth
-                  name="confirmPassword"
-                  label="Confirm Password"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  id="confirmPassword"
-                  autoComplete="new-password"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  error={!!validationErrors.confirmPassword}
-                  helperText={validationErrors.confirmPassword}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Lock />
-                      </InputAdornment>
-                    ),
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          aria-label="toggle confirm password visibility"
-                          onClick={toggleConfirmPasswordVisibility}
-                          edge="end"
-                        >
-                          {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Grid>
-            </Grid>
-            <Button
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="password">Password</label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    id="password"
+                    name="password"
+                    className={`form-input ${validationErrors.password ? 'error' : ''}`}
+                    placeholder="Create a password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    autoComplete="new-password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={togglePasswordVisibility}
+                    aria-label="Toggle password visibility"
+                  >
+                    {showPassword ? '👁️' : '👁️‍🗨️'}
+                  </button>
+                </div>
+                {validationErrors.password && (
+                  <span className="error-message">{validationErrors.password}</span>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="confirmPassword">Confirm Password</label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    className={`form-input ${validationErrors.confirmPassword ? 'error' : ''}`}
+                    placeholder="Confirm your password"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    autoComplete="new-password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={toggleConfirmPasswordVisibility}
+                    aria-label="Toggle confirm password visibility"
+                  >
+                    {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+                  </button>
+                </div>
+                {validationErrors.confirmPassword && (
+                  <span className="error-message">{validationErrors.confirmPassword}</span>
+                )}
+              </div>
+            </div>
+
+            <button
               type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ mt: 3, mb: 2 }}
+              className="btn primary full-width"
               disabled={isSubmitting}
             >
               {isSubmitting ? 'Creating Account...' : 'Create Account'}
-            </Button>
+            </button>
 
-            <Divider sx={{ my: 2 }}>
-              <Typography variant="body2" color="text.secondary">
-                OR
-              </Typography>
-            </Divider>
-
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="body2" color="text.secondary">
+            <div className="auth-footer">
+              <p>
                 Already have an account?{' '}
-                <Link
-                  to="/login"
-                  style={{ textDecoration: 'none' }}
-                >
-                  <Typography
-                    component="span"
-                    variant="body2"
-                    color="primary"
-                    sx={{ fontWeight: 'medium' }}
-                  >
-                    Sign in here
-                  </Typography>
+                <Link to="/login" className="auth-link">
+                  Sign in here
                 </Link>
-              </Typography>
-            </Box>
-          </Box>
-        </Paper>
-      </Box>
-    </Container>
+              </p>
+            </div>
+          </form>
+        </div>
+
+        <div className="auth-info why-autosphere">
+          <h2>Why AutoSphere?</h2>
+          <ul>
+            <li>Access thousands of verified vehicles from trusted dealers</li>
+            <li>Book services with certified automotive professionals</li>
+            <li>Get personalized recommendations based on your preferences</li>
+            <li>Secure transactions with buyer protection</li>
+            <li>24/7 customer support for all your automotive needs</li>
+          </ul>
+        </div>
+      </div>
+    </div>
   );
 };
 

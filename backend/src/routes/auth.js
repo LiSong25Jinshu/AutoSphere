@@ -5,6 +5,7 @@ import User from '../models/User.js';
 import { hashPassword } from '../utils/password.js';
 import { generateAccessToken } from '../utils/jwt.js';
 import { authenticateToken } from '../middleware/auth.js';
+import passport from '../config/passport.js';
 
 const router = express.Router();
 
@@ -203,5 +204,39 @@ router.post('/refresh', authenticateToken, async (req, res) => {
     });
   }
 });
+
+// Google OAuth routes
+router.get('/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] })
+);
+
+router.get('/google/callback',
+  passport.authenticate('google', { session: false }),
+  async (req, res) => {
+    try {
+      const user = req.user;
+      
+      // Update last login
+      user.lastLoginAt = new Date();
+      await user.save();
+
+      // Generate JWT token
+      const token = generateAccessToken({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        isVerified: user.isVerified
+      });
+
+      // Redirect to frontend with token
+      const frontendURL = process.env.FRONTEND_URL || 'http://localhost:3001';
+      res.redirect(`${frontendURL}/auth/google/success?token=${token}&user=${encodeURIComponent(JSON.stringify(user.toJSON()))}`);
+    } catch (error) {
+      console.error('Google OAuth callback error:', error);
+      const frontendURL = process.env.FRONTEND_URL || 'http://localhost:3001';
+      res.redirect(`${frontendURL}/auth/google/error?error=${encodeURIComponent('Authentication failed')}`);
+    }
+  }
+);
 
 export default router;

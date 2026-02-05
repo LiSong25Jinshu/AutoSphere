@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import './styles/tesla-theme.css';
+import './styles/auto-theme.css';
 import Footer from './components/Footer';
 
 // Import user pages
@@ -22,6 +22,9 @@ import About from './pages/public/About';
 import Contact from './pages/public/Contact';
 import Login from './pages/public/Login';
 import Register from './pages/public/Register';
+
+// Import Google Auth components
+import GoogleAuthCallback from './components/GoogleAuthCallback';
 
 // Simple test components
 // Simple placeholder components
@@ -698,7 +701,7 @@ const DashboardRoute = ({ children, requiredRole }) => {
 import UserDropdown from './components/UserDropdown';
 import DashboardLayout from './components/DashboardLayout';
 
-// Navigation Component (for public pages only)
+// Navigation Component (Auto-inspired minimal design)
 function Navigation() {
   const { user } = useAuth();
 
@@ -709,37 +712,45 @@ function Navigation() {
   }
 
   return (
-    <nav className="autosphere-nav">
-      <div className="autosphere-nav-content">
-        {/* Brand Logo - Positioned in Top Left */}
-        <div className="autosphere-nav-brand">
-          <Link to="/" className="autosphere-logo">
+    <nav className="auto-nav">
+      <div className="auto-nav-content">
+        {/* Auto Logo */}
+        <div className="auto-nav-brand">
+          <Link to="/" className="auto-logo">
             AutoSphere
           </Link>
         </div>
-        
-        <div className="autosphere-nav-links">
+
+        {/* Auto Navigation Links */}
+        <div className="auto-nav-links">
           {!user ? (
-            // Before Login: Logo | Home | Vehicles | About | Contact | Login | Sign Up
             <>
-              <Link to="/" className="autosphere-nav-link">Home</Link>
-              <Link to="/vehicles" className="autosphere-nav-link">Vehicles</Link>
-              <Link to="/about" className="autosphere-nav-link">About</Link>
-              <Link to="/contact" className="autosphere-nav-link">Contact</Link>
-              <Link to="/login" className="autosphere-nav-link">Login</Link>
-              <Link to="/register" className="autosphere-nav-btn autosphere-nav-btn-register">Sign Up</Link>
+              <Link to="/" className="auto-nav-link">Home</Link>
+              <Link to="/vehicles" className="auto-nav-link">Vehicles</Link>
+              <Link to="/about" className="auto-nav-link">About</Link>
+              <Link to="/contact" className="auto-nav-link">Contact</Link>
             </>
           ) : (
-            // After Login on public pages: Logo | Dashboard | Vehicles | Appointments | Inventory | Messages | 🔔 | 👤 Avatar ▼
             <>
-              <Link to="/dashboard" className="autosphere-nav-link">Dashboard</Link>
-              <Link to="/vehicles" className="autosphere-nav-link">Vehicles</Link>
-              <Link to="/appointments" className="autosphere-nav-link">Appointments</Link>
-              <Link to="/inventory" className="autosphere-nav-link">Inventory</Link>
-              <Link to="/user-messages" className="autosphere-nav-link">Messages</Link>
-              <Link to="/notifications" className="autosphere-nav-icon-link" title="Notifications">
-                🔔
-              </Link>
+              <Link to="/dashboard" className="auto-nav-link">Dashboard</Link>
+              <Link to="/vehicles" className="auto-nav-link">Vehicles</Link>
+              <Link to="/appointments" className="auto-nav-link">Appointments</Link>
+              <Link to="/inventory" className="auto-nav-link">Inventory</Link>
+              <Link to="/user-messages" className="auto-nav-link">Messages</Link>
+            </>
+          )}
+        </div>
+
+        {/* Auto Utility Icons */}
+        <div className="auto-nav-utils">
+          {!user ? (
+            <>
+              <Link to="/login" className="auto-nav-util">Login</Link>
+              <Link to="/register" className="auto-nav-util auto-nav-util-primary">Sign Up</Link>
+            </>
+          ) : (
+            <>
+              <Link to="/notifications" className="auto-nav-util">🔔</Link>
               <UserDropdown />
             </>
           )}
@@ -765,6 +776,10 @@ function AppContent() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          
+          {/* Google OAuth callback routes */}
+          <Route path="/auth/google/success" element={<GoogleAuthCallback />} />
+          <Route path="/auth/google/error" element={<GoogleAuthCallback />} />
           
           {/* Dashboard Routes with Sidebar */}
           <Route 

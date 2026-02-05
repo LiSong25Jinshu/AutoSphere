@@ -1,17 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  Box,
-  Paper,
-  TextField,
-  Button,
-  Typography,
-  Alert,
-  InputAdornment,
-  Container,
-} from '@mui/material';
-import { Email, ArrowBack } from '@mui/icons-material';
 import { useAuthOperations } from '../hooks/useAuthOperations';
+import '../pages/public/Auth.css';
 
 const ForgotPasswordForm = () => {
   const { requestPasswordReset, isSubmitting } = useAuthOperations();
@@ -67,96 +57,76 @@ const ForgotPasswordForm = () => {
   };
 
   return (
-    <Container component="main" maxWidth="sm">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Paper
-          elevation={3}
-          sx={{
-            padding: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            width: '100%',
-          }}
-        >
-          <Typography component="h1" variant="h4" gutterBottom>
-            Reset Password
-          </Typography>
-          
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3, textAlign: 'center' }}>
-            Enter your email address and we'll send you a link to reset your password
-          </Typography>
+    <div className="auth-page">
+      <div className="auth-container">
+        <div className="auth-card">
+          <div className="auth-header">
+            <h1>Reset Password</h1>
+            <p>Enter your email address and we'll send you a link to reset your password</p>
+          </div>
 
           {requestError && (
-            <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
+            <div className="error-message">
               {requestError}
-            </Alert>
+            </div>
           )}
 
           {successMessage && (
-            <Alert severity="success" sx={{ width: '100%', mb: 2 }}>
+            <div className="success-message">
               {successMessage}
-            </Alert>
+            </div>
           )}
 
-          <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="email"
-              label="Email Address"
-              name="email"
-              autoComplete="email"
-              autoFocus
-              value={email}
-              onChange={handleInputChange}
-              error={!!validationError}
-              helperText={validationError}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Email />
-                  </InputAdornment>
-                ),
-              }}
-            />
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label htmlFor="email">Email Address</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                className={`form-input ${validationError ? 'error' : ''}`}
+                placeholder="Enter your email"
+                value={email}
+                onChange={handleInputChange}
+                autoComplete="email"
+                autoFocus
+                required
+              />
+              {validationError && (
+                <span className="error-message">{validationError}</span>
+              )}
+            </div>
 
-            <Button
+            <button
               type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ mt: 3, mb: 2 }}
+              className="btn primary full-width"
               disabled={isSubmitting}
             >
               {isSubmitting ? 'Sending...' : 'Send Reset Link'}
-            </Button>
+            </button>
 
-            <Box sx={{ textAlign: 'center', mt: 2 }}>
-              <Link
-                to="/login"
-                style={{ textDecoration: 'none', color: 'inherit' }}
-              >
-                <Button
-                  startIcon={<ArrowBack />}
-                  variant="text"
-                  color="primary"
-                >
-                  Back to Sign In
-                </Button>
-              </Link>
-            </Box>
-          </Box>
-        </Paper>
-      </Box>
-    </Container>
+            <div className="auth-footer">
+              <p>
+                <Link to="/login" className="auth-link">
+                  ← Back to Sign In
+                </Link>
+              </p>
+            </div>
+          </form>
+        </div>
+
+        <div className="auth-info">
+          <h2>Password Recovery</h2>
+          <ul>
+            <li>Enter your registered email address</li>
+            <li>Check your inbox for the reset link</li>
+            <li>Follow the link to create a new password</li>
+            <li>Sign in with your new credentials</li>
+            <li>Contact support if you need additional help</li>
+          </ul>
+        </div>
+      </div>
+    </div>
   );
 };
 

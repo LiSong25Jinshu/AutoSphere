@@ -1,18 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import {
-  Box,
-  Paper,
-  TextField,
-  Button,
-  Typography,
-  Alert,
-  InputAdornment,
-  IconButton,
-  Container,
-} from '@mui/material';
-import { Lock, Visibility, VisibilityOff, ArrowBack } from '@mui/icons-material';
 import { useAuthOperations } from '../hooks/useAuthOperations';
+import '../pages/public/Auth.css';
 
 const ResetPasswordForm = () => {
   const navigate = useNavigate();
@@ -122,157 +111,133 @@ const ResetPasswordForm = () => {
 
   if (!token && !resetError) {
     return (
-      <Container component="main" maxWidth="sm">
-        <Box
-          sx={{
-            marginTop: 8,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-          }}
-        >
-          <Typography>Loading...</Typography>
-        </Box>
-      </Container>
+      <div className="auth-page">
+        <div className="auth-container">
+          <div className="auth-card">
+            <div className="auth-header">
+              <h1>Loading...</h1>
+            </div>
+          </div>
+          <div className="auth-info">
+            <h2>Please Wait</h2>
+            <ul>
+              <li>Verifying your reset token</li>
+            </ul>
+          </div>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Container component="main" maxWidth="sm">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Paper
-          elevation={3}
-          sx={{
-            padding: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            width: '100%',
-          }}
-        >
-          <Typography component="h1" variant="h4" gutterBottom>
-            Set New Password
-          </Typography>
-          
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3, textAlign: 'center' }}>
-            Enter your new password below
-          </Typography>
+    <div className="auth-page">
+      <div className="auth-container">
+        <div className="auth-card">
+          <div className="auth-header">
+            <h1>Set New Password</h1>
+            <p>Enter your new password below</p>
+          </div>
 
           {resetError && (
-            <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
+            <div className="error-message">
               {resetError}
-            </Alert>
+            </div>
           )}
 
           {successMessage && (
-            <Alert severity="success" sx={{ width: '100%', mb: 2 }}>
+            <div className="success-message">
               {successMessage}
-            </Alert>
+            </div>
           )}
 
-          <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="New Password"
-              type={showPassword ? 'text' : 'password'}
-              id="password"
-              autoComplete="new-password"
-              autoFocus
-              value={formData.password}
-              onChange={handleInputChange}
-              error={!!validationErrors.password}
-              helperText={validationErrors.password}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Lock />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle password visibility"
-                      onClick={togglePasswordVisibility}
-                      edge="end"
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label htmlFor="password">New Password</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  id="password"
+                  name="password"
+                  className={`form-input ${validationErrors.password ? 'error' : ''}`}
+                  placeholder="Create a new password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  autoComplete="new-password"
+                  autoFocus
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={togglePasswordVisibility}
+                  aria-label="Toggle password visibility"
+                >
+                  {showPassword ? '👁️' : '👁️‍🗨️'}
+                </button>
+              </div>
+              {validationErrors.password && (
+                <span className="error-message">{validationErrors.password}</span>
+              )}
+            </div>
 
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="confirmPassword"
-              label="Confirm New Password"
-              type={showConfirmPassword ? 'text' : 'password'}
-              id="confirmPassword"
-              autoComplete="new-password"
-              value={formData.confirmPassword}
-              onChange={handleInputChange}
-              error={!!validationErrors.confirmPassword}
-              helperText={validationErrors.confirmPassword}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Lock />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle confirm password visibility"
-                      onClick={toggleConfirmPasswordVisibility}
-                      edge="end"
-                    >
-                      {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
+            <div className="form-group">
+              <label htmlFor="confirmPassword">Confirm New Password</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  className={`form-input ${validationErrors.confirmPassword ? 'error' : ''}`}
+                  placeholder="Confirm your new password"
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  autoComplete="new-password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={toggleConfirmPasswordVisibility}
+                  aria-label="Toggle confirm password visibility"
+                >
+                  {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+                </button>
+              </div>
+              {validationErrors.confirmPassword && (
+                <span className="error-message">{validationErrors.confirmPassword}</span>
+              )}
+            </div>
 
-            <Button
+            <button
               type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ mt: 3, mb: 2 }}
+              className="btn primary full-width"
               disabled={isSubmitting || !token}
             >
               {isSubmitting ? 'Resetting Password...' : 'Reset Password'}
-            </Button>
+            </button>
 
-            <Box sx={{ textAlign: 'center', mt: 2 }}>
-              <Link
-                to="/login"
-                style={{ textDecoration: 'none', color: 'inherit' }}
-              >
-                <Button
-                  startIcon={<ArrowBack />}
-                  variant="text"
-                  color="primary"
-                >
-                  Back to Sign In
-                </Button>
-              </Link>
-            </Box>
-          </Box>
-        </Paper>
-      </Box>
-    </Container>
+            <div className="auth-footer">
+              <p>
+                <Link to="/login" className="auth-link">
+                  ← Back to Sign In
+                </Link>
+              </p>
+            </div>
+          </form>
+        </div>
+
+        <div className="auth-info">
+          <h2>Create New Password</h2>
+          <ul>
+            <li>Use at least 8 characters</li>
+            <li>Include uppercase and lowercase letters</li>
+            <li>Add at least one number</li>
+            <li>Make it unique and secure</li>
+            <li>Avoid using personal information</li>
+          </ul>
+        </div>
+      </div>
+    </div>
   );
 };
 

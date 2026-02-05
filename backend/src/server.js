@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import session from 'express-session';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 
@@ -11,6 +12,7 @@ import { Server } from 'socket.io';
 import { connectDB } from './config/database.js';
 import { connectRedis } from './config/redis.js';
 import { rateLimiter } from './middleware/rateLimiter.js';
+import passport from './config/passport.js';
 
 // Import routes
 import authRoutes from './routes/auth.js';
@@ -38,11 +40,32 @@ app.use(helmet());
 app.use(compression());
 app.use(morgan('combined'));
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3001',
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:3001', 
+    process.env.FRONTEND_URL || 'http://localhost:3001'
+  ],
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-test-mode'],
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Session middleware for passport
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
+// Passport middleware
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Rate limiting
 app.use('/api/', rateLimiter);

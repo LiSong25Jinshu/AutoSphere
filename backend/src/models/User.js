@@ -19,8 +19,14 @@ const User = sequelize.define('User', {
   },
   passwordHash: {
     type: DataTypes.STRING(255),
-    allowNull: false,
+    allowNull: true, // Allow null for Google OAuth users
     field: 'password_hash',
+  },
+  googleId: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    unique: true,
+    field: 'google_id',
   },
   firstName: {
     type: DataTypes.STRING(100),
@@ -117,6 +123,15 @@ const User = sequelize.define('User', {
     {
       fields: ['password_reset_token'],
     },
+    {
+      unique: true,
+      fields: ['google_id'],
+      where: {
+        google_id: {
+          [Op.ne]: null
+        }
+      }
+    },
   ],
 });
 
@@ -159,6 +174,12 @@ User.prototype.toJSON = function() {
 };
 
 // Static methods
+User.findByGoogleId = async function(googleId) {
+  return await this.findOne({
+    where: { googleId },
+  });
+};
+
 User.findByEmail = async function(email) {
   return await this.findOne({
     where: { email: email.toLowerCase() },

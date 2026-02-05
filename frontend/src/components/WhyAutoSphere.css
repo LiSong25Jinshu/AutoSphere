@@ -1,0 +1,74 @@
+/* Dedicated CSS file for Why AutoSphere container - BLACK TEXT OVERRIDE */
+
+/* Force black text styling for Why AutoSphere container */
+.auth-info.why-autosphere {
+  background: #ffffff !important;
+  border: 1px solid #d1d5db !important;
+  padding: 2rem !important;
+  color: #000000 !important;
+  border-radius: 12px !important;
+}
+
+/* Remove any gradient backgrounds */
+.auth-info.why-autosphere::before {
+  display: none !important;
+}
+
+/* Black heading text */
+.auth-info.why-autosphere h2 {
+  color: #000000 !important;
+  letter-spacing: 0.05em !important;
+  font-weight: 700 !important;
+  font-size: 1.875rem !important;
+  margin: 0 0 1.5rem 0 !important;
+  line-height: 1.2 !important;
+}
+
+/* Black list text with expanded spacing */
+.auth-info.why-autosphere ul {
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.25rem !important;
+}
+
+.auth-info.why-autosphere li {
+  color: #000000 !important;
+  background: #f8f9fa !important;
+  border: 1px solid #e5e7eb !important;
+  border-left: 1px solid #e5e7eb !important;
+  letter-spacing: 0.025em !important;
+  font-weight: 500 !important;
+  padding: 1rem !important;
+  padding-left: 3rem !important;
+  font-size: 1rem !important;
+  border-radius: 8px !important;
+  position: relative !important;
+}
+
+/* Black checkmark icons */
+.auth-info.why-autosphere li::before {
+  content: '✓' !important;
+  position: absolute !important;
+  left: 1rem !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  color: #000000 !important;
+  font-weight: 700 !important;
+  font-size: 1.125rem !important;
+}
+
+/* Hover state with black text maintained */
+.auth-info.why-autosphere li:hover {
+  background: #f1f3f4 !important;
+  color: #000000 !important;
+  transform: none !important;
+  border-left: 1px solid #e5e7eb !important;
+}
+
+/* Override any Tesla theme variables */
+.auth-info.why-autosphere * {
+  color: #000000 !important;
+}

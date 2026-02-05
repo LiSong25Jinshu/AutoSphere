@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Booking API</title>
+</head>
+<body>
+    <h1>Debug Booking API</h1>
+    <button onclick="testBooking()">Test Booking</button>
+    <div id="result"></div>
+
+    <script>
+        async function testBooking() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing...';
+
+            try {
+                // Test data that should match backend validation
+                const bookingData = {
+                    serviceProviderId: 3,
+                    serviceType: 'oil_change',
+                    title: 'Oil Change Service Test',
+                    description: 'Test booking for oil change',
+                    scheduledDate: '2026-02-10',
+                    scheduledTime: '10:00',
+                    customerNotes: 'Test notes',
+                    priority: 'normal'
+                };
+
+                console.log('=== SENDING BOOKING DATA ===');
+                console.log(JSON.stringify(bookingData, null, 2));
+
+                const response = await fetch('http://localhost:5001/api/bookings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-test-mode': 'true'
+                    },
+                    body: JSON.stringify(bookingData)
+                });
+
+                const responseData = await response.json();
+                
+                console.log('=== RESPONSE ===');
+                console.log('Status:', response.status);
+                console.log('Data:', JSON.stringify(responseData, null, 2));
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <h3 style="color: green;">SUCCESS!</h3>
+                        <pre>${JSON.stringify(responseData, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <h3 style="color: red;">FAILED!</h3>
+                        <p>Status: ${response.status}</p>
+                        <pre>${JSON.stringify(responseData, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = `
+                    <h3 style="color: red;">ERROR!</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

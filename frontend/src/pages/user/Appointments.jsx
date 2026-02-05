@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { appointmentService } from '../../services/appointmentService';
 import './Appointments.css';
 
 const UserAppointments = () => {
@@ -7,6 +8,9 @@ const UserAppointments = () => {
   const [appointments, setAppointments] = useState([]);
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [rescheduleModal, setRescheduleModal] = useState(null);
+  const [rescheduleData, setRescheduleData] = useState({ date: '', time: '' });
 
   useEffect(() => {
     fetchAppointments();
@@ -14,67 +18,42 @@ const UserAppointments = () => {
 
   const fetchAppointments = async () => {
     setLoading(true);
-    // Mock data - replace with real API call
-    setTimeout(() => {
-      setAppointments([
-        {
-          id: 1,
-          serviceType: 'Oil Change',
-          provider: 'QuickFix Motors',
-          date: '2024-01-25',
-          time: '10:00 AM',
-          status: 'confirmed',
-          price: 45.00,
-          address: '123 Service St, City, ST 12345',
-          notes: 'Regular maintenance check'
-        },
-        {
-          id: 2,
-          serviceType: 'Brake Service',
-          provider: 'AutoCare Plus',
-          date: '2024-01-30',
-          time: '2:00 PM',
-          status: 'pending',
-          price: 180.00,
-          address: '456 Repair Ave, City, ST 12345',
-          notes: 'Brake pads replacement needed'
-        },
-        {
-          id: 3,
-          serviceType: 'Car Wash',
-          provider: 'Shine & Clean',
-          date: '2024-01-15',
-          time: '11:30 AM',
-          status: 'completed',
-          price: 25.00,
-          address: '789 Wash Blvd, City, ST 12345',
-          notes: 'Full exterior and interior cleaning'
-        },
-        {
-          id: 4,
-          serviceType: 'Tire Service',
-          provider: 'Tire World',
-          date: '2024-01-10',
-          time: '9:00 AM',
-          status: 'completed',
-          price: 320.00,
-          address: '321 Tire Lane, City, ST 12345',
-          notes: 'All four tires replaced'
-        },
-        {
-          id: 5,
-          serviceType: 'AC Service',
-          provider: 'Cool Air Auto',
-          date: '2024-01-05',
-          time: '3:30 PM',
-          status: 'cancelled',
-          price: 95.00,
-          address: '654 Climate Dr, City, ST 12345',
-          notes: 'AC not cooling properly'
-        }
-      ]);
+    setError('');
+    
+    try {
+      const response = await appointmentService.getUserAppointments();
+      
+      if (response.success) {
+        // Transform booking data to appointment format
+        const transformedAppointments = response.data.map(booking => ({
+          id: booking.id,
+          serviceType: booking.title,
+          provider: booking.serviceProvider ? 
+            `${booking.serviceProvider.firstName} ${booking.serviceProvider.lastName}` : 
+            'AutoSphere Service',
+          date: new Date(booking.scheduledDate).toISOString().split('T')[0],
+          time: booking.scheduledTime,
+          status: booking.status,
+          price: booking.estimatedCost || booking.actualCost || 0,
+          address: booking.location?.address || '123 Service St, City, ST 12345',
+          notes: booking.customerNotes || booking.description,
+          priority: booking.priority,
+          confirmationNumber: `AS-${booking.id.toString().padStart(6, '0')}`,
+          createdAt: booking.createdAt,
+          updatedAt: booking.updatedAt,
+          originalBooking: booking // Keep reference to original data
+        }));
+        
+        setAppointments(transformedAppointments);
+      } else {
+        setError(response.message || 'Failed to fetch appointments');
+      }
+    } catch (error) {
+      console.error('Fetch appointments error:', error);
+      setError('Failed to load appointments. Please try again.');
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const filteredAppointments = appointments.filter(appointment => {
@@ -88,25 +67,121 @@ const UserAppointments = () => {
       case 'pending': return 'status-pending';
       case 'completed': return 'status-completed';
       case 'cancelled': return 'status-cancelled';
+      case 'in_progress': return 'status-in-progress';
       default: return 'status-pending';
     }
   };
 
-  const handleCancelAppointment = (appointmentId) => {
+  const handleCancelAppointment = async (appointmentId) => {
+    const reason = prompt('Please provide a reason for cancellation (optional):');
+    
     if (window.confirm('Are you sure you want to cancel this appointment?')) {
-      setAppointments(prev => 
-        prev.map(apt => 
-          apt.id === appointmentId 
-            ? { ...apt, status: 'cancelled' }
-            : apt
-        )
-      );
+      try {
+        const response = await appointmentService.cancelAppointment(appointmentId, reason);
+        
+        if (response.success) {
+          // Update local state
+          setAppointments(prev => 
+            prev.map(apt => 
+              apt.id === appointmentId 
+                ? { ...apt, status: 'cancelled' }
+                : apt
+            )
+          );
+          alert('Appointment cancelled successfully!');
+        } else {
+          alert(response.message || 'Failed to cancel appointment');
+        }
+      } catch (error) {
+        console.error('Cancel appointment error:', error);
+        alert('Failed to cancel appointment. Please try again.');
+      }
     }
   };
 
   const handleRescheduleAppointment = (appointmentId) => {
-    // Navigate to reschedule page or open modal
-    alert('Reschedule functionality coming soon!');
+    const appointment = appointments.find(apt => apt.id === appointmentId);
+    if (appointment) {
+      setRescheduleModal(appointmentId);
+      setRescheduleData({
+        date: appointment.date,
+        time: appointment.time
+      });
+    }
+  };
+
+  const submitReschedule = async () => {
+    if (!rescheduleData.date || !rescheduleData.time) {
+      alert('Please select both date and time');
+      return;
+    }
+
+    // Validate date is not in the past
+    const selectedDate = new Date(`${rescheduleData.date}T${rescheduleData.time}`);
+    const now = new Date();
+    if (selectedDate <= now) {
+      alert('Please select a future date and time!');
+      return;
+    }
+
+    try {
+      const response = await appointmentService.rescheduleAppointment(
+        rescheduleModal,
+        rescheduleData.date,
+        rescheduleData.time
+      );
+
+      if (response.success) {
+        // Update local state
+        setAppointments(prev => 
+          prev.map(apt => 
+            apt.id === rescheduleModal 
+              ? { ...apt, date: rescheduleData.date, time: rescheduleData.time }
+              : apt
+          )
+        );
+        setRescheduleModal(null);
+        setRescheduleData({ date: '', time: '' });
+        alert('Appointment rescheduled successfully!');
+      } else {
+        alert(response.message || 'Failed to reschedule appointment');
+      }
+    } catch (error) {
+      console.error('Reschedule appointment error:', error);
+      alert('Failed to reschedule appointment. Please try again.');
+    }
+  };
+
+  const handleViewDetails = (appointmentId) => {
+    // Navigate to appointment details page or show modal
+    navigate(`/appointments/${appointmentId}`);
+  };
+
+  const handleLeaveReview = async (appointmentId) => {
+    const rating = prompt('Rate your experience (1-5 stars):');
+    if (rating && rating >= 1 && rating <= 5) {
+      const review = prompt('Leave a review (optional):');
+      
+      try {
+        const response = await appointmentService.addReview(appointmentId, parseInt(rating), review);
+        
+        if (response.success) {
+          alert('Thank you for your review!');
+          fetchAppointments(); // Refresh to show updated data
+        } else {
+          alert(response.message || 'Failed to submit review');
+        }
+      } catch (error) {
+        console.error('Add review error:', error);
+        alert('Failed to submit review. Please try again.');
+      }
+    }
+  };
+
+  // Get minimum date for rescheduling (today)
+  const getMinDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
   };
 
   if (loading) {
@@ -116,6 +191,23 @@ const UserAppointments = () => {
           <div className="loading-state">
             <div className="loading-spinner"></div>
             <p>Loading appointments...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="appointments-page">
+        <div className="appointments-container">
+          <div className="error-state">
+            <div className="error-icon">⚠️</div>
+            <h3>Error Loading Appointments</h3>
+            <p>{error}</p>
+            <button className="btn primary" onClick={fetchAppointments}>
+              Try Again
+            </button>
           </div>
         </div>
       </div>
@@ -188,25 +280,42 @@ const UserAppointments = () => {
                   <div className="appointment-service">
                     <h3>{appointment.serviceType}</h3>
                     <p className="provider">{appointment.provider}</p>
+                    <p className="confirmation">Confirmation: {appointment.confirmationNumber}</p>
                   </div>
-                  <span className={`appointment-status ${getStatusColor(appointment.status)}`}>
-                    {appointment.status}
-                  </span>
+                  <div className="appointment-status-container">
+                    <span className={`appointment-status ${getStatusColor(appointment.status)}`}>
+                      {appointment.status}
+                    </span>
+                    {appointment.priority && appointment.priority !== 'normal' && (
+                      <span className={`priority-badge priority-${appointment.priority}`}>
+                        {appointment.priority}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="appointment-details">
                   <div className="detail-item">
                     <span className="detail-icon">📅</span>
-                    <span className="detail-text">{appointment.date} at {appointment.time}</span>
+                    <span className="detail-text">
+                      {new Date(appointment.date).toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })} at {appointment.time}
+                    </span>
                   </div>
                   <div className="detail-item">
                     <span className="detail-icon">📍</span>
                     <span className="detail-text">{appointment.address}</span>
                   </div>
-                  <div className="detail-item">
-                    <span className="detail-icon">💰</span>
-                    <span className="detail-text">${appointment.price.toFixed(2)}</span>
-                  </div>
+                  {appointment.price > 0 && (
+                    <div className="detail-item">
+                      <span className="detail-icon">💰</span>
+                      <span className="detail-text">${appointment.price.toFixed(2)}</span>
+                    </div>
+                  )}
                   {appointment.notes && (
                     <div className="detail-item">
                       <span className="detail-icon">📝</span>
@@ -216,23 +325,7 @@ const UserAppointments = () => {
                 </div>
 
                 <div className="appointment-actions">
-                  {appointment.status === 'pending' && (
-                    <>
-                      <button 
-                        className="btn secondary small"
-                        onClick={() => handleRescheduleAppointment(appointment.id)}
-                      >
-                        Reschedule
-                      </button>
-                      <button 
-                        className="btn danger small"
-                        onClick={() => handleCancelAppointment(appointment.id)}
-                      >
-                        Cancel
-                      </button>
-                    </>
-                  )}
-                  {appointment.status === 'confirmed' && (
+                  {(appointment.status === 'pending' || appointment.status === 'confirmed') && (
                     <>
                       <button 
                         className="btn secondary small"
@@ -249,11 +342,17 @@ const UserAppointments = () => {
                     </>
                   )}
                   {appointment.status === 'completed' && (
-                    <button className="btn primary small">
+                    <button 
+                      className="btn primary small"
+                      onClick={() => handleLeaveReview(appointment.id)}
+                    >
                       Leave Review
                     </button>
                   )}
-                  <button className="btn secondary small">
+                  <button 
+                    className="btn secondary small"
+                    onClick={() => handleViewDetails(appointment.id)}
+                  >
                     View Details
                   </button>
                 </div>
@@ -272,13 +371,13 @@ const UserAppointments = () => {
                   <span className="stat-label">Completed</span>
                 </div>
                 <div className="summary-stat">
-                  <span className="stat-number">{appointments.filter(a => a.status === 'confirmed' || a.status === 'pending').length}</span>
+                  <span className="stat-number">{appointments.filter(a => ['confirmed', 'pending', 'in_progress'].includes(a.status)).length}</span>
                   <span className="stat-label">Upcoming</span>
                 </div>
                 <div className="summary-stat">
                   <span className="stat-number">
                     ${appointments
-                      .filter(a => a.status === 'completed')
+                      .filter(a => a.status === 'completed' && a.price > 0)
                       .reduce((sum, a) => sum + a.price, 0)
                       .toFixed(0)}
                   </span>
@@ -289,6 +388,58 @@ const UserAppointments = () => {
           </div>
         )}
       </div>
+
+      {/* Reschedule Modal */}
+      {rescheduleModal && (
+        <div className="modal-overlay" onClick={() => setRescheduleModal(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Reschedule Appointment</h3>
+              <button 
+                className="modal-close"
+                onClick={() => setRescheduleModal(null)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group">
+                <label>New Date</label>
+                <input
+                  type="date"
+                  value={rescheduleData.date}
+                  onChange={(e) => setRescheduleData(prev => ({ ...prev, date: e.target.value }))}
+                  className="form-input"
+                  min={getMinDate()}
+                />
+              </div>
+              <div className="form-group">
+                <label>New Time</label>
+                <input
+                  type="time"
+                  value={rescheduleData.time}
+                  onChange={(e) => setRescheduleData(prev => ({ ...prev, time: e.target.value }))}
+                  className="form-input"
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button 
+                className="btn secondary"
+                onClick={() => setRescheduleModal(null)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn primary"
+                onClick={submitReschedule}
+              >
+                Reschedule
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

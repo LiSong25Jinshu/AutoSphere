@@ -1,7 +1,6 @@
 /* ===============================
    AutoSphere Advanced Theme
 ================================ */
-@import './styles/autosphere-theme.css';
 
 /* -------------------------------
    App Container
@@ -11,18 +10,18 @@
   color: var(--autosphere-charcoal);
   background-color: var(--autosphere-white);
   min-height: 100vh;
-  padding-top: 80px;
+  padding-top: 56px; /* Auto header height */
 }
 
 @media (max-width: 768px) {
   .App {
-    padding-top: 90px;
+    padding-top: 48px; /* Auto mobile header height */
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .App {
-    padding-top: 120px;
+    padding-top: 80px; /* Auto mobile wrapped header height */
   }
 }
 

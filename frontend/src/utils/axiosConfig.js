@@ -1,15 +1,22 @@
 import axios from 'axios';
 
 // Set base URL for API calls
-axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+axios.defaults.baseURL = baseURL;
 
 // Request interceptor to add auth token
 axios.interceptors.request.use(
   (config) => {
+    // Always add test mode header in development
+    if (import.meta.env.DEV) {
+      config.headers['x-test-mode'] = 'true';
+    }
+    
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
     return config;
   },
   (error) => {
@@ -28,6 +35,12 @@ axios.interceptors.response.use(
     // Handle 401 Unauthorized responses
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
+
+      // In development with test mode, don't redirect to login
+      if (import.meta.env.DEV && originalRequest.headers['x-test-mode'] === 'true') {
+        console.warn('API request failed in test mode:', error.response?.data?.message);
+        return Promise.reject(error);
+      }
 
       // Clear invalid token
       localStorage.removeItem('token');

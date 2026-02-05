@@ -35,77 +35,161 @@
 .book-service-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 25px;
   text-align: left;
 }
 
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
 .book-service-form label {
-  font-weight: bold;
+  font-weight: 600;
   color: #111;
   display: block;
+  margin-bottom: 8px;
+  font-size: 1rem;
 }
 
 .required {
-  color: red;
+  color: #dc2626;
   margin-left: 4px;
 }
 
 /* Service selection grid */
 .service-options {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 15px;
-  margin-bottom: 20px;
+  margin-top: 10px;
 }
 
 .service-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 15px;
-  background: #eaeaea; /* light grey */
-  border-radius: 15px;
+  padding: 20px 15px;
+  background: #f8f9fa;
+  border-radius: 12px;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border 0.2s ease;
+  transition: all 0.2s ease;
   border: 2px solid transparent;
-}
-
-.service-card img {
-  width: 60px;
-  height: 60px;
-  margin-bottom: 10px;
-}
-
-.service-card p {
-  font-weight: bold;
-  color: #111;
+  text-align: center;
 }
 
 .service-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border-color: #e9ecef;
 }
 
 .service-card.selected {
-  border-color: #111; /* highlight selected service */
+  border-color: #111;
+  background: #f0f8ff;
+  box-shadow: 0 4px 12px rgba(17, 17, 17, 0.1);
 }
 
-/* Inputs & textarea */
-.book-service-form input,
-.book-service-form textarea {
-  margin-top: 5px;
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px solid #ccc;
+.service-icon {
+  font-size: 2.5rem;
+  margin-bottom: 8px;
+}
+
+.service-label {
+  font-weight: 600;
+  color: #111;
+  margin-bottom: 4px;
+  font-size: 1rem;
+}
+
+.service-description {
+  font-size: 0.875rem;
+  color: #666;
+  line-height: 1.3;
+}
+
+/* Time slots */
+.time-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.time-slot {
+  padding: 10px 12px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.time-slot:hover {
+  border-color: #111;
+  background: #f8f9fa;
+}
+
+.time-slot.selected {
+  border-color: #111;
+  background: #111;
+  color: white;
+}
+
+.time-slot:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Form row for date and time */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 20px;
+  align-items: start;
+}
+
+/* Inputs, selects & textarea */
+.form-input,
+.form-select,
+.form-textarea {
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 2px solid #e9ecef;
   font-size: 16px;
   color: #111;
   background-color: #fff;
   width: 100%;
-  resize: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.book-service-form textarea {
-  min-height: 80px;
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: #111;
+  box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.1);
+}
+
+.form-textarea {
+  min-height: 100px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.form-select {
+  cursor: pointer;
+}
+
+.form-input:disabled,
+.form-select:disabled,
+.form-textarea:disabled {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 /* Buttons */
@@ -146,12 +230,88 @@
 }
 
 /* Responsive */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .book-service-card {
     padding: 30px 20px;
+    margin: 10px;
   }
 
   .service-options {
     grid-template-columns: 1fr;
   }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .time-slots {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .form-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .book-service-page {
+    padding: 10px;
+  }
+  
+  .service-card {
+    padding: 15px 10px;
+  }
+  
+  .service-icon {
+    font-size: 2rem;
+  }
+  
+  .time-slots {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+/* Alert Messages */
+.alert {
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.alert-error {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.alert-success {
+  background-color: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+/* Form enhancements */
+.form-select:disabled,
+.form-input:disabled,
+.form-textarea:disabled {
+  background-color: #f9fafb;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.required {
+  color: #dc2626;
+}
+
+/* Button loading state */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

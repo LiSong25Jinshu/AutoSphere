@@ -120,6 +120,28 @@ export const AuthProvider = ({ children }) => {
           localStorage.removeItem('user');
           dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: false });
         }
+      } else if (import.meta.env.DEV) {
+        // Auto-login test user in development mode
+        const testUser = {
+          id: 4,
+          firstName: 'Test',
+          lastName: 'User',
+          email: 'test@autosphere.com',
+          role: 'user',
+          isVerified: true
+        };
+        const testToken = 'test-mode-token';
+        
+        localStorage.setItem('token', testToken);
+        localStorage.setItem('user', JSON.stringify(testUser));
+        
+        dispatch({
+          type: AUTH_ACTIONS.LOAD_USER,
+          payload: { user: testUser, token: testToken },
+        });
+        
+        // Set default authorization header
+        axios.defaults.headers.common['Authorization'] = `Bearer ${testToken}`;
       } else {
         dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: false });
       }
@@ -185,6 +207,32 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Google OAuth login function
+  const googleLogin = async (user, token) => {
+    try {
+      // Store in localStorage
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      
+      // Set default authorization header
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
+      dispatch({
+        type: AUTH_ACTIONS.LOGIN_SUCCESS,
+        payload: { user, token },
+      });
+      
+      return { success: true };
+    } catch (error) {
+      const errorMessage = 'Google login failed';
+      dispatch({
+        type: AUTH_ACTIONS.LOGIN_FAILURE,
+        payload: errorMessage,
+      });
+      return { success: false, error: errorMessage };
+    }
+  };
+
   // Register function
   const register = async (userData) => {
     dispatch({ type: AUTH_ACTIONS.REGISTER_START });
@@ -238,6 +286,7 @@ export const AuthProvider = ({ children }) => {
   const value = {
     ...state,
     login,
+    googleLogin,
     register,
     logout,
     clearError,
