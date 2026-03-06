@@ -27,12 +27,12 @@ DATASET_MAPS = {
         'seats':           'body_type', #***
         'Description':     'description' #***
     },
-    'OLX_cars_dataset00.csv': {
-        'Make':           'make',
+    "OLX_cars_dataset00.csv": {
+        "Make":           "make",
         'Model':          'model',
         'Year':           'year',
         'Price':          'price',
-        'KM's driven':    'mileage',
+        "KM's driven":    "mileage",
         'Fuel':           'fuel_type',
         'Transmission':   'transmission',
         'Body_type':      'body_type', #***
