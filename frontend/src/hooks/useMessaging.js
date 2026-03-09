@@ -44,28 +44,28 @@ export const useMessaging = () => {
       setMessages(messageList);
     });
 
-    newSocket.on('new_message', (message) => {
+    newSocket.on('message:new', (message) => {
       setMessages(prev => [...prev, message]);
       
       // Update unread count if message is not from current user and not in active conversation
-      if (message.sender_id !== user.id && 
-          (!activeConversation || message.conversation_id !== activeConversation.id)) {
+      if (message.senderId !== user.id && 
+          (!activeConversation || message.conversationId !== activeConversation.id)) {
         setUnreadCounts(prev => ({
           ...prev,
-          [message.conversation_id]: (prev[message.conversation_id] || 0) + 1
+          [message.conversationId]: (prev[message.conversationId] || 0) + 1
         }));
       }
     });
 
-    newSocket.on('message_read', ({ messageId, conversationId }) => {
+    newSocket.on('message:read', ({ messageId, conversationId, readBy, readAt }) => {
       setMessages(prev => 
         prev.map(msg => 
-          msg.id === messageId ? { ...msg, is_read: true } : msg
+          msg.id === messageId ? { ...msg, isRead: true, readAt } : msg
         )
       );
     });
 
-    newSocket.on('user_typing', ({ userId, conversationId, isTyping }) => {
+    newSocket.on('typing:user', ({ userId, conversationId, isTyping }) => {
       if (activeConversation && conversationId === activeConversation.id) {
         setTypingUsers(prev => {
           const newSet = new Set(prev);
@@ -79,11 +79,11 @@ export const useMessaging = () => {
       }
     });
 
-    newSocket.on('user_online', (userId) => {
+    newSocket.on('user:online', ({ userId }) => {
       setOnlineUsers(prev => new Set([...prev, userId]));
     });
 
-    newSocket.on('user_offline', (userId) => {
+    newSocket.on('user:offline', ({ userId }) => {
       setOnlineUsers(prev => {
         const newSet = new Set(prev);
         newSet.delete(userId);
@@ -126,29 +126,28 @@ export const useMessaging = () => {
     }));
     
     if (socket && isConnected) {
-      socket.emit('join_conversation', conversation.id);
+      socket.emit('conversation:join', conversation.id);
       socket.emit('get_messages', conversation.id);
     }
   }, [socket, isConnected]);
 
   // Send message
-  const sendMessage = useCallback((content, type = 'text') => {
+  const sendMessage = useCallback((content, attachments = []) => {
     if (!activeConversation || !socket || !isConnected || !content.trim()) {
       return false;
     }
 
     const messageData = {
-      conversation_id: activeConversation.id,
+      conversationId: activeConversation.id,
       content: content.trim(),
-      type
+      attachments
     };
 
-    socket.emit('send_message', messageData);
+    socket.emit('message:send', messageData);
     
     // Stop typing indicator
-    socket.emit('typing', {
-      conversationId: activeConversation.id,
-      isTyping: false
+    socket.emit('typing:stop', {
+      conversationId: activeConversation.id
     });
 
     return true;
@@ -163,26 +162,25 @@ export const useMessaging = () => {
       clearTimeout(typingTimeoutRef.current);
     }
 
-    socket.emit('typing', {
-      conversationId: activeConversation.id,
-      isTyping
+    const eventName = isTyping ? 'typing:start' : 'typing:stop';
+    socket.emit(eventName, {
+      conversationId: activeConversation.id
     });
 
     // Auto-stop typing after 2 seconds if still typing
     if (isTyping) {
       typingTimeoutRef.current = setTimeout(() => {
-        socket.emit('typing', {
-          conversationId: activeConversation.id,
-          isTyping: false
+        socket.emit('typing:stop', {
+          conversationId: activeConversation.id
         });
       }, 2000);
     }
   }, [activeConversation, socket, isConnected]);
 
   // Mark message as read
-  const markMessageAsRead = useCallback((messageId) => {
+  const markMessageAsRead = useCallback((messageId, conversationId) => {
     if (socket && isConnected) {
-      socket.emit('mark_read', messageId);
+      socket.emit('message:read', { messageId, conversationId });
     }
   }, [socket, isConnected]);
 

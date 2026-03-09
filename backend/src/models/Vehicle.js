@@ -249,6 +249,15 @@ Vehicle.searchVehicles = async function(searchParams = {}) {
     where.price = { ...where.price, [Op.lte]: searchParams.maxPrice };
   }
   
+  // Mileage filters
+  if (searchParams.minMileage !== undefined) {
+    where.mileage = { [Op.gte]: searchParams.minMileage };
+  }
+  
+  if (searchParams.maxMileage !== undefined) {
+    where.mileage = { ...where.mileage, [Op.lte]: searchParams.maxMileage };
+  }
+  
   if (searchParams.condition) {
     where.condition = searchParams.condition;
   }
@@ -257,8 +266,18 @@ Vehicle.searchVehicles = async function(searchParams = {}) {
     where.fuelType = searchParams.fuelType;
   }
   
+  // Transmission filter
+  if (searchParams.transmission) {
+    where.transmission = searchParams.transmission.toLowerCase();
+  }
+  
   if (searchParams.bodyType) {
     where.bodyType = searchParams.bodyType;
+  }
+  
+  // Color filter
+  if (searchParams.color) {
+    where.color = { [Op.iLike]: `%${searchParams.color}%` };
   }
   
   return await this.findAll({

@@ -6,6 +6,7 @@ import { hashPassword } from '../utils/password.js';
 import { generateAccessToken } from '../utils/jwt.js';
 import { authenticateToken } from '../middleware/auth.js';
 import passport from '../config/passport.js';
+import { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail } from '../utils/email.js';
 
 const router = express.Router();
 
@@ -46,22 +47,25 @@ router.post('/register', [
       lastName,
       phone,
       role,
-      isVerified: true // For demo purposes, auto-verify users
+      isVerified: false // User must verify email
     });
 
-    // Generate JWT token
-    const token = generateAccessToken({
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      isVerified: user.isVerified
-    });
+    // Generate verification token
+    const verificationToken = user.generateEmailVerificationToken();
+    await user.save();
+
+    // Send verification email
+    try {
+      await sendVerificationEmail(user.email, user.firstName, verificationToken);
+    } catch (emailError) {
+      console.error('Failed to send verification email:', emailError);
+      // Continue with registration even if email fails
+    }
 
     res.status(201).json({
       success: true,
-      message: 'User registered successfully',
-      user: user.toJSON(),
-      token
+      message: 'Registration successful. Please check your email to verify your account.',
+      user: user.toJSON()
     });
 
   } catch (error) {
@@ -108,6 +112,15 @@ router.post('/login', [
       });
     }
 
+    // Check if email is verified
+    if (!user.isVerified) {
+      return res.status(403).json({
+        success: false,
+        message: 'Please verify your email address before logging in. Check your inbox for the verification link.',
+        requiresVerification: true
+      });
+    }
+
     // Update last login
     user.lastLoginAt = new Date();
     await user.save();
@@ -129,6 +142,220 @@ router.post('/login', [
 
   } catch (error) {
     console.error('Login error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Verify email endpoint
+router.post('/verify-email', [
+  body('token').notEmpty().withMessage('Verification token is required'),
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    const { token } = req.body;
+
+    // Find user by verification token
+    const user = await User.findByVerificationToken(token);
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired verification token'
+      });
+    }
+
+    // Mark user as verified
+    user.clearEmailVerificationToken();
+    await user.save();
+
+    // Send welcome email
+    try {
+      await sendWelcomeEmail(user.email, user.firstName);
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError);
+      // Continue even if welcome email fails
+    }
+
+    res.json({
+      success: true,
+      message: 'Email verified successfully. You can now log in.'
+    });
+
+  } catch (error) {
+    console.error('Email verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Resend verification email endpoint
+router.post('/resend-verification', [
+  body('email').isEmail().normalizeEmail(),
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    const { email } = req.body;
+
+    // Find user by email
+    const user = await User.findByEmail(email);
+    if (!user) {
+      // Return success to prevent email enumeration
+      return res.json({
+        success: true,
+        message: 'If an account exists with this email, a verification link has been sent.'
+      });
+    }
+
+    // Check if already verified
+    if (user.isVerified) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is already verified'
+      });
+    }
+
+    // Generate new verification token
+    const verificationToken = user.generateEmailVerificationToken();
+    await user.save();
+
+    // Send verification email
+    try {
+      await sendVerificationEmail(user.email, user.firstName, verificationToken);
+    } catch (emailError) {
+      console.error('Failed to send verification email:', emailError);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to send verification email'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Verification email sent successfully'
+    });
+
+  } catch (error) {
+    console.error('Resend verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Forgot password endpoint
+router.post('/forgot-password', [
+  body('email').isEmail().normalizeEmail(),
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    const { email } = req.body;
+
+    // Find user by email
+    const user = await User.findByEmail(email);
+    
+    // Always return success to prevent email enumeration
+    if (!user) {
+      return res.json({
+        success: true,
+        message: 'If an account exists with this email, a password reset link has been sent.'
+      });
+    }
+
+    // Generate password reset token
+    const resetToken = user.generatePasswordResetToken();
+    await user.save();
+
+    // Send password reset email
+    try {
+      await sendPasswordResetEmail(user.email, user.firstName, resetToken);
+    } catch (emailError) {
+      console.error('Failed to send password reset email:', emailError);
+      // Still return success to prevent email enumeration
+    }
+
+    res.json({
+      success: true,
+      message: 'If an account exists with this email, a password reset link has been sent.'
+    });
+
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Reset password endpoint
+router.post('/reset-password', [
+  body('token').notEmpty().withMessage('Reset token is required'),
+  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    const { token, password } = req.body;
+
+    // Find user by password reset token
+    const user = await User.findByPasswordResetToken(token);
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired reset token'
+      });
+    }
+
+    // Update password
+    await user.setPassword(password);
+    
+    // Clear reset token
+    user.clearPasswordResetToken();
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Password reset successfully. You can now log in with your new password.'
+    });
+
+  } catch (error) {
+    console.error('Reset password error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'

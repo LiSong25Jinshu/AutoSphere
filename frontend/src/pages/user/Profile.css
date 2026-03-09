@@ -341,3 +341,27 @@
     font-size: 1.5rem;
   }
 }
+
+/* Email Verification Badge */
+.verification-badge {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.verification-badge.verified {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #4caf50;
+}
+
+.verification-badge.unverified {
+  background: #fff3e0;
+  color: #e65100;
+  border: 1px solid #ff9800;
+}

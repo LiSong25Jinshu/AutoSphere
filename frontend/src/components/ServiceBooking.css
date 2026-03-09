@@ -199,17 +199,32 @@
   cursor: pointer;
   transition: all 0.2s ease;
   font-weight: 500;
+  font-size: 0.9rem;
 }
 
-.time-slot:hover {
+.time-slot:hover:not(:disabled) {
   border-color: #667eea;
   background: #f7fafc;
+  transform: translateY(-1px);
 }
 
 .time-slot.selected {
   border-color: #667eea;
   background: #667eea;
   color: white;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.time-slot.unavailable {
+  background: #f7fafc;
+  color: #a0aec0;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.time-slot.unavailable:hover {
+  transform: none;
+  border-color: #e2e8f0;
 }
 
 .error-message {

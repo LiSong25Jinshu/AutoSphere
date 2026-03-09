@@ -18,6 +18,7 @@ const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
   const [loginError, setLoginError] = useState('');
+  const [emailNotVerified, setEmailNotVerified] = useState(false);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -77,10 +78,20 @@ const LoginForm = () => {
       return;
     }
 
+    setEmailNotVerified(false);
     const result = await handleLogin(formData);
     
     if (!result.success) {
       setLoginError(result.error);
+      
+      // Check if error is related to email verification
+      if (result.error && (
+        result.error.toLowerCase().includes('verify') || 
+        result.error.toLowerCase().includes('verification') ||
+        result.error.toLowerCase().includes('not verified')
+      )) {
+        setEmailNotVerified(true);
+      }
     }
   };
 
@@ -100,6 +111,17 @@ const LoginForm = () => {
           {(error || loginError) && (
             <div className="error-message">
               {error || loginError}
+              {emailNotVerified && (
+                <div style={{ marginTop: '10px' }}>
+                  <Link 
+                    to={`/verify-email?email=${encodeURIComponent(formData.email)}`}
+                    className="auth-link"
+                    style={{ fontSize: '0.9em' }}
+                  >
+                    Click here to resend verification email
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 

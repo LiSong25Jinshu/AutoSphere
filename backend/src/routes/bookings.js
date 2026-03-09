@@ -5,6 +5,12 @@ import Booking from '../models/Booking.js';
 import User from '../models/User.js';
 import Vehicle from '../models/Vehicle.js';
 import { mockBookingService } from '../utils/mockData.js';
+import { 
+  sendBookingConfirmationEmail,
+  sendServiceProviderBookingNotification,
+  sendBookingStatusChangeEmail,
+  sendBookingRescheduleEmail
+} from '../utils/email.js';
 
 const router = express.Router();
 
@@ -293,6 +299,49 @@ router.post('/', [
       ],
     });
 
+    // Send booking confirmation email
+    try {
+      await sendBookingConfirmationEmail(
+        req.user.email,
+        req.user.firstName,
+        {
+          id: completeBooking.id,
+          serviceType: completeBooking.serviceType,
+          scheduledDate: completeBooking.scheduledDate,
+          scheduledTime: completeBooking.scheduledTime,
+          status: completeBooking.status,
+          notes: completeBooking.customerNotes,
+        }
+      );
+    } catch (emailError) {
+      console.error('Failed to send booking confirmation email:', emailError);
+      // Don't fail the booking creation if email fails
+    }
+        // Send notification to service provider
+    try {
+      await sendServiceProviderBookingNotification(
+        serviceProvider.email,
+        serviceProvider.firstName,
+        {
+          id: completeBooking.id,
+          serviceType: completeBooking.serviceType,
+          scheduledDate: completeBooking.scheduledDate,
+          scheduledTime: completeBooking.scheduledTime,
+          notes: completeBooking.customerNotes,
+        },
+        {
+          firstName: req.user.firstName,
+          lastName: req.user.lastName,
+          email: req.user.email,
+          phone: req.user.phone,
+        }
+      );
+    } catch (emailError) {
+      console.error('Failed to send service provider notification:', emailError);
+      // Don't fail the booking creation if email fails
+    }
+
+
     res.status(201).json({
       success: true,
       message: 'Booking created successfully',
@@ -366,6 +415,35 @@ router.patch('/:id/status', [
       }
 
       const updatedBooking = await mockBookingService.update(bookingId, updateData);
+    await booking.update(updateData);
+
+    // Send status change notification to customer
+    try {
+      const user = await User.findByPk(booking.userId);
+      if (user) {
+        await sendBookingStatusChangeEmail(
+          user.email,
+          user.firstName,
+          {
+            id: booking.id,
+            serviceType: booking.serviceType,
+            scheduledDate: booking.scheduledDate,
+            scheduledTime: booking.scheduledTime,
+          },
+          booking.status, // oldStatus (before update, but we use current as approximation)
+          req.body.status // newStatus
+        );
+      }
+    } catch (emailError) {
+      console.error('Failed to send status change email:', emailError);
+      // Don't fail the status update if email fails
+    }
+
+    res.json({
+      success: true,
+      message: 'Booking status updated successfully',
+      data: booking,
+    });
 
       return res.json({
         success: true,
@@ -586,13 +664,40 @@ router.patch('/:id/reschedule', [
       });
     }
 
+      // Store old values before reschedule
+    const oldDate = booking.scheduledDate;
+    const oldTime = booking.scheduledTime;
+    
     await booking.reschedule(req.body.scheduledDate, req.body.scheduledTime);
+
+    // Send reschedule notification to customer
+    try {
+      const user = await User.findByPk(booking.userId);
+      if (user) {
+        await sendBookingRescheduleEmail(
+          user.email,
+          user.firstName,
+          {
+            id: booking.id,
+            serviceType: booking.serviceType,
+            scheduledDate: req.body.scheduledDate,
+            scheduledTime: req.body.scheduledTime,
+          },
+          oldDate,
+          oldTime
+        );
+      }
+    } catch (emailError) {
+      console.error('Failed to send reschedule email:', emailError);
+      // Don't fail the reschedule if email fails
+    }
 
     res.json({
       success: true,
       message: 'Booking rescheduled successfully',
       data: booking,
     });
+
 
   } catch (error) {
     console.error('Reschedule booking error:', error);

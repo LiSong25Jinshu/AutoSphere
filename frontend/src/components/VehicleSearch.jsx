@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -11,10 +11,19 @@ import {
   Slider,
   Typography,
   Chip,
-  IconButton,
   Collapse,
   Grid,
   Autocomplete,
+  Menu,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Alert,
+  Snackbar,
 } from '@mui/material';
 import {
   Search,
@@ -22,7 +31,11 @@ import {
   Clear,
   ExpandMore,
   ExpandLess,
+  Save,
+  BookmarkBorder,
+  Delete,
 } from '@mui/icons-material';
+import savedSearchService from '../services/savedSearchService';
 
 const VehicleSearch = ({ 
   onSearch, 
@@ -45,6 +58,14 @@ const VehicleSearch = ({
   });
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [activeFilters, setActiveFilters] = useState([]);
+  
+  // Saved searches state
+  const [savedSearches, setSavedSearches] = useState([]);
+  const [savedSearchAnchor, setSavedSearchAnchor] = useState(null);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [searchName, setSearchName] = useState('');
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [makeSuggestions, setMakeSuggestions] = useState([]);
 
   // Mock data - in real app, these would come from API
   const carMakes = [
@@ -60,6 +81,20 @@ const VehicleSearch = ({
   useEffect(() => {
     updateActiveFilters();
   }, [filters, searchTerm]);
+
+  // Load saved searches on mount
+  useEffect(() => {
+    loadSavedSearches();
+  }, []);
+
+  const loadSavedSearches = async () => {
+    try {
+      const searches = await savedSearchService.getSavedSearches();
+      setSavedSearches(searches);
+    } catch (error) {
+      console.error('Failed to load saved searches:', error);
+    }
+  };
 
   const updateActiveFilters = () => {
     const active = [];
@@ -151,6 +186,57 @@ const VehicleSearch = ({
     });
   };
 
+  // Saved search handlers
+  const handleSaveSearch = async () => {
+    if (!searchName.trim()) {
+      setSnackbar({ open: true, message: 'Please enter a name for this search', severity: 'error' });
+      return;
+    }
+
+    try {
+      const criteria = { search: searchTerm, ...filters };
+      await savedSearchService.createSavedSearch(searchName, criteria, false);
+      setSnackbar({ open: true, message: 'Search saved successfully', severity: 'success' });
+      setSaveDialogOpen(false);
+      setSearchName('');
+      loadSavedSearches();
+    } catch (error) {
+      setSnackbar({ open: true, message: 'Failed to save search', severity: 'error' });
+    }
+  };
+
+  const handleLoadSearch = (savedSearch) => {
+    const criteria = savedSearch.searchCriteria;
+    setSearchTerm(criteria.search || '');
+    setFilters({
+      make: criteria.make || '',
+      model: criteria.model || '',
+      yearRange: criteria.yearRange || [2000, new Date().getFullYear()],
+      priceRange: criteria.priceRange || [0, 100000],
+      mileageRange: criteria.mileageRange || [0, 200000],
+      fuelType: criteria.fuelType || '',
+      transmission: criteria.transmission || '',
+      bodyType: criteria.bodyType || '',
+      availabilityType: criteria.availabilityType || '',
+      color: criteria.color || '',
+    });
+    setSavedSearchAnchor(null);
+    setSnackbar({ open: true, message: `Loaded "${savedSearch.name}"`, severity: 'success' });
+    
+    // Trigger search with loaded criteria
+    onFilterChange?.({ search: criteria.search || '', ...criteria });
+  };
+
+  const handleDeleteSearch = async (id, name) => {
+    try {
+      await savedSearchService.deleteSavedSearch(id);
+      setSnackbar({ open: true, message: `Deleted "${name}"`, severity: 'success' });
+      loadSavedSearches();
+    } catch (error) {
+      setSnackbar({ open: true, message: 'Failed to delete search', severity: 'error' });
+    }
+  };
+
   return (
     <Paper sx={{ p: 3, mb: 3 }}>
       {/* Main Search Bar */}
@@ -160,7 +246,7 @@ const VehicleSearch = ({
           placeholder="Search by make, model, or keywords..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+          onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
           InputProps={{
             startAdornment: <Search sx={{ mr: 1, color: 'action.active' }} />,
           }}
@@ -172,6 +258,22 @@ const VehicleSearch = ({
           sx={{ minWidth: 120 }}
         >
           {loading ? 'Searching...' : 'Search'}
+        </Button>
+        <Button
+          variant="outlined"
+          startIcon={<Save />}
+          onClick={() => setSaveDialogOpen(true)}
+          sx={{ minWidth: 120 }}
+        >
+          Save
+        </Button>
+        <Button
+          variant="outlined"
+          startIcon={<BookmarkBorder />}
+          onClick={(e) => setSavedSearchAnchor(e.currentTarget)}
+          sx={{ minWidth: 120 }}
+        >
+          Saved
         </Button>
         <Button
           variant="outlined"
@@ -214,12 +316,28 @@ const VehicleSearch = ({
             {/* Make and Model */}
             <Grid item xs={12} sm={6} md={3}>
               <Autocomplete
-                options={carMakes}
+                options={makeSuggestions.length > 0 ? makeSuggestions : carMakes}
                 value={filters.make}
                 onChange={(_, value) => handleFilterChange('make', value || '')}
+                onInputChange={async (_, value) => {
+                  if (value && value.length >= 2) {
+                    try {
+                      const response = await fetch(
+                        `${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/vehicles/suggestions?q=${encodeURIComponent(value)}`
+                      );
+                      const data = await response.json();
+                      if (data.success && data.data.makes) {
+                        setMakeSuggestions(data.data.makes);
+                      }
+                    } catch (error) {
+                      console.error('Failed to fetch suggestions:', error);
+                    }
+                  }
+                }}
                 renderInput={(params) => (
                   <TextField {...params} label="Make" fullWidth />
                 )}
+                freeSolo
               />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
@@ -376,6 +494,74 @@ const VehicleSearch = ({
           </Grid>
         </Box>
       </Collapse>
+
+      {/* Saved Searches Menu */}
+      <Menu
+        anchorEl={savedSearchAnchor}
+        open={Boolean(savedSearchAnchor)}
+        onClose={() => setSavedSearchAnchor(null)}
+        PaperProps={{ sx: { minWidth: 250 } }}
+      >
+        {savedSearches.length === 0 ? (
+          <MenuItem disabled>
+            <Typography variant="body2" color="text.secondary">
+              No saved searches
+            </Typography>
+          </MenuItem>
+        ) : (
+          savedSearches.map((search) => (
+            <MenuItem key={search.id} sx={{ display: 'flex', justifyContent: 'space-between', pr: 1 }}>
+              <Box onClick={() => handleLoadSearch(search)} sx={{ flex: 1 }}>
+                <ListItemText primary={search.name} />
+              </Box>
+              <ListItemIcon sx={{ minWidth: 'auto' }}>
+                <Button
+                  size="small"
+                  color="error"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteSearch(search.id, search.name);
+                  }}
+                >
+                  <Delete fontSize="small" />
+                </Button>
+              </ListItemIcon>
+            </MenuItem>
+          ))
+        )}
+      </Menu>
+
+      {/* Save Search Dialog */}
+      <Dialog open={saveDialogOpen} onClose={() => setSaveDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Save Search</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Search Name"
+            fullWidth
+            value={searchName}
+            onChange={(e) => setSearchName(e.target.value)}
+            placeholder="e.g., Red SUVs under $30k"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSaveDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleSaveSearch} variant="contained">Save</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity={snackbar.severity} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Paper>
   );
 };

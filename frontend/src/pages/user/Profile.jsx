@@ -95,7 +95,18 @@ const UserProfile = () => {
           </div>
           <div className="profile-header-info">
             <h1>{profileData.firstName} {profileData.lastName}</h1>
-            <p className="profile-email">{profileData.email}</p>
+            <p className="profile-email">
+              {profileData.email}
+              {user?.emailVerified ? (
+                <span className="verification-badge verified" title="Email verified">
+                  ✓ Verified
+                </span>
+              ) : (
+                <span className="verification-badge unverified" title="Email not verified">
+                  ⚠ Not Verified
+                </span>
+              )}
+            </p>
             <span className="profile-role">{user?.role || 'User'}</span>
           </div>
           <div className="profile-actions">
