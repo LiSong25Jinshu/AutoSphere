@@ -1,0 +1,1071 @@
+/* AutoSphere Advanced Landing Page - Grey, White, Black Theme */
+.autosphere-landing-page {
+  min-height: 100vh;
+  font-family: var(--autosphere-font-primary);
+}
+
+/* Enhanced Hero Section with Slideshow */
+.autosphere-hero-slideshow {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.autosphere-slideshow-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+}
+
+.autosphere-slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.autosphere-slide.active {
+  opacity: 1;
+}
+
+.autosphere-hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 var(--autosphere-space-6);
+  color: var(--autosphere-white);
+}
+
+.autosphere-hero-title {
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: var(--autosphere-weight-bold);
+  line-height: var(--autosphere-leading-tight);
+  letter-spacing: -0.02em;
+  margin-bottom: var(--autosphere-space-6);
+  background: linear-gradient(135deg, #ffffff 0%, #e6e6e6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.autosphere-hero-subtitle {
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  font-weight: var(--autosphere-weight-medium);
+  margin-bottom: var(--autosphere-space-4);
+  opacity: 0.95;
+  color: var(--autosphere-platinum);
+}
+
+.autosphere-hero-description {
+  font-size: var(--autosphere-text-lg);
+  font-weight: var(--autosphere-weight-regular);
+  margin-bottom: var(--autosphere-space-12);
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: var(--autosphere-leading-relaxed);
+  opacity: 0.9;
+  color: var(--autosphere-silver);
+}
+
+.autosphere-hero-buttons {
+  display: flex;
+  justify-content: center;
+  gap: var(--autosphere-space-6);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.autosphere-hero-btn-secondary {
+  background-color: transparent;
+  color: var(--autosphere-white);
+  border-color: var(--autosphere-white);
+}
+
+.autosphere-hero-btn-secondary:hover {
+  background-color: var(--autosphere-white);
+  color: var(--autosphere-dark-grey);
+  border-color: var(--autosphere-white);
+}
+
+.autosphere-ml-2 {
+  margin-left: var(--autosphere-space-2);
+}
+
+/* Slideshow Controls */
+.autosphere-slideshow-controls {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 var(--autosphere-space-6);
+  z-index: 3;
+  pointer-events: none;
+}
+
+.autosphere-slide-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: var(--autosphere-white);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  font-size: var(--autosphere-text-2xl);
+  font-weight: var(--autosphere-weight-bold);
+  cursor: pointer;
+  transition: var(--autosphere-transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: all;
+  backdrop-filter: blur(10px);
+}
+
+.autosphere-slide-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.1);
+}
+
+/* Slide Indicators */
+.autosphere-slide-indicators {
+  position: absolute;
+  bottom: var(--autosphere-space-8);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: var(--autosphere-space-3);
+  z-index: 3;
+}
+
+.autosphere-slide-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: var(--autosphere-transition-fast);
+}
+
+.autosphere-slide-indicator.active {
+  background: var(--autosphere-white);
+  border-color: var(--autosphere-white);
+  transform: scale(1.2);
+}
+
+.autosphere-slide-indicator:hover {
+  background: rgba(255, 255, 255, 0.7);
+  transform: scale(1.1);
+}
+
+/* Hero Badge */
+.autosphere-hero-badge {
+  position: absolute;
+  top: var(--autosphere-space-8);
+  left: var(--autosphere-space-8);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--autosphere-radius-full);
+  padding: var(--autosphere-space-3) var(--autosphere-space-5);
+  display: flex;
+  align-items: center;
+  gap: var(--autosphere-space-2);
+  color: var(--autosphere-white);
+  font-size: var(--autosphere-text-sm);
+  font-weight: var(--autosphere-weight-medium);
+  z-index: 3;
+}
+
+/* Enhanced Stats Section */
+.autosphere-stats-section {
+  padding: var(--autosphere-space-20) 0;
+  background: var(--autosphere-white);
+  border-bottom: 1px solid var(--autosphere-platinum);
+}
+
+.autosphere-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--autosphere-space-12);
+  text-align: center;
+}
+
+.autosphere-stat-item {
+  padding: var(--autosphere-space-8);
+  background: var(--autosphere-white);
+  border-radius: var(--autosphere-radius-xl);
+  box-shadow: var(--autosphere-shadow-sm);
+  border: 1px solid var(--autosphere-platinum);
+  transition: var(--autosphere-transition-all);
+}
+
+.autosphere-stat-item:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--autosphere-shadow-lg);
+  border-color: var(--autosphere-silver);
+}
+
+.autosphere-stat-number {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: var(--autosphere-weight-bold);
+  color: var(--autosphere-dark-grey);
+  margin-bottom: var(--autosphere-space-3);
+  line-height: var(--autosphere-leading-tight);
+  background: linear-gradient(135deg, var(--autosphere-dark-grey) 0%, var(--autosphere-medium-grey) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.autosphere-stat-label {
+  font-size: var(--autosphere-text-base);
+  color: var(--autosphere-medium-grey);
+  font-weight: var(--autosphere-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Enhanced Features Section - Combined Layout */
+.autosphere-features-section {
+  padding: var(--autosphere-space-24) 0;
+  background: var(--autosphere-white);
+}
+
+/* Features Content */
+.autosphere-features-content {
+  margin-bottom: var(--autosphere-space-20);
+}
+
+.autosphere-features-title {
+  text-align: center;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: var(--autosphere-weight-bold);
+  margin-bottom: var(--autosphere-space-5);
+  color: var(--autosphere-charcoal);
+  letter-spacing: -0.02em;
+}
+
+.autosphere-features-subtitle {
+  text-align: center;
+  font-size: var(--autosphere-text-xl);
+  color: var(--autosphere-medium-grey);
+  margin-bottom: var(--autosphere-space-16);
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  font-weight: var(--autosphere-weight-regular);
+  line-height: var(--autosphere-leading-relaxed);
+}
+
+.autosphere-features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: var(--autosphere-space-8);
+}
+
+.autosphere-feature-card {
+  background: var(--autosphere-white);
+  padding: var(--autosphere-space-10);
+  border-radius: var(--autosphere-radius-2xl);
+  transition: var(--autosphere-transition-all);
+  border: 1px solid var(--autosphere-silver);
+  box-shadow: var(--autosphere-shadow-sm);
+}
+
+.autosphere-feature-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--autosphere-shadow-xl);
+  border-color: var(--autosphere-light-grey);
+}
+
+.autosphere-feature-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--autosphere-space-6);
+}
+
+.autosphere-feature-icon {
+  margin-right: var(--autosphere-space-5);
+  padding: var(--autosphere-space-3);
+  background: var(--autosphere-platinum);
+  border-radius: var(--autosphere-radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.autosphere-feature-title {
+  font-size: var(--autosphere-text-2xl);
+  font-weight: var(--autosphere-weight-semibold);
+  margin: 0;
+  color: var(--autosphere-charcoal);
+}
+
+.autosphere-feature-description {
+  color: var(--autosphere-medium-grey);
+  line-height: var(--autosphere-leading-relaxed);
+  margin: 0;
+  font-size: var(--autosphere-text-base);
+  font-weight: var(--autosphere-weight-regular);
+}
+
+
+
+/* User Roles Content */
+.autosphere-roles-content {
+  margin-bottom: var(--autosphere-space-12);
+}
+
+.autosphere-roles-title {
+  text-align: center;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: var(--autosphere-weight-bold);
+  margin-bottom: var(--autosphere-space-5);
+  color: var(--autosphere-charcoal);
+  letter-spacing: -0.02em;
+}
+
+.autosphere-roles-subtitle {
+  text-align: center;
+  font-size: var(--autosphere-text-xl);
+  color: var(--autosphere-medium-grey);
+  margin-bottom: var(--autosphere-space-16);
+  font-weight: var(--autosphere-weight-regular);
+  line-height: var(--autosphere-leading-relaxed);
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.autosphere-roles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--autosphere-space-6);
+}
+
+.autosphere-role-card {
+  background: var(--autosphere-white);
+  border: 2px solid var(--autosphere-platinum);
+  border-radius: var(--autosphere-radius-2xl);
+  padding: var(--autosphere-space-8);
+  text-align: center;
+  transition: var(--autosphere-transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.autosphere-role-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--autosphere-dark-grey), var(--autosphere-medium-grey));
+  transform: scaleX(0);
+  transition: var(--autosphere-transition-normal);
+}
+
+.autosphere-role-card:hover::before {
+  transform: scaleX(1);
+}
+
+.autosphere-role-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--autosphere-shadow-lg);
+  border-color: var(--autosphere-light-grey);
+}
+
+.autosphere-role-icon {
+  font-size: 3rem;
+  margin-bottom: var(--autosphere-space-4);
+  display: block;
+}
+
+.autosphere-role-card h3 {
+  font-size: var(--autosphere-text-xl);
+  font-weight: var(--autosphere-weight-semibold);
+  color: var(--autosphere-charcoal);
+  margin-bottom: var(--autosphere-space-3);
+}
+
+.autosphere-role-card p {
+  color: var(--autosphere-medium-grey);
+  line-height: var(--autosphere-leading-relaxed);
+  margin: 0;
+  font-size: var(--autosphere-text-base);
+}
+
+/* AI Section */
+.autosphere-ai-section {
+  padding: var(--autosphere-space-24) 0;
+  background: var(--autosphere-platinum);
+}
+
+.autosphere-ai-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--autosphere-space-16);
+  align-items: center;
+}
+
+.autosphere-ai-title {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: var(--autosphere-weight-bold);
+  margin-bottom: var(--autosphere-space-6);
+  color: var(--autosphere-charcoal);
+  letter-spacing: -0.02em;
+}
+
+.autosphere-ai-description {
+  font-size: var(--autosphere-text-lg);
+  color: var(--autosphere-medium-grey);
+  line-height: var(--autosphere-leading-relaxed);
+  margin-bottom: var(--autosphere-space-8);
+}
+
+.autosphere-ai-features {
+  display: flex;
+  flex-direction: column;
+  gap: var(--autosphere-space-4);
+}
+
+.autosphere-ai-feature {
+  display: flex;
+  align-items: center;
+  gap: var(--autosphere-space-3);
+  color: var(--autosphere-dark-grey);
+  font-weight: var(--autosphere-weight-medium);
+}
+
+.autosphere-ai-visual {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.autosphere-ai-graphic {
+  position: relative;
+  width: 300px;
+  height: 300px;
+}
+
+.autosphere-ai-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, var(--autosphere-dark-grey) 0%, var(--autosphere-charcoal) 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--autosphere-white);
+  box-shadow: var(--autosphere-shadow-xl);
+}
+
+.autosphere-ai-orbits {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.autosphere-ai-orbit {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  background: var(--autosphere-white);
+  border: 2px solid var(--autosphere-silver);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--autosphere-dark-grey);
+  box-shadow: var(--autosphere-shadow-md);
+  animation: orbit 10s linear infinite;
+}
+
+.autosphere-ai-orbit.orbit-1 {
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation-delay: 0s;
+}
+
+.autosphere-ai-orbit.orbit-2 {
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  animation-delay: -3.33s;
+}
+
+.autosphere-ai-orbit.orbit-3 {
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation-delay: -6.66s;
+}
+
+@keyframes orbit {
+  from {
+    transform: rotate(0deg) translateX(120px) rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg) translateX(120px) rotate(-360deg);
+  }
+}
+
+/* Enhanced Showcase Section */
+.autosphere-showcase-section {
+  padding: var(--autosphere-space-24) 0;
+  background: var(--autosphere-white);
+}
+
+.autosphere-showcase-title {
+  text-align: center;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: var(--autosphere-weight-bold);
+  margin-bottom: var(--autosphere-space-5);
+  color: var(--autosphere-charcoal);
+  letter-spacing: -0.02em;
+}
+
+.autosphere-showcase-subtitle {
+  text-align: center;
+  font-size: var(--autosphere-text-xl);
+  color: var(--autosphere-medium-grey);
+  margin-bottom: var(--autosphere-space-16);
+  font-weight: var(--autosphere-weight-regular);
+  line-height: var(--autosphere-leading-relaxed);
+}
+
+.autosphere-showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: var(--autosphere-space-10);
+}
+
+.autosphere-showcase-card {
+  background: var(--autosphere-white);
+  border-radius: var(--autosphere-radius-2xl);
+  overflow: hidden;
+  transition: var(--autosphere-transition-all);
+  border: 1px solid var(--autosphere-platinum);
+  box-shadow: var(--autosphere-shadow-md);
+}
+
+.autosphere-showcase-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--autosphere-shadow-2xl);
+  border-color: var(--autosphere-silver);
+}
+
+.autosphere-showcase-image-container {
+  position: relative;
+  overflow: hidden;
+  height: 280px;
+}
+
+.autosphere-showcase-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: var(--autosphere-transition-slow);
+}
+
+.autosphere-showcase-card:hover .autosphere-showcase-image {
+  transform: scale(1.05);
+}
+
+.autosphere-showcase-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(44, 44, 44, 0.7) 0%,
+    rgba(26, 26, 26, 0.8) 100%
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: var(--autosphere-transition-normal);
+}
+
+.autosphere-showcase-card:hover .autosphere-showcase-overlay {
+  opacity: 1;
+}
+
+.autosphere-showcase-overlay-content {
+  text-align: center;
+  color: var(--autosphere-white);
+}
+
+.autosphere-showcase-overlay-content h4 {
+  font-size: var(--autosphere-text-2xl);
+  font-weight: var(--autosphere-weight-semibold);
+  margin-bottom: var(--autosphere-space-2);
+}
+
+.autosphere-showcase-overlay-content p {
+  font-size: var(--autosphere-text-base);
+  opacity: 0.9;
+}
+
+.autosphere-showcase-content {
+  padding: var(--autosphere-space-8);
+}
+
+.autosphere-showcase-card-title {
+  font-size: var(--autosphere-text-2xl);
+  font-weight: var(--autosphere-weight-semibold);
+  margin: 0 0 var(--autosphere-space-4) 0;
+  color: var(--autosphere-charcoal);
+}
+
+.autosphere-showcase-description {
+  color: var(--autosphere-medium-grey);
+  line-height: var(--autosphere-leading-relaxed);
+  margin: 0 0 var(--autosphere-space-6) 0;
+  font-weight: var(--autosphere-weight-regular);
+}
+
+.autosphere-showcase-link {
+  display: inline-flex;
+  align-items: center;
+  color: var(--autosphere-dark-grey);
+  text-decoration: none;
+  font-weight: var(--autosphere-weight-medium);
+  font-size: var(--autosphere-text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: var(--autosphere-transition-all);
+}
+
+.autosphere-showcase-link:hover {
+  color: var(--autosphere-charcoal);
+  transform: translateX(4px);
+}
+
+/* Enhanced Testimonials Section */
+.autosphere-testimonials-section {
+  padding: var(--autosphere-space-24) 0;
+  background: var(--autosphere-platinum);
+}
+
+.autosphere-testimonials-title {
+  text-align: center;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: var(--autosphere-weight-bold);
+  margin-bottom: var(--autosphere-space-5);
+  color: var(--autosphere-charcoal);
+  letter-spacing: -0.02em;
+}
+
+.autosphere-testimonials-subtitle {
+  text-align: center;
+  font-size: var(--autosphere-text-xl);
+  color: var(--autosphere-medium-grey);
+  margin-bottom: var(--autosphere-space-16);
+  font-weight: var(--autosphere-weight-regular);
+  line-height: var(--autosphere-leading-relaxed);
+}
+
+.autosphere-testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: var(--autosphere-space-8);
+}
+
+.autosphere-testimonial-card {
+  background: var(--autosphere-white);
+  padding: var(--autosphere-space-10);
+  border-radius: var(--autosphere-radius-2xl);
+  text-align: center;
+  border: 1px solid var(--autosphere-silver);
+  box-shadow: var(--autosphere-shadow-sm);
+  transition: var(--autosphere-transition-all);
+}
+
+.autosphere-testimonial-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--autosphere-shadow-lg);
+  border-color: var(--autosphere-light-grey);
+}
+
+.autosphere-testimonial-rating {
+  margin-bottom: var(--autosphere-space-6);
+  display: flex;
+  justify-content: center;
+  gap: var(--autosphere-space-1);
+}
+
+.autosphere-testimonial-star {
+  color: #fbbf24;
+}
+
+.autosphere-testimonial-comment {
+  font-style: italic;
+  color: var(--autosphere-medium-grey);
+  margin-bottom: var(--autosphere-space-8);
+  line-height: var(--autosphere-leading-relaxed);
+  font-size: var(--autosphere-text-lg);
+  font-weight: var(--autosphere-weight-regular);
+}
+
+.autosphere-testimonial-author {
+  border-top: 1px solid var(--autosphere-platinum);
+  padding-top: var(--autosphere-space-6);
+}
+
+.autosphere-testimonial-name {
+  font-weight: var(--autosphere-weight-semibold);
+  color: var(--autosphere-charcoal);
+  margin-bottom: var(--autosphere-space-2);
+  font-size: var(--autosphere-text-lg);
+}
+
+.autosphere-testimonial-role {
+  color: var(--autosphere-medium-grey);
+  font-size: var(--autosphere-text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--autosphere-space-1);
+}
+
+.autosphere-testimonial-location {
+  color: var(--autosphere-light-grey);
+  font-size: var(--autosphere-text-sm);
+  margin: 0;
+}
+
+/* Enhanced CTA Section */
+.autosphere-cta-section {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.autosphere-cta-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(44, 44, 44, 0.9) 0%,
+    rgba(26, 26, 26, 0.95) 100%
+  );
+  z-index: 1;
+}
+
+.autosphere-cta-container {
+  position: relative;
+  z-index: 2;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 var(--autosphere-space-6);
+  color: var(--autosphere-white);
+}
+
+.autosphere-cta-title {
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: var(--autosphere-weight-bold);
+  margin-bottom: var(--autosphere-space-6);
+  letter-spacing: -0.02em;
+  line-height: var(--autosphere-leading-tight);
+}
+
+.autosphere-cta-description {
+  font-size: var(--autosphere-text-xl);
+  margin-bottom: var(--autosphere-space-12);
+  opacity: 0.95;
+  line-height: var(--autosphere-leading-relaxed);
+  font-weight: var(--autosphere-weight-regular);
+  color: var(--autosphere-silver);
+}
+
+.autosphere-cta-buttons {
+  display: flex;
+  justify-content: center;
+  gap: var(--autosphere-space-6);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.autosphere-cta-btn-secondary {
+  background-color: transparent;
+  color: var(--autosphere-white);
+  border-color: var(--autosphere-white);
+}
+
+.autosphere-cta-btn-secondary:hover {
+  background-color: var(--autosphere-white);
+  color: var(--autosphere-dark-grey);
+  border-color: var(--autosphere-white);
+}
+
+/* AutoSphere Responsive Design */
+@media (max-width: 768px) {
+  .autosphere-hero-buttons,
+  .autosphere-cta-buttons {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--autosphere-space-4);
+  }
+  
+  .autosphere-hero-buttons .autosphere-btn,
+  .autosphere-cta-buttons .autosphere-btn {
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .autosphere-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--autosphere-space-6);
+  }
+  
+  .autosphere-features-grid,
+  .autosphere-testimonials-grid,
+  .autosphere-showcase-grid,
+  .autosphere-roles-grid {
+    grid-template-columns: 1fr;
+    gap: var(--autosphere-space-6);
+  }
+  
+  .autosphere-showcase-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .autosphere-showcase-card {
+    min-width: unset;
+  }
+  
+  .autosphere-hero-content,
+  .autosphere-cta-container {
+    padding: 0 var(--autosphere-space-4);
+  }
+  
+  .autosphere-feature-card,
+  .autosphere-testimonial-card,
+  .autosphere-role-card {
+    padding: var(--autosphere-space-6);
+  }
+  
+  .autosphere-showcase-content {
+    padding: var(--autosphere-space-6);
+  }
+  
+  /* Slideshow controls for mobile */
+  .autosphere-slideshow-controls {
+    padding: 0 var(--autosphere-space-4);
+  }
+  
+  .autosphere-slide-btn {
+    width: 40px;
+    height: 40px;
+    font-size: var(--autosphere-text-lg);
+  }
+  
+  /* Steps for mobile */
+  .autosphere-steps-container {
+    flex-direction: column;
+    gap: var(--autosphere-space-6);
+  }
+  
+  .autosphere-step-connector {
+    transform: rotate(90deg);
+    margin: var(--autosphere-space-2) 0;
+  }
+
+  /* Combined sections for mobile */
+  .autosphere-how-it-works-content {
+    margin-left: var(--autosphere-space-3);
+    margin-right: var(--autosphere-space-3);
+    padding: var(--autosphere-space-12) var(--autosphere-space-6);
+  }
+
+  .autosphere-features-content,
+  .autosphere-how-it-works-content,
+  .autosphere-roles-content {
+    margin-bottom: var(--autosphere-space-16);
+  }
+  
+  /* AI section for mobile */
+  .autosphere-ai-content {
+    grid-template-columns: 1fr;
+    gap: var(--autosphere-space-8);
+    text-align: center;
+  }
+  
+  .autosphere-ai-graphic {
+    width: 250px;
+    height: 250px;
+  }
+  
+  .autosphere-ai-circle {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .autosphere-ai-orbit {
+    width: 50px;
+    height: 50px;
+  }
+  
+  @keyframes orbit {
+    from {
+      transform: rotate(0deg) translateX(100px) rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg) translateX(100px) rotate(-360deg);
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .autosphere-stats-grid {
+    grid-template-columns: 1fr;
+    gap: var(--autosphere-space-4);
+  }
+  
+  .autosphere-stat-item {
+    padding: var(--autosphere-space-6);
+  }
+  
+  .autosphere-feature-card,
+  .autosphere-testimonial-card,
+  .autosphere-role-card {
+    padding: var(--autosphere-space-5);
+  }
+  
+  .autosphere-showcase-content {
+    padding: var(--autosphere-space-4);
+  }
+  
+  .autosphere-hero-title {
+    font-size: clamp(2rem, 8vw, 3.5rem);
+  }
+  
+  .autosphere-hero-subtitle {
+    font-size: clamp(1.25rem, 4vw, 1.75rem);
+  }
+  
+  .autosphere-features-title,
+  .autosphere-showcase-title,
+  .autosphere-testimonials-title,
+  .autosphere-cta-title,
+  .autosphere-how-it-works-title,
+  .autosphere-ai-title,
+  .autosphere-roles-title {
+    font-size: clamp(2rem, 6vw, 3rem);
+  }
+  
+  .autosphere-hero-badge {
+    position: static;
+    margin-bottom: var(--autosphere-space-4);
+    align-self: center;
+  }
+  
+  .autosphere-slide {
+    padding: var(--autosphere-space-4);
+  }
+  
+  .autosphere-ai-graphic {
+    width: 200px;
+    height: 200px;
+  }
+  
+  .autosphere-ai-circle {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .autosphere-ai-orbit {
+    width: 40px;
+    height: 40px;
+  }
+  
+  @keyframes orbit {
+    from {
+      transform: rotate(0deg) translateX(80px) rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg) translateX(80px) rotate(-360deg);
+    }
+  }
+}
+
+/* Animation Enhancements */
+@media (prefers-reduced-motion: no-preference) {
+  .autosphere-fade-in {
+    animation: autosphereFadeIn 0.8s ease-out;
+  }
+  
+  .autosphere-hover-lift {
+    transition: var(--autosphere-transition-all);
+  }
+  
+  .autosphere-hover-lift:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--autosphere-shadow-xl);
+  }
+  
+  @keyframes autosphereFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .autosphere-hero-title,
+  .autosphere-features-title,
+  .autosphere-showcase-title,
+  .autosphere-testimonials-title,
+  .autosphere-cta-title {
+    -webkit-text-fill-color: unset;
+    background: unset;
+    color: var(--autosphere-charcoal);
+  }
+  
+  .autosphere-stat-number {
+    -webkit-text-fill-color: unset;
+    background: unset;
+    color: var(--autosphere-charcoal);
+  }
+}
