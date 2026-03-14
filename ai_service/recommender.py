@@ -84,7 +84,7 @@ class VehicleRecommendationEngine:
         # Text Features - TF-IDF on description
         tfidf = TfidfVectorizer(max_features=50, stop_words='english')
         desc_matrix = tfidf.fit_transform(
-            vehicle_df['description'.fillna('')
+            vehicle_df['description'].fillna('')
         ).toarray()
         desc_df = pd.DataFrame(desc_matrix, columns=[f'desc_{i}' for i in range(desc_matrix.shape[1])])
 

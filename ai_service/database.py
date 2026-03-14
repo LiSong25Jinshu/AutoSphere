@@ -1,7 +1,7 @@
 import psycopg2
 import pandas as pd
 
-DB-CONFIG = {
+DB_CONFIG = {
     'host': 'localhost',
     'database': 'autosphere',
     'user': 'autosphere_user',
@@ -19,24 +19,24 @@ def fetch_user_interactions(): # Database doesn't exist yet but will(important)
     Interactions include: views, bookings, saved vehicles.
     Returns a DataFrame with columns: user_id, vehicle_id, score.
     """
-    query = '''
-        SELECT
-            user_id,
-            vehicle_id,
-            --Score: booking=3, save=2, view=1
-            CASE
-                WHEN interaction_type = 'booking' THEN 3
-                WHEN interaction_type = 'save' THEN 2
-                ELSE 1
-            END AS score
-        FROM user_vehicle_interactions
-        ORDER BY created_at DESC
-        LIMIT 50000
-    '''
-    conn = get_connection()
-    df = pd.read_sql(query, conn)
-    conn.close()
-    return df
+    # query = '''
+    #     SELECT
+    #         user_id,
+    #         vehicle_id,
+    #         --Score: booking=3, save=2, view=1
+    #         CASE
+    #             WHEN interaction_type = 'booking' THEN 3
+    #             WHEN interaction_type = 'save' THEN 2
+    #             ELSE 1
+    #         END AS score
+    #     FROM user_vehicle_interactions
+    #     ORDER BY created_at DESC
+    #     LIMIT 50000
+    # '''
+    # conn = get_connection()
+    # df = pd.read_sql(query, conn)
+    # conn.close()
+    return 0 # df
 
 def fetch_vehicle_data():  #Body type doesn't exist in the database
     """
@@ -47,7 +47,7 @@ def fetch_vehicle_data():  #Body type doesn't exist in the database
         SELECT
             id AS vehicle_id,
             make, model, year, price, fuel_type,
-            transmission, body type, mileage, color, description
+            transmission, body_type, mileage, color, description
         FROM vehicles
         WHERE status = 'available'
     '''
@@ -56,7 +56,7 @@ def fetch_vehicle_data():  #Body type doesn't exist in the database
     conn.close()
     return df
 
-def fetch_user_preference(user_id):   # Database doesn't exist yet
+def fetch_user_preferences(user_id):   # Database doesn't exist yet
     """Get a specific user's stated preferences"""
     query = '''
         SELECT budget_min, budget_max, prefered_fuel,
@@ -67,5 +67,5 @@ def fetch_user_preference(user_id):   # Database doesn't exist yet
     conn = get_connection()
     df = pd.read_sql(query, conn, params=(user_id,))
     conn.close()
-    return df.iloc[0].to dict() if not df.empty else{}
+    return df.iloc[0].to_dict() if not df.empty else{}
     
