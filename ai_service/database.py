@@ -1,17 +1,12 @@
-import psycopg2
+from sqlalchemy import create_engine
 import pandas as pd
 
-DB_CONFIG = {
-    'host': 'localhost',
-    'database': 'autosphere',
-    'user': 'autosphere_user',
-    'password': 'autospheredb',
-    'port' : 5432
-}
+DATABASE_URL = "postgresql://autosphere_user:autospheredb@localhost:5432/autosphere"
 
 def get_connection():
     """Create a connection to the PostgreSQL database"""
-    return psycopg2.connect(**DB_CONFIG)
+    engine = create_engine(DATABASE_URL)
+    return engine.connect()
 
 def fetch_user_interactions(): # Database doesn't exist yet but will(important)
     """

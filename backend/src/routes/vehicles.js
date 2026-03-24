@@ -3,6 +3,7 @@ import { body, query, validationResult } from 'express-validator';
 import { authenticateToken, requireRole, optionalAuth } from '../middleware/auth.js';
 import Vehicle from '../models/Vehicle.js';
 import User from '../models/User.js';
+import UserVehicleInteraction from '../models/UserVehicleInteraction.js';
 
 const router = express.Router();
 
@@ -126,6 +127,15 @@ router.get('/:id', async (req, res) => {
 
     // Increment view count
     await vehicle.incrementViewCount();
+
+    // Log the view interaction for AI recommendations
+    if (req.user?.id) {
+      await UserVehicleInteraction.create({
+        userId: req.user.id,
+        vehicleId: vehicleId,
+        interactionType: 'view'
+      });
+    }
 
     res.json({
       success: true,

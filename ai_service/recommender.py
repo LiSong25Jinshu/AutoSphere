@@ -36,7 +36,7 @@ class VehicleRecommendationEngine:
         matrix = np.zeros((len(self.user_ids), len(self.vehicle_ids)))
 
         # Fill up the scores
-        for _, row in interactions_df.iterrrows():
+        for _, row in interactions_df.iterrows():
             u = user_index.get(row['user_id'])
             v = vehicle_index.get(row['vehicle_id'])
             if u is not None and v is not None:
@@ -53,7 +53,7 @@ class VehicleRecommendationEngine:
         self.collab_model = NMF(
             n_components=20,  # Number of hidden patterns to find
             random_state=42,
-            max_tier=300
+            max_iter=300
         )
         self.collab_model.fit(self.user_item_matrix)
         print('✅Collaborative filter trained')
@@ -107,8 +107,16 @@ class VehicleRecommendationEngine:
         Run this once when the service starts, then retrain periodically.
         """
         print('Training recommendation model...')
-        self.user_item_matrix = self.build_user_item_matrix(interactions_df)
-        self.train_collabrative_filter()
+        
+        # Handle empty or invalid interactions
+        if interactions_df is None or not isinstance(interactions_df, pd.DataFrame) or interactions_df.empty:
+            print('⚠️ No interaction data yet - skipping collaborativr filter')
+            self.user_item_matrix = None
+            self.collab_model = None
+        else:
+            self.user_item_matrix = self.build_user_item_matrix(interactions_df)
+            self.train_collabrative_filter()
+        
         self.build_vehicle_features(vehicle_df)
         print('✅ Model fully tained and ready!')
 
@@ -169,14 +177,17 @@ class VehicleRecommendationEngine:
         60% weight on collaborative, 40% on content-based.
         Like asking both friend a friend and a salesperson, then averaging their advice.
         """
-        collab = self.collaborative_recommendations(user_id, n *2)
-        content = self.content_recommendations(user_preferences, n *2)
-
         # Combine scores
         combined = {}
-        for items in collab:
-            vid = item['vehicle_id']
-            combined[vid] = combined.get(vid, 0) + 0.6 * item['score']
+
+        # Run collab filter if model is trained
+        if self.collab_model is not None and user_id in self.user_ids:
+            collab = self.collaborative_recommendations(user_id, n *2)
+            for items in collab:
+                combined[item['vehicle_id']] = 0.6 * item['score']
+
+        # Always run content-based filter
+        content = self.content_recommendations(user_preferences, n *2)
         for item in content:
             vid = item['vehicle_id']
             combined[vid] = combined.get(vid, 0) + 0.4 * item['score']

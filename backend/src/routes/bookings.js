@@ -5,6 +5,7 @@ import Booking from '../models/Booking.js';
 import User from '../models/User.js';
 import Vehicle from '../models/Vehicle.js';
 import { mockBookingService } from '../utils/mockData.js';
+import UserVehicleInteraction from '../models/UserVehicleInteraction.js';
 
 const router = express.Router();
 
@@ -271,6 +272,15 @@ router.post('/', [
     };
 
     const booking = await Booking.create(bookingData);
+
+    // Log booking interaction for AI recommendations
+    if (req.body.vehicleId) {
+      await UserVehicleInteraction.create({
+        userId: req.user.id,
+        vehicleId: req.body.vehicleId,
+        interactionType: 'booking'
+      });
+    }
 
     // Fetch the complete booking with associations
     const completeBooking = await Booking.findByPk(booking.id, {
