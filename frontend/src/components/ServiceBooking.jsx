@@ -31,8 +31,23 @@ const ServiceBooking = ({ vehicleId, onBookingComplete }) => {
   ];
 
   const timeSlots = [
-    '08:00', '09:00', '10:00', '11:00', 
-    '13:00', '14:00', '15:00', '16:00', '17:00'
+    { time: '08:00', label: '8:00 AM', available: true },
+    { time: '08:30', label: '8:30 AM', available: true },
+    { time: '09:00', label: '9:00 AM', available: true },
+    { time: '09:30', label: '9:30 AM', available: true },
+    { time: '10:00', label: '10:00 AM', available: true },
+    { time: '10:30', label: '10:30 AM', available: true },
+    { time: '11:00', label: '11:00 AM', available: true },
+    { time: '11:30', label: '11:30 AM', available: true },
+    { time: '13:00', label: '1:00 PM', available: true },
+    { time: '13:30', label: '1:30 PM', available: true },
+    { time: '14:00', label: '2:00 PM', available: true },
+    { time: '14:30', label: '2:30 PM', available: true },
+    { time: '15:00', label: '3:00 PM', available: true },
+    { time: '15:30', label: '3:30 PM', available: true },
+    { time: '16:00', label: '4:00 PM', available: true },
+    { time: '16:30', label: '4:30 PM', available: true },
+    { time: '17:00', label: '5:00 PM', available: true },
   ];
 
   const priorityLevels = [
@@ -196,14 +211,16 @@ const ServiceBooking = ({ vehicleId, onBookingComplete }) => {
         <div className="form-group">
           <label>Preferred Time</label>
           <div className="time-slots">
-            {timeSlots.map(time => (
+            {timeSlots.map(slot => (
               <button
-                key={time}
+                key={slot.time}
                 type="button"
-                className={`time-slot ${formData.time === time ? 'selected' : ''}`}
-                onClick={() => handleInputChange('time', time)}
+                className={`time-slot ${formData.time === slot.time ? 'selected' : ''} ${!slot.available ? 'unavailable' : ''}`}
+                onClick={() => slot.available && handleInputChange('time', slot.time)}
+                disabled={!slot.available}
+                title={slot.available ? `Select ${slot.label}` : 'Not available'}
               >
-                {time}
+                {slot.label}
               </button>
             ))}
           </div>

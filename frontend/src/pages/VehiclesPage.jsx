@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Container, Box, Typography } from '@mui/material';
 import VehicleSearch from '../components/VehicleSearch';
 import VehicleList from '../components/VehicleList';
+import { vehicleService } from '../services/vehicleService';
 
 const VehiclesPage = () => {
   const [vehicles, setVehicles] = useState([]);
@@ -24,128 +25,62 @@ const VehiclesPage = () => {
       setLoading(true);
       setError(null);
       
-      // Mock API call - replace with actual API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock vehicle data
-      const mockVehicles = generateMockVehicles();
-      
-      // Apply filters and sorting (mock implementation)
-      let filteredVehicles = mockVehicles;
-      
-      // Apply search filter
-      if (searchFilters.search) {
-        filteredVehicles = filteredVehicles.filter(vehicle =>
-          `${vehicle.make} ${vehicle.model} ${vehicle.year}`.toLowerCase()
-            .includes(searchFilters.search.toLowerCase())
-        );
+      // Prepare API filters
+      const apiFilters = {
+        page: currentPage,
+        limit: pageSize,
+        ...searchFilters
+      };
+
+      // Convert frontend filter format to backend format
+      if (searchFilters.yearRange && Array.isArray(searchFilters.yearRange)) {
+        apiFilters.minYear = searchFilters.yearRange[0];
+        apiFilters.maxYear = searchFilters.yearRange[1];
+        delete apiFilters.yearRange;
       }
-      
-      // Apply other filters
-      if (searchFilters.make) {
-        filteredVehicles = filteredVehicles.filter(vehicle => 
-          vehicle.make === searchFilters.make
-        );
+
+      if (searchFilters.priceRange && Array.isArray(searchFilters.priceRange)) {
+        apiFilters.minPrice = searchFilters.priceRange[0];
+        apiFilters.maxPrice = searchFilters.priceRange[1];
+        delete apiFilters.priceRange;
       }
-      
+
+      if (searchFilters.mileageRange && Array.isArray(searchFilters.mileageRange)) {
+        apiFilters.minMileage = searchFilters.mileageRange[0];
+        apiFilters.maxMileage = searchFilters.mileageRange[1];
+        delete apiFilters.mileageRange;
+      }
+
+      // Map transmission and color filters
+      if (searchFilters.transmission) {
+        apiFilters.transmission = searchFilters.transmission.toLowerCase();
+      }
+
+      if (searchFilters.color) {
+        apiFilters.color = searchFilters.color;
+      }
+
+      // Map frontend availability type to backend format
       if (searchFilters.availabilityType) {
-        filteredVehicles = filteredVehicles.filter(vehicle => 
-          vehicle.availabilityType === searchFilters.availabilityType
-        );
+        // For now, we'll just pass it through - backend can be enhanced to support this
+        delete apiFilters.availabilityType;
       }
+
+      const result = await vehicleService.getVehicles(apiFilters);
       
-      // Apply price range filter
-      if (searchFilters.priceRange) {
-        filteredVehicles = filteredVehicles.filter(vehicle => 
-          vehicle.price >= searchFilters.priceRange[0] && 
-          vehicle.price <= searchFilters.priceRange[1]
-        );
+      if (result.success) {
+        setVehicles(result.data.data || result.data);
+        setTotalCount(result.data.pagination?.total || result.data.length);
+      } else {
+        setError(result.message || 'Failed to load vehicles');
       }
-      
-      // Apply sorting
-      filteredVehicles.sort((a, b) => {
-        switch (sortBy) {
-          case 'price-low':
-            return a.price - b.price;
-          case 'price-high':
-            return b.price - a.price;
-          case 'mileage-low':
-            return a.mileage - b.mileage;
-          case 'mileage-high':
-            return b.mileage - a.mileage;
-          case 'year-new':
-            return b.year - a.year;
-          case 'year-old':
-            return a.year - b.year;
-          case 'oldest':
-            return new Date(a.createdAt) - new Date(b.createdAt);
-          case 'newest':
-          default:
-            return new Date(b.createdAt) - new Date(a.createdAt);
-        }
-      });
-      
-      const totalCount = filteredVehicles.length;
-      const startIndex = (currentPage - 1) * pageSize;
-      const paginatedVehicles = filteredVehicles.slice(startIndex, startIndex + pageSize);
-      
-      setVehicles(paginatedVehicles);
-      setTotalCount(totalCount);
       
     } catch (err) {
+      console.error('Error fetching vehicles:', err);
       setError('Failed to load vehicles. Please try again.');
     } finally {
       setLoading(false);
     }
-  };
-
-  const generateMockVehicles = () => {
-    const makes = ['Toyota', 'Honda', 'Ford', 'Chevrolet', 'Nissan', 'BMW', 'Mercedes-Benz', 'Audi'];
-    const models = {
-      Toyota: ['Camry', 'Corolla', 'RAV4', 'Highlander', 'Prius'],
-      Honda: ['Civic', 'Accord', 'CR-V', 'Pilot', 'Fit'],
-      Ford: ['F-150', 'Escape', 'Explorer', 'Mustang', 'Focus'],
-      Chevrolet: ['Silverado', 'Equinox', 'Malibu', 'Tahoe', 'Cruze'],
-      Nissan: ['Altima', 'Sentra', 'Rogue', 'Pathfinder', 'Leaf'],
-      BMW: ['3 Series', '5 Series', 'X3', 'X5', 'i3'],
-      'Mercedes-Benz': ['C-Class', 'E-Class', 'GLC', 'GLE', 'A-Class'],
-      Audi: ['A4', 'A6', 'Q5', 'Q7', 'e-tron'],
-    };
-    const colors = ['Black', 'White', 'Silver', 'Gray', 'Red', 'Blue', 'Green'];
-    const fuelTypes = ['Gasoline', 'Diesel', 'Hybrid', 'Electric'];
-    const transmissions = ['Manual', 'Automatic', 'CVT'];
-    const bodyTypes = ['Sedan', 'SUV', 'Hatchback', 'Coupe', 'Truck'];
-    const availabilityTypes = ['sale', 'rental', 'both'];
-
-    return Array.from({ length: 50 }, (_, index) => {
-      const make = makes[Math.floor(Math.random() * makes.length)];
-      const model = models[make][Math.floor(Math.random() * models[make].length)];
-      const year = 2015 + Math.floor(Math.random() * 9);
-      
-      return {
-        id: index + 1,
-        make,
-        model,
-        year,
-        price: 15000 + Math.floor(Math.random() * 50000),
-        mileage: Math.floor(Math.random() * 100000),
-        fuelType: fuelTypes[Math.floor(Math.random() * fuelTypes.length)],
-        transmission: transmissions[Math.floor(Math.random() * transmissions.length)],
-        bodyType: bodyTypes[Math.floor(Math.random() * bodyTypes.length)],
-        color: colors[Math.floor(Math.random() * colors.length)],
-        availabilityType: availabilityTypes[Math.floor(Math.random() * availabilityTypes.length)],
-        isAvailable: true,
-        description: `This ${year} ${make} ${model} is in excellent condition and ready for its next owner. Well-maintained with regular service records.`,
-        images: [
-          '/placeholder-car.jpg',
-          '/placeholder-car-2.jpg',
-          '/placeholder-car-3.jpg',
-        ],
-        dealerId: Math.floor(Math.random() * 10) + 1,
-        location: 'Auto City, AC',
-        createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-      };
-    });
   };
 
   const handleSearch = (searchData) => {

@@ -21,6 +21,10 @@ import vehicleRoutes from './routes/vehicles.js';
 import bookingRoutes from './routes/bookings.js';
 import messageRoutes from './routes/messages.js';
 import recommendationsRouter from './routes/recommendations.js';
+import savedSearchesRoutes from './routes/savedSearches.js';
+
+// Import socket handlers
+import { initializeMessageSocket } from './sockets/messageSocket.js';
 
 // Load environment variables
 dotenv.config();
@@ -78,6 +82,7 @@ app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/recommendations', recommendationsRouter);
+app.use('/api/saved-searches', savedSearchesRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -88,24 +93,8 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Socket.io connection handling
-io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
-
-  socket.on('join_room', (roomId) => {
-    socket.join(roomId);
-    console.log(`User ${socket.id} joined room ${roomId}`);
-  });
-
-  socket.on('leave_room', (roomId) => {
-    socket.leave(roomId);
-    console.log(`User ${socket.id} left room ${roomId}`);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
-  });
-});
+// Initialize WebSocket handlers
+initializeMessageSocket(io);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

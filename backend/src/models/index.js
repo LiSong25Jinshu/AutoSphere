@@ -5,6 +5,7 @@ import Booking from './Booking.js';
 import Conversation from './Conversation.js';
 import Message from './Message.js';
 import UserVehicleInteraction from '.../UserVehicleInteraction.js';
+import SavedSearch from './SavedSearch.js';
 
 // Define associations
 const defineAssociations = () => {
@@ -45,6 +46,10 @@ const defineAssociations = () => {
 
   Vehicle.hasMany(UserVehicleInteraction, { foreignKey: 'vehicleId', as: 'interactions' });
   UserVehicleInteraction.belongsTo(Vehicle, { foreignKey: 'vehicleId', as: 'vehicle' });
+  
+  // SavedSearch associations
+  User.hasMany(SavedSearch, { foreignKey: 'userId', as: 'savedSearches' });
+  SavedSearch.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 };
 
 // Initialize associations
@@ -70,6 +75,7 @@ export {
   Conversation,
   Message,
   UserVehicleInteraction,
+  SavedSearch,
   syncDatabase,
 };
 
@@ -81,5 +87,6 @@ export default {
   Conversation,
   Message,
   UserVehicleInteraction,
+  SavedSearch,
   syncDatabase,
 };

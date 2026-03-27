@@ -1,9 +1,11 @@
 import express from 'express';
 import { body, query, validationResult } from 'express-validator';
+import { Op } from 'sequelize';
 import { authenticateToken, requireRole, optionalAuth } from '../middleware/auth.js';
 import Vehicle from '../models/Vehicle.js';
 import User from '../models/User.js';
 import UserVehicleInteraction from '../models/UserVehicleInteraction.js';
+import { mockVehicleService } from '../utils/mockData.js';
 
 const router = express.Router();
 
@@ -17,10 +19,15 @@ router.get('/', [
   query('maxYear').optional().isInt({ max: new Date().getFullYear() + 2 }),
   query('minPrice').optional().isFloat({ min: 0 }),
   query('maxPrice').optional().isFloat({ min: 0 }),
+  query('minMileage').optional().isInt({ min: 0 }),
+  query('maxMileage').optional().isInt({ min: 0 }),
   query('condition').optional().isIn(['new', 'used', 'certified_pre_owned']),
   query('fuelType').optional().isIn(['gasoline', 'diesel', 'hybrid', 'electric', 'plug_in_hybrid']),
+  query('transmission').optional().isIn(['manual', 'automatic', 'cvt']),
   query('bodyType').optional().isIn(['sedan', 'suv', 'hatchback', 'coupe', 'convertible', 'truck', 'van', 'wagon']),
+  query('color').optional().isString().trim(),
   query('featured').optional().isBoolean(),
+  query('search').optional().isString().trim(),
 ], optionalAuth, async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -39,44 +46,65 @@ router.get('/', [
     const searchParams = {
       make: req.query.make,
       model: req.query.model,
-      minYear: req.query.minYear,
-      maxYear: req.query.maxYear,
-      minPrice: req.query.minPrice,
-      maxPrice: req.query.maxPrice,
+      minYear: req.query.minYear ? parseInt(req.query.minYear) : undefined,
+      maxYear: req.query.maxYear ? parseInt(req.query.maxYear) : undefined,
+      minPrice: req.query.minPrice ? parseFloat(req.query.minPrice) : undefined,
+      maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice) : undefined,
+      minMileage: req.query.minMileage ? parseInt(req.query.minMileage) : undefined,
+      maxMileage: req.query.maxMileage ? parseInt(req.query.maxMileage) : undefined,
       condition: req.query.condition,
       fuelType: req.query.fuelType,
+      transmission: req.query.transmission,
       bodyType: req.query.bodyType,
+      color: req.query.color,
+      search: req.query.search,
       limit,
       offset,
     };
 
     let vehicles;
-    if (req.query.featured === 'true') {
-      vehicles = await Vehicle.findFeatured({
-        include: [{
-          model: User,
-          as: 'dealer',
-          attributes: ['id', 'firstName', 'lastName', 'email', 'phone'],
-        }],
-        limit,
-        offset,
-      });
-    } else {
-      vehicles = await Vehicle.searchVehicles(searchParams);
-      
-      // Include dealer information
-      for (let vehicle of vehicles) {
-        const dealer = await User.findByPk(vehicle.dealerId, {
-          attributes: ['id', 'firstName', 'lastName', 'email', 'phone'],
-        });
-        vehicle.dataValues.dealer = dealer;
-      }
-    }
+    let totalCount;
 
-    // Get total count for pagination
-    const totalCount = await Vehicle.count({
-      where: { status: 'available' }
-    });
+    try {
+      // Try to use database first
+      if (req.query.featured === 'true') {
+        vehicles = await Vehicle.findFeatured({
+          include: [{
+            model: User,
+            as: 'dealer',
+            attributes: ['id', 'firstName', 'lastName', 'email', 'phone'],
+          }],
+          limit,
+          offset,
+        });
+      } else {
+        vehicles = await Vehicle.searchVehicles(searchParams);
+        
+        // Include dealer information
+        for (let vehicle of vehicles) {
+          const dealer = await User.findByPk(vehicle.dealerId, {
+            attributes: ['id', 'firstName', 'lastName', 'email', 'phone'],
+          });
+          vehicle.dataValues.dealer = dealer;
+        }
+      }
+
+      // Get total count for pagination
+      totalCount = await Vehicle.count({
+        where: { status: 'available' }
+      });
+    } catch (dbError) {
+      console.log('Database not available, using mock data:', dbError.message);
+      
+      // Use mock data as fallback
+      if (req.query.featured === 'true') {
+        vehicles = await mockVehicleService.findFeatured({ limit, offset });
+      } else {
+        vehicles = await mockVehicleService.searchVehicles(searchParams);
+      }
+      
+      totalCount = await mockVehicleService.count({ where: { status: 'available' } });
+    }
 
     res.json({
       success: true,
@@ -98,6 +126,81 @@ router.get('/', [
   }
 });
 
+// Get search suggestions (autocomplete)
+router.get('/suggestions', [
+  query('q').notEmpty().trim().withMessage('Query parameter q is required'),
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    const searchQuery = req.query.q.toLowerCase();
+    const suggestions = {
+      makes: [],
+      models: [],
+      keywords: []
+    };
+
+    try {
+      // Get unique makes and models from database
+      const vehicles = await Vehicle.findAll({
+        attributes: ['make', 'model'],
+        where: {
+          status: 'available',
+          [Op.or]: [
+            { make: { [Op.iLike]: `%${searchQuery}%` } },
+            { model: { [Op.iLike]: `%${searchQuery}%` } }
+          ]
+        },
+        limit: 20,
+        raw: true
+      });
+
+      // Extract unique makes and models
+      const makesSet = new Set();
+      const modelsSet = new Set();
+
+      vehicles.forEach(v => {
+        if (v.make.toLowerCase().includes(searchQuery)) {
+          makesSet.add(v.make);
+        }
+        if (v.model.toLowerCase().includes(searchQuery)) {
+          modelsSet.add(v.model);
+        }
+      });
+
+      suggestions.makes = Array.from(makesSet).slice(0, 5);
+      suggestions.models = Array.from(modelsSet).slice(0, 5);
+
+      // Add common keywords
+      const keywords = ['sedan', 'suv', 'truck', 'hybrid', 'electric', 'automatic', 'manual'];
+      suggestions.keywords = keywords.filter(k => k.includes(searchQuery)).slice(0, 5);
+
+    } catch (dbError) {
+      console.log('Database not available for suggestions:', dbError.message);
+      // Return empty suggestions if database is not available
+    }
+
+    res.json({
+      success: true,
+      data: suggestions
+    });
+
+  } catch (error) {
+    console.error('Get suggestions error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
 // Get vehicle by ID
 router.get('/:id', async (req, res) => {
   try {
@@ -110,13 +213,27 @@ router.get('/:id', async (req, res) => {
       });
     }
 
-    const vehicle = await Vehicle.findByPk(vehicleId, {
-      include: [{
-        model: User,
-        as: 'dealer',
-        attributes: ['id', 'firstName', 'lastName', 'email', 'phone'],
-      }],
-    });
+    let vehicle;
+    
+    try {
+      // Try database first
+      vehicle = await Vehicle.findByPk(vehicleId, {
+        include: [{
+          model: User,
+          as: 'dealer',
+          attributes: ['id', 'firstName', 'lastName', 'email', 'phone'],
+        }],
+      });
+
+      if (vehicle) {
+        // Increment view count
+        await vehicle.incrementViewCount();
+      }
+    } catch (dbError) {
+      console.log('Database not available, using mock data:', dbError.message);
+      // Use mock data as fallback
+      vehicle = await mockVehicleService.findByPk(vehicleId);
+    }
 
     if (!vehicle) {
       return res.status(404).json({

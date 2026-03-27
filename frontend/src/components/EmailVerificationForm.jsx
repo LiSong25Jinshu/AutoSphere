@@ -20,9 +20,19 @@ const EmailVerificationForm = () => {
   const [verificationStatus, setVerificationStatus] = useState('pending'); // pending, success, error
   const [message, setMessage] = useState('');
   const [token, setToken] = useState('');
+  const [email, setEmail] = useState('');
+  const [resendStatus, setResendStatus] = useState(''); // success, error
+  const [resendMessage, setResendMessage] = useState('');
+  const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
     const verificationToken = searchParams.get('token');
+    const userEmail = searchParams.get('email');
+    
+    if (userEmail) {
+      setEmail(userEmail);
+    }
+    
     if (!verificationToken) {
       setVerificationStatus('error');
       setMessage('Invalid or missing verification token.');
@@ -65,6 +75,43 @@ const EmailVerificationForm = () => {
     navigate('/login', { 
       state: { message: 'Email verified successfully! You can now sign in.' }
     });
+  };
+
+  const handleResendVerification = async () => {
+    if (!email) {
+      setResendStatus('error');
+      setResendMessage('Email address is required to resend verification.');
+      return;
+    }
+
+    setIsResending(true);
+    setResendStatus('');
+    setResendMessage('');
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/resend-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setResendStatus('success');
+        setResendMessage('Verification email sent! Please check your inbox.');
+      } else {
+        setResendStatus('error');
+        setResendMessage(data.message || 'Failed to resend verification email.');
+      }
+    } catch (error) {
+      setResendStatus('error');
+      setResendMessage('Network error. Please try again.');
+    } finally {
+      setIsResending(false);
+    }
   };
 
   const renderContent = () => {
@@ -124,6 +171,16 @@ const EmailVerificationForm = () => {
             <Alert severity="error" sx={{ width: '100%', mb: 3 }}>
               {message}
             </Alert>
+            
+            {resendStatus && (
+              <Alert 
+                severity={resendStatus === 'success' ? 'success' : 'error'} 
+                sx={{ width: '100%', mb: 2 }}
+              >
+                {resendMessage}
+              </Alert>
+            )}
+            
             {token && (
               <Button
                 variant="contained"
@@ -132,6 +189,17 @@ const EmailVerificationForm = () => {
                 sx={{ mb: 2 }}
               >
                 {isSubmitting ? 'Retrying...' : 'Retry Verification'}
+              </Button>
+            )}
+            
+            {email && (
+              <Button
+                variant="outlined"
+                onClick={handleResendVerification}
+                disabled={isResending}
+                sx={{ mb: 2 }}
+              >
+                {isResending ? 'Sending...' : 'Resend Verification Email'}
               </Button>
             )}
           </>
