@@ -4,6 +4,7 @@ import { Op } from 'sequelize';
 import { authenticateToken, requireRole, optionalAuth } from '../middleware/auth.js';
 import Vehicle from '../models/Vehicle.js';
 import User from '../models/User.js';
+import UserVehicleInteraction from '../models/UserVehicleInteraction.js';
 import { mockVehicleService } from '../utils/mockData.js';
 
 const router = express.Router();
@@ -238,6 +239,18 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({
         success: false,
         message: 'Vehicle not found'
+      });
+    }
+
+    // Increment view count
+    await vehicle.incrementViewCount();
+
+    // Log the view interaction for AI recommendations
+    if (req.user?.id) {
+      await UserVehicleInteraction.create({
+        userId: req.user.id,
+        vehicleId: vehicleId,
+        interactionType: 'view'
       });
     }
 

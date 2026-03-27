@@ -20,6 +20,7 @@ import userRoutes from './routes/users.js';
 import vehicleRoutes from './routes/vehicles.js';
 import bookingRoutes from './routes/bookings.js';
 import messageRoutes from './routes/messages.js';
+import recommendationsRouter from './routes/recommendations.js';
 import savedSearchesRoutes from './routes/savedSearches.js';
 
 // Import socket handlers
@@ -80,6 +81,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/recommendations', recommendationsRouter);
 app.use('/api/saved-searches', savedSearchesRoutes);
 
 // Health check endpoint
