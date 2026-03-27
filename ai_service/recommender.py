@@ -110,7 +110,7 @@ class VehicleRecommendationEngine:
         
         # Handle empty or invalid interactions
         if interactions_df is None or not isinstance(interactions_df, pd.DataFrame) or interactions_df.empty:
-            print('⚠️ No interaction data yet - skipping collaborativr filter')
+            print('⚠️ No interaction data yet - skipping collaborative filter')
             self.user_item_matrix = None
             self.collab_model = None
         else:

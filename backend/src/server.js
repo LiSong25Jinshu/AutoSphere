@@ -20,7 +20,7 @@ import userRoutes from './routes/users.js';
 import vehicleRoutes from './routes/vehicles.js';
 import bookingRoutes from './routes/bookings.js';
 import messageRoutes from './routes/messages.js';
-import recommendationsRouter from '.routes/recommendations.js';
+import recommendationsRouter from './routes/recommendations.js';
 
 // Load environment variables
 dotenv.config();

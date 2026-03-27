@@ -105,10 +105,14 @@ Thumbs.db
 
 # Python virtual environments
 **/.venv/
-.ipynb_checkpoints
 
 # Setup scripts and environment files
 ai_service/setup_env.ps1
 ai_service/setup_env.sh
 ai_service/requirements_clean.txt
 ai_service/ENVIRONMENT.md
+
+Python files
+**/.ipynb_checkpoints
+**/__pycache__
+*.pyc

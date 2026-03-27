@@ -9,14 +9,21 @@ const UserVehicleInteraction = sequelize.define('UserVehicleInteraction', {
     },
     userId: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
+        field: 'user_id'
+    },
+    vehicleId: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        field: 'vehicle_id'
     },
     interactionType: {
         type: DataTypes.ENUM('view', 'save', 'booking'),
-        allowNull: false
+        allowNull: false,
+        field: 'interaction_type'
     }
 }, {
-    tableName: 'user_vehicle_interactions';
+    tableName: 'user_vehicle_interactions',
     timestamps: true,  // adds createdAt and updatedAt automatically
 });
 

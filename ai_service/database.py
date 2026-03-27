@@ -12,26 +12,26 @@ def fetch_user_interactions(): # Database doesn't exist yet but will(important)
     """
     Get all user interactions with vehicles.
     Interactions include: views, bookings, saved vehicles.
-    Returns a DataFrame with columns: user_id, vehicle_id, score.
+    Returns a DataFrame with columns: userId, vehicleId, score.
     """
-    # query = '''
-    #     SELECT
-    #         user_id,
-    #         vehicle_id,
-    #         --Score: booking=3, save=2, view=1
-    #         CASE
-    #             WHEN interaction_type = 'booking' THEN 3
-    #             WHEN interaction_type = 'save' THEN 2
-    #             ELSE 1
-    #         END AS score
-    #     FROM user_vehicle_interactions
-    #     ORDER BY created_at DESC
-    #     LIMIT 50000
-    # '''
-    # conn = get_connection()
-    # df = pd.read_sql(query, conn)
-    # conn.close()
-    return 0 # df
+    query = '''
+        SELECT
+            user_id,
+            vehicle_id,
+            --Score: booking=3, save=2, view=1
+            CASE
+                WHEN interaction_type = 'booking' THEN 3
+                WHEN interaction_type = 'save' THEN 2
+                ELSE 1
+            END AS score
+        FROM user_vehicle_interactions
+        ORDER BY "createdAt" DESC
+        LIMIT 50000
+    '''
+    conn = get_connection()
+    df = pd.read_sql(query, conn)
+    conn.close()
+    return df
 
 def fetch_vehicle_data():  #Body type doesn't exist in the database
     """
