@@ -1,8 +1,15 @@
+// config/keys.js
 import dotenv from 'dotenv';
+dotenv.config(); // Make sure this comes first
 
-dotenv.config();
+export const googleKeys = {
+  googleClientID: process.env.GOOGLE_CLIENT_ID,
+  googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  googleCallbackURL: process.env.GOOGLE_CALLBACK_URL,
+  sessionSecret: process.env.SESSION_SECRET || 'secret'
+};
 
-export default {
+const dbConfig = {
   development: {
     username: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'password',
@@ -37,3 +44,5 @@ export default {
     },
   },
 };
+
+export default dbConfig;

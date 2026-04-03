@@ -1,42 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  Container,
-  Box,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  Button,
-  Chip,
-  Avatar,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemAvatar,
-  Divider,
-  Paper,
-  LinearProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
+  Container, Box, Typography, Grid, Card, CardContent, Button, Chip,
+  Avatar, List, ListItem, ListItemText, ListItemAvatar, Divider, Paper,
+  LinearProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
 } from '@mui/material';
 import {
-  DirectionsCar as CarIcon,
-  TrendingUp as TrendingUpIcon,
-  People as PeopleIcon,
-  AttachMoney as MoneyIcon,
-  Inventory as InventoryIcon,
-  Analytics as AnalyticsIcon,
-  Add as AddIcon,
-  Edit as EditIcon,
-  Visibility as ViewIcon,
-  Star as StarIcon,
+  DirectionsCar as CarIcon, TrendingUp as TrendingUpIcon, People as PeopleIcon,
+  AttachMoney as MoneyIcon, Inventory as InventoryIcon, Analytics as AnalyticsIcon,
+  Add as AddIcon, Edit as EditIcon, Visibility as ViewIcon, Star as StarIcon,
 } from '@mui/icons-material';
+import { vehicleService } from '../../services/vehicleService';
+import { useAuth } from '../../contexts/AuthContext';
 
 const DealerDashboard = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [inventoryCount, setInventoryCount] = useState(0);
+
+  useEffect(() => {
+    vehicleService.getVehicles({ limit: 1 }).then(res => {
+      if (res.success) setInventoryCount(res.data?.pagination?.total || res.data?.data?.length || 0);
+    });
+  }, []);
+
   const [recentInquiries] = useState([
     {
       id: 1,
@@ -75,7 +62,7 @@ const DealerDashboard = () => {
   ]);
 
   const stats = [
-    { label: 'Total Inventory', value: '127', icon: <InventoryIcon />, color: '#4caf50', change: '+5 this week' },
+    { label: 'Total Inventory', value: inventoryCount || '—', icon: <InventoryIcon />, color: '#4caf50', change: 'Live from API' },
     { label: 'Monthly Sales', value: '23', icon: <CarIcon />, color: '#2196f3', change: '+12% vs last month' },
     { label: 'Active Leads', value: '45', icon: <PeopleIcon />, color: '#ff9800', change: '8 new today' },
     { label: 'Revenue (MTD)', value: '$485K', icon: <MoneyIcon />, color: '#9c27b0', change: '+18% vs last month' },
@@ -214,6 +201,7 @@ const DealerDashboard = () => {
                   fullWidth
                   startIcon={<AddIcon />}
                   sx={{ py: 2 }}
+                  onClick={() => navigate('/dealer/inventory')}
                 >
                   Add New Vehicle
                 </Button>
@@ -225,6 +213,7 @@ const DealerDashboard = () => {
                   startIcon={<EditIcon />}
                   sx={{ py: 2 }}
                   color="info"
+                  onClick={() => navigate('/dealer/inventory')}
                 >
                   Update Inventory
                 </Button>
@@ -236,6 +225,7 @@ const DealerDashboard = () => {
                   startIcon={<AnalyticsIcon />}
                   sx={{ py: 2 }}
                   color="warning"
+                  onClick={() => navigate('/dealer/sales')}
                 >
                   View Analytics
                 </Button>
@@ -246,6 +236,7 @@ const DealerDashboard = () => {
                   fullWidth
                   startIcon={<ViewIcon />}
                   sx={{ py: 2 }}
+                  onClick={() => navigate('/dealer/messages')}
                 >
                   Manage Leads
                 </Button>

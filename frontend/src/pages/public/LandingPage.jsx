@@ -239,6 +239,56 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* WHY AUTOSPHERE SECTION */}
+      <section className="autosphere-why-section">
+        <div className="autosphere-container">
+          <h2 className="autosphere-section-title">Why AutoSphere?</h2>
+          <p className="autosphere-section-subtitle">Everything you need, all in one place</p>
+          <div className="autosphere-why-grid">
+            {[
+              { icon: '🚗', text: 'Access thousands of verified vehicles from trusted dealers' },
+              { icon: '🔧', text: 'Book services with certified automotive professionals' },
+              { icon: '🤖', text: 'Get personalized recommendations based on your preferences' },
+              { icon: '🔒', text: 'Secure transactions with buyer protection' },
+              { icon: '💬', text: '24/7 customer support for all your automotive needs' },
+            ].map((item, i) => (
+              <div key={i} className="autosphere-why-card autosphere-hover-lift">
+                <span className="autosphere-why-icon">{item.icon}</span>
+                <p>{item.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* JOIN AUTOSPHERE SECTION */}
+      <section className="autosphere-join-section">
+        <div className="autosphere-container">
+          <h2 className="autosphere-section-title">Join AutoSphere Today</h2>
+          <p className="autosphere-section-subtitle">Thousands of drivers already trust us</p>
+          <div className="autosphere-join-grid">
+            {[
+              { icon: '🏪', text: 'Browse and purchase vehicles from trusted dealers' },
+              { icon: '📅', text: 'Book automotive services with certified providers' },
+              { icon: '✨', text: 'Get AI-powered vehicle recommendations' },
+              { icon: '🤝', text: 'Connect with automotive professionals' },
+              { icon: '🎁', text: 'Access exclusive deals and offers' },
+            ].map((item, i) => (
+              <div key={i} className="autosphere-join-card">
+                <span className="autosphere-join-icon">{item.icon}</span>
+                <p>{item.text}</p>
+              </div>
+            ))}
+          </div>
+          <div className="autosphere-join-cta">
+            <Link to="/register" className="autosphere-btn autosphere-btn-dark autosphere-btn-lg">
+              Create Free Account
+              <ArrowRightIcon size={20} className="autosphere-ml-2" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* CTA SECTION */}
       <section
         className="autosphere-cta-section"

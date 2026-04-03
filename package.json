@@ -16,10 +16,22 @@
     "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
     "start": "cd backend && npm start"
   },
-  "keywords": ["automotive", "web", "platform", "ai", "recommendations"],
+  "keywords": [
+    "automotive",
+    "web",
+    "platform",
+    "ai",
+    "recommendations"
+  ],
   "author": "AutoSphere Team",
   "license": "MIT",
   "devDependencies": {
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "express-session": "^1.19.0",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0"
   }
 }

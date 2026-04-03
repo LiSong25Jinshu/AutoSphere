@@ -1,0 +1,190 @@
+.dealer-sales-page {
+  padding: 32px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.ds-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 28px;
+}
+
+.ds-page-header h1 {
+  margin: 0 0 4px 0;
+  font-size: 1.6rem;
+  color: #1a1a1a;
+}
+
+.ds-page-header p {
+  margin: 0;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.ds-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.ds-stat-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.ds-stat-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.ds-stat-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.ds-stat-sub {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.ds-controls {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.ds-search {
+  flex: 1;
+  min-width: 200px;
+  padding: 10px 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.ds-search:focus {
+  outline: none;
+  border-color: var(--primary-color, #2c2c2c);
+}
+
+.ds-filters {
+  display: flex;
+  gap: 6px;
+}
+
+.ds-filter-btn {
+  padding: 8px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #555;
+  transition: all 0.2s;
+}
+
+.ds-filter-btn.active {
+  background: var(--primary-color, #2c2c2c);
+  color: white;
+  border-color: var(--primary-color, #2c2c2c);
+}
+
+.ds-table-wrap {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.ds-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ds-table th {
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: #fafafa;
+  border-bottom: 1px solid #eee;
+}
+
+.ds-table td {
+  padding: 14px 16px;
+  font-size: 0.9rem;
+  color: #333;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.ds-table tr:last-child td {
+  border-bottom: none;
+}
+
+.ds-vehicle-cell {
+  font-weight: 600;
+  color: #1a1a1a !important;
+}
+
+.ds-price-cell {
+  font-weight: 700;
+  color: #2e7d32 !important;
+}
+
+.ds-status-badge {
+  color: white;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.ds-action-btn {
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: #555;
+  transition: all 0.2s;
+}
+
+.ds-action-btn:hover {
+  border-color: var(--primary-color, #2c2c2c);
+  color: var(--primary-color, #2c2c2c);
+}
+
+.ds-empty {
+  text-align: center;
+  color: #999;
+  padding: 40px !important;
+}
+
+@media (max-width: 768px) {
+  .dealer-sales-page {
+    padding: 16px;
+  }
+
+  .ds-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ds-table-wrap {
+    overflow-x: auto;
+  }
+}

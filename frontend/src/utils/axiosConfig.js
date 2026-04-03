@@ -1,8 +1,7 @@
 import axios from 'axios';
 
-// Set base URL for API calls
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
-axios.defaults.baseURL = baseURL;
+// No baseURL needed — Vite proxies /api to the backend
+// This avoids CORS issues in development
 
 // Request interceptor to add auth token
 axios.interceptors.request.use(

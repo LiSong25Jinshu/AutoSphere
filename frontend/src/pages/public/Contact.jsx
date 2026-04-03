@@ -55,12 +55,6 @@ const Contact = () => {
       description: 'Mon-Fri 9AM-6PM EST'
     },
     {
-      icon: '📍',
-      title: 'Visit Us',
-      details: '123 Auto Street, East Legon, CC 12345',
-      description: 'Our headquarters'
-    },
-    {
       icon: '🕒',
       title: 'Business Hours',
       details: 'Mon-Fri: 9AM-6PM',

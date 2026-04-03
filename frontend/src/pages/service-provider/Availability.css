@@ -1,0 +1,148 @@
+.availability-page {
+  padding: 32px 24px;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.availability-header {
+  margin-bottom: 24px;
+}
+
+.availability-header h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 6px 0;
+}
+
+.availability-header p {
+  color: #666;
+  margin: 0;
+}
+
+.availability-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  overflow: hidden;
+}
+
+.availability-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.15s;
+}
+
+.availability-row:last-child {
+  border-bottom: none;
+}
+
+.availability-row.disabled {
+  opacity: 0.5;
+}
+
+.availability-day {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 160px;
+}
+
+.day-name {
+  font-weight: 500;
+  color: #1a1a1a;
+  font-size: 0.95rem;
+}
+
+.availability-toggle {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  cursor: pointer;
+}
+
+.availability-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: #ccc;
+  border-radius: 22px;
+  transition: background 0.2s;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  left: 3px;
+  top: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.availability-toggle input:checked + .toggle-slider {
+  background: #2c2c2c;
+}
+
+.availability-toggle input:checked + .toggle-slider::before {
+  transform: translateX(18px);
+}
+
+.availability-times {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.time-input {
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #1a1a1a;
+  background: #fafafa;
+}
+
+.time-separator {
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.unavailable-label {
+  color: #999;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.availability-actions {
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.save-btn {
+  padding: 10px 28px;
+  background: #2c2c2c;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.save-btn:hover {
+  background: #1a1a1a;
+}

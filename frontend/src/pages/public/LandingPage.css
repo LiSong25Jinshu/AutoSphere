@@ -1069,3 +1069,116 @@
     color: var(--autosphere-charcoal);
   }
 }
+
+/* Why AutoSphere Section */
+.autosphere-why-section {
+  padding: var(--autosphere-space-24) 0;
+  background: var(--autosphere-platinum);
+}
+
+.autosphere-section-title {
+  text-align: center;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: var(--autosphere-weight-bold);
+  color: var(--autosphere-charcoal);
+  margin-bottom: var(--autosphere-space-4);
+  letter-spacing: -0.02em;
+}
+
+.autosphere-section-subtitle {
+  text-align: center;
+  font-size: var(--autosphere-text-lg);
+  color: var(--autosphere-medium-grey);
+  margin-bottom: var(--autosphere-space-12);
+}
+
+.autosphere-why-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--autosphere-space-6);
+}
+
+.autosphere-why-card {
+  background: var(--autosphere-white);
+  border-radius: var(--autosphere-radius-xl);
+  padding: var(--autosphere-space-8);
+  text-align: center;
+  border: 1px solid var(--autosphere-silver);
+  box-shadow: var(--autosphere-shadow-sm);
+}
+
+.autosphere-why-icon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: var(--autosphere-space-4);
+}
+
+.autosphere-why-card p {
+  color: var(--autosphere-medium-grey);
+  font-size: var(--autosphere-text-base);
+  line-height: var(--autosphere-leading-relaxed);
+  margin: 0;
+}
+
+/* Join AutoSphere Section */
+.autosphere-join-section {
+  padding: var(--autosphere-space-24) 0;
+  background: var(--autosphere-white);
+}
+
+.autosphere-join-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--autosphere-space-6);
+  margin-bottom: var(--autosphere-space-12);
+}
+
+.autosphere-join-card {
+  background: var(--autosphere-charcoal);
+  border-radius: var(--autosphere-radius-xl);
+  padding: var(--autosphere-space-8);
+  text-align: center;
+  color: var(--autosphere-white);
+}
+
+.autosphere-join-icon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: var(--autosphere-space-4);
+}
+
+.autosphere-join-card p {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: var(--autosphere-text-base);
+  line-height: var(--autosphere-leading-relaxed);
+  margin: 0;
+}
+
+.autosphere-join-cta {
+  text-align: center;
+}
+
+.autosphere-btn-dark {
+  background: var(--autosphere-charcoal);
+  color: var(--autosphere-white);
+  border-color: var(--autosphere-charcoal);
+}
+
+.autosphere-btn-dark:hover {
+  background: var(--autosphere-dark-grey);
+  border-color: var(--autosphere-dark-grey);
+}
+
+@media (max-width: 768px) {
+  .autosphere-why-grid,
+  .autosphere-join-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .autosphere-why-grid,
+  .autosphere-join-grid {
+    grid-template-columns: 1fr;
+  }
+}

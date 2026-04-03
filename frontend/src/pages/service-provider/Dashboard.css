@@ -1,0 +1,441 @@
+/* Service Provider Dashboard Styles - Following User Dashboard Pattern */
+.dashboard-container {
+  padding: var(--auto-spacing-lg);
+  max-width: 1400px;
+  margin: 0 auto;
+  background-color: var(--auto-white);
+  min-height: 100vh;
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--auto-white);
+  padding: var(--auto-spacing-xl);
+  border-radius: var(--auto-radius-lg);
+  box-shadow: var(--auto-shadow-sm);
+  margin-bottom: var(--auto-spacing-xl);
+  border: 1px solid var(--auto-gray-light);
+}
+
+.dashboard-avatar {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+}
+
+.dashboard-welcome {
+  flex: 1;
+  margin-left: 1.5rem;
+}
+
+.dashboard-welcome h1 {
+  margin: 0 0 0.5rem 0;
+  color: #1a1a1a;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.dashboard-welcome p {
+  margin: 0;
+  color: #666;
+  font-size: 1rem;
+}
+
+.settings-btn {
+  padding: 0.75rem 1.5rem;
+  border: 2px solid #2c2c2c;
+  background: transparent;
+  color: #2c2c2c;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.settings-btn:hover {
+  background: #2c2c2c;
+  color: white;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border: 1px solid #e0e0e0;
+}
+
+.stat-card-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stat-info h3 {
+  margin: 0 0 0.5rem 0;
+  color: #666;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.stat-info .stat-number {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.stat-icon {
+  font-size: 2.5rem;
+  opacity: 0.7;
+}
+
+.stat-icon.primary { color: #2c2c2c; }
+.stat-icon.success { color: #4caf50; }
+.stat-icon.secondary { color: #ff9800; }
+.stat-icon.info { color: #2196f3; }
+
+/* Main Content Grid */
+.dashboard-main {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+}
+
+@media (max-width: 968px) {
+  .dashboard-main {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Quick Actions */
+.quick-actions {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom: 1.5rem;
+}
+
+.quick-actions h2 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.action-card {
+  padding: 1.5rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+}
+
+.action-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.action-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.action-icon {
+  margin-right: 0.75rem;
+  font-size: 1.5rem;
+}
+
+.action-icon.primary { color: #2c2c2c; }
+.action-icon.secondary { color: #ff9800; }
+.action-icon.success { color: #4caf50; }
+.action-icon.info { color: #2196f3; }
+
+.action-card h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.action-card p {
+  margin: 0;
+  color: #666;
+  font-size: 0.875rem;
+}
+
+/* Appointments Section */
+.appointments-section {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.appointments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.appointments-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.view-all-btn {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 1px solid #2c2c2c;
+  color: #2c2c2c;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.view-all-btn:hover {
+  background: #2c2c2c;
+  color: white;
+}
+
+.appointments-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.appointment-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.appointment-item:last-child {
+  border-bottom: none;
+}
+
+.appointment-icon {
+  margin-right: 1rem;
+  font-size: 1.5rem;
+  color: #666;
+}
+
+.appointment-details {
+  flex: 1;
+}
+
+.appointment-details h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.appointment-details p {
+  margin: 0;
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.appointment-status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.appointment-status.confirmed {
+  background: #e8f5e8;
+  color: #2e7d32;
+}
+
+.appointment-status.pending {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.appointment-status.in-progress {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.appointment-status.completed {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.no-appointments {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+/* Sidebar */
+.dashboard-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.service-performance,
+.business-summary {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.service-performance h2,
+.business-summary h2 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.service-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.service-item {
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.service-item-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.service-icon {
+  font-size: 1.5rem;
+  margin-right: 0.5rem;
+}
+
+.service-name {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.service-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.service-revenue {
+  font-weight: 600;
+  color: #4caf50;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: #e0e0e0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2196f3 0%, #1976d2 100%);
+  transition: width 0.3s ease;
+}
+
+.view-analytics-btn {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #2196f3;
+  background: transparent;
+  color: #2196f3;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.view-analytics-btn:hover {
+  background: #2196f3;
+  color: white;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.summary-item:last-child {
+  border-bottom: none;
+}
+
+.summary-label {
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.summary-value {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 1rem;
+  }
+  
+  .dashboard-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+  
+  .dashboard-welcome {
+    margin-left: 0;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+  
+  .actions-grid {
+    grid-template-columns: 1fr;
+  }
+}

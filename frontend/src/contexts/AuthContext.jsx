@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 // Initial state
@@ -120,28 +120,6 @@ export const AuthProvider = ({ children }) => {
           localStorage.removeItem('user');
           dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: false });
         }
-      } else if (import.meta.env.DEV) {
-        // Auto-login test user in development mode
-        const testUser = {
-          id: 4,
-          firstName: 'Test',
-          lastName: 'User',
-          email: 'test@autosphere.com',
-          role: 'user',
-          isVerified: true
-        };
-        const testToken = 'test-mode-token';
-        
-        localStorage.setItem('token', testToken);
-        localStorage.setItem('user', JSON.stringify(testUser));
-        
-        dispatch({
-          type: AUTH_ACTIONS.LOAD_USER,
-          payload: { user: testUser, token: testToken },
-        });
-        
-        // Set default authorization header
-        axios.defaults.headers.common['Authorization'] = `Bearer ${testToken}`;
       } else {
         dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: false });
       }
@@ -177,7 +155,7 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: AUTH_ACTIONS.LOGIN_START });
     
     try {
-      const response = await axios.post('http://localhost:5001/api/auth/login', {
+      const response = await axios.post('/api/auth/login', {
         email: emailOrUserData,
         password,
       });
@@ -238,7 +216,7 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: AUTH_ACTIONS.REGISTER_START });
     
     try {
-      const response = await axios.post('http://localhost:5001/api/auth/register', userData);
+      const response = await axios.post('/api/auth/register', userData);
       
       dispatch({ type: AUTH_ACTIONS.REGISTER_SUCCESS });
       
@@ -269,9 +247,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Clear error function
-  const clearError = () => {
+  const clearError = useCallback(() => {
     dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
-  };
+  }, []);
 
   // Check if user has specific role
   const hasRole = (role) => {

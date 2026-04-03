@@ -2,62 +2,79 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import UserDropdown from './UserDropdown';
+import NotificationBell from './NotificationBell';
 
 const DashboardHeader = () => {
   const location = useLocation();
   const { user } = useAuth();
 
-  const isActive = (path) => {
-    return location.pathname === path;
+  const isActive = (path) => location.pathname === path;
+
+  const getNavLinks = () => {
+    const role = user?.role;
+
+    if (role === 'dealer') {
+      return [
+        { to: '/dealer-dashboard', label: 'Dashboard' },
+        { to: '/dealer/inventory', label: 'Inventory' },
+        { to: '/dealer/manage-listings', label: 'Listings' },
+        { to: '/dealer/sales', label: 'Sales' },
+        { to: '/dealer/messages', label: 'Messages' },
+      ];
+    }
+
+    if (role === 'service_provider') {
+      return [
+        { to: '/service-provider-dashboard', label: 'Dashboard' },
+        { to: '/service-provider/appointments', label: 'Appointments' },
+        { to: '/service-provider/services', label: 'Services' },
+        { to: '/service-provider/availability', label: 'Availability' },
+        { to: '/service-provider/messages', label: 'Messages' },
+      ];
+    }
+
+    if (role === 'admin') {
+      return [
+        { to: '/admin-dashboard', label: 'Dashboard' },
+        { to: '/admin/users', label: 'Users' },
+        { to: '/admin/dealers', label: 'Dealers' },
+        { to: '/admin/services', label: 'Services' },
+        { to: '/admin/reports', label: 'Reports' },
+        { to: '/admin/logs', label: 'Logs' },
+        { to: '/admin/system-settings', label: 'Settings' },
+      ];
+    }
+
+    // Default: user (buyer/car owner)
+    return [
+      { to: '/dashboard', label: 'Dashboard' },
+      { to: '/vehicles', label: 'Vehicles' },
+      { to: '/appointments', label: 'Appointments' },
+      { to: '/user-messages', label: 'Messages' },
+    ];
   };
 
   return (
     <header className="auto-nav">
       <div className="auto-nav-content">
-        {/* Auto Logo */}
         <div className="auto-nav-brand">
-          <Link to="/" className="auto-logo">
-            AutoSphere
-          </Link>
+          <Link to="/" className="auto-logo">AutoSphere</Link>
         </div>
 
-        {/* Dashboard Navigation Links */}
         <div className="auto-nav-links">
-          <Link 
-            to="/dashboard" 
-            className={`auto-nav-link ${isActive('/dashboard') ? 'active' : ''}`}
-          >
-            Dashboard
-          </Link>
-          <Link 
-            to="/vehicles" 
-            className={`auto-nav-link ${isActive('/vehicles') ? 'active' : ''}`}
-          >
-            Vehicles
-          </Link>
-          <Link 
-            to="/appointments" 
-            className={`auto-nav-link ${isActive('/appointments') ? 'active' : ''}`}
-          >
-            Appointments
-          </Link>
-          <Link 
-            to="/inventory" 
-            className={`auto-nav-link ${isActive('/inventory') ? 'active' : ''}`}
-          >
-            Inventory
-          </Link>
-          <Link 
-            to="/user-messages" 
-            className={`auto-nav-link ${isActive('/user-messages') ? 'active' : ''}`}
-          >
-            Messages
-          </Link>
+          {getNavLinks().map(({ to, label }) => (
+            <Link
+              key={to}
+              to={to}
+              className={`auto-nav-link ${isActive(to) ? 'active' : ''}`}
+            >
+              {label}
+            </Link>
+          ))}
         </div>
 
-        {/* Dashboard Utility Icons */}
         <div className="auto-nav-utils">
-          <Link to="/notifications" className="auto-nav-util">🔔</Link>
+          <NotificationBell />
           <UserDropdown />
         </div>
       </div>

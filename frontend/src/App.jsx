@@ -1,7 +1,13 @@
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { NotificationProvider } from './contexts/NotificationContext';
+import AdminSystemSettings from './pages/admin/SystemSettings';
+import ServiceProviderAvailability from './pages/service-provider/Availability';
+import ServiceProviderProfilePage from './pages/service-provider/ProfilePage';
 import './styles/auto-theme.css';
 import Footer from './components/Footer';
+import UserDropdown from './components/UserDropdown';
+import DashboardLayout from './components/DashboardLayout';
 
 // Import user pages
 import UserDashboardPage from './pages/user/Dashboard';
@@ -17,14 +23,36 @@ import AICarFinder from './pages/AICarFinder';
 
 // Import admin pages
 import AdminJobs from './pages/admin/Jobs';
+import AdminUsers from './pages/admin/Users';
+import AdminDealers from './pages/admin/Dealers';
+import AdminServices from './pages/admin/Services';
+import AdminReports from './pages/admin/Reports';
+import AdminLogs from './pages/admin/Logs';
 import LandingPage from './pages/public/LandingPage';
 import About from './pages/public/About';
 import Contact from './pages/public/Contact';
 import Login from './pages/public/Login';
 import Register from './pages/public/Register';
 
+// Import dealer pages
+import DealerDashboardPage from './pages/dealer/Dashboard';
+import DealerInventory from './pages/dealer/Inventory';
+import DealerMessages from './pages/dealer/Messages';
+import DealerProfile from './pages/dealer/Profile';
+import DealerSales from './pages/dealer/Sales';
+
+// Import service provider pages
+import ServiceProviderDashboardPage from './pages/service-provider/Dashboard';
+import ServiceProviderBookings from './pages/service-provider/Bookings';
+import ServiceProviderServices from './pages/service-provider/Services';
+import ServiceProviderProfile from './pages/service-provider/Profile';
+import ServiceProviderMessages from './pages/service-provider/Messages';
+
 // Import Google Auth components
 import GoogleAuthCallback from './components/GoogleAuthCallback';
+import ForgotPasswordForm from './components/ForgotPasswordForm';
+import ResetPasswordForm from './components/ResetPasswordForm';
+import EmailVerificationForm from './components/EmailVerificationForm';
 
 // Simple test components
 // Simple placeholder components
@@ -649,17 +677,25 @@ const ServiceProviderDashboard = () => {
 
 const ProtectedRoute = ({ children, requiredRole }) => {
   const { isAuthenticated, isLoading, user } = useAuth();
+  const location = useLocation();
 
   if (isLoading) {
     return <div style={{ padding: '40px 20px', textAlign: 'center' }}>Loading...</div>;
   }
 
   if (!isAuthenticated) {
-    return <LoginPage />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   if (requiredRole && user?.role !== requiredRole) {
-    return <UserDashboard />;
+    // Redirect to the correct dashboard for their role
+    const roleHome = {
+      user: '/dashboard',
+      dealer: '/dealer-dashboard',
+      service_provider: '/service-provider-dashboard',
+      admin: '/admin-dashboard',
+    };
+    return <Navigate to={roleHome[user?.role] || '/dashboard'} replace />;
   }
 
   return children;
@@ -667,9 +703,9 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 
 // Helper function to determine if route should use dashboard layout
 const isDashboardRoute = (path) => {
-  const dashboardRoutes = [
+  const dashboardPrefixes = [
     '/dashboard',
-    '/admin-dashboard', 
+    '/admin-dashboard',
     '/dealer-dashboard',
     '/service-provider-dashboard',
     '/appointments',
@@ -681,9 +717,17 @@ const isDashboardRoute = (path) => {
     '/jobs',
     '/vehicle-insights',
     '/book-service',
-    '/ai-car-finder'
+    '/ai-car-finder',
+    '/messages',
+    '/bookings',
+    // Role-prefixed sub-routes
+    '/dealer/',
+    '/service-provider/',
+    '/admin/',
   ];
-  return dashboardRoutes.includes(path);
+  return dashboardPrefixes.some(prefix =>
+    path === prefix || path.startsWith(prefix)
+  );
 };
 
 // Wrapper component for dashboard routes
@@ -697,16 +741,12 @@ const DashboardRoute = ({ children, requiredRole }) => {
   );
 };
 
-// Import UserDropdown component
-import UserDropdown from './components/UserDropdown';
-import DashboardLayout from './components/DashboardLayout';
-
-// Navigation Component (Auto-inspired minimal design)
+// Navigation Component — Public pages only (dashboard routes have their own header)
 function Navigation() {
   const { user } = useAuth();
-
-  // Don't show navigation on dashboard pages - they have their own header
   const location = useLocation();
+
+  // Dashboard routes use DashboardHeader instead
   if (isDashboardRoute(location.pathname)) {
     return null;
   }
@@ -714,34 +754,18 @@ function Navigation() {
   return (
     <nav className="auto-nav">
       <div className="auto-nav-content">
-        {/* Auto Logo */}
         <div className="auto-nav-brand">
-          <Link to="/" className="auto-logo">
-            AutoSphere
-          </Link>
+          <Link to="/" className="auto-logo">AutoSphere</Link>
         </div>
 
-        {/* Auto Navigation Links */}
+        {/* Public nav links — same for all visitors */}
         <div className="auto-nav-links">
-          {!user ? (
-            <>
-              <Link to="/" className="auto-nav-link">Home</Link>
-              <Link to="/vehicles" className="auto-nav-link">Vehicles</Link>
-              <Link to="/about" className="auto-nav-link">About</Link>
-              <Link to="/contact" className="auto-nav-link">Contact</Link>
-            </>
-          ) : (
-            <>
-              <Link to="/dashboard" className="auto-nav-link">Dashboard</Link>
-              <Link to="/vehicles" className="auto-nav-link">Vehicles</Link>
-              <Link to="/appointments" className="auto-nav-link">Appointments</Link>
-              <Link to="/inventory" className="auto-nav-link">Inventory</Link>
-              <Link to="/user-messages" className="auto-nav-link">Messages</Link>
-            </>
-          )}
+          <Link to="/" className="auto-nav-link">Home</Link>
+          <Link to="/vehicles" className="auto-nav-link">Vehicles</Link>
+          <Link to="/about" className="auto-nav-link">About</Link>
+          <Link to="/contact" className="auto-nav-link">Contact</Link>
         </div>
 
-        {/* Auto Utility Icons */}
         <div className="auto-nav-utils">
           {!user ? (
             <>
@@ -750,7 +774,7 @@ function Navigation() {
             </>
           ) : (
             <>
-              <Link to="/notifications" className="auto-nav-util">🔔</Link>
+              <Link to="/notifications" className="auto-nav-util" title="Notifications">🔔</Link>
               <UserDropdown />
             </>
           )}
@@ -776,6 +800,9 @@ function AppContent() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPasswordForm />} />
+          <Route path="/reset-password" element={<ResetPasswordForm />} />
+              <Route path="/verify-email" element={<EmailVerificationForm />} />
           
           {/* Google OAuth callback routes */}
           <Route path="/auth/google/success" element={<GoogleAuthCallback />} />
@@ -896,22 +923,47 @@ function AppContent() {
               </DashboardRoute>
             } 
           />
+          <Route path="/admin/users" element={<DashboardRoute requiredRole="admin"><AdminUsers /></DashboardRoute>} />
+          <Route path="/admin/dealers" element={<DashboardRoute requiredRole="admin"><AdminDealers /></DashboardRoute>} />
+          <Route path="/admin/services" element={<DashboardRoute requiredRole="admin"><AdminServices /></DashboardRoute>} />
+          <Route path="/admin/reports" element={<DashboardRoute requiredRole="admin"><AdminReports /></DashboardRoute>} />
+          <Route path="/admin/messages" element={<DashboardRoute requiredRole="admin"><AdminDashboard /></DashboardRoute>} />
+          <Route path="/admin/profile" element={<DashboardRoute requiredRole="admin"><AdminDashboard /></DashboardRoute>} />
+          <Route path="/admin/system-settings" element={<DashboardRoute requiredRole="admin"><AdminSystemSettings /></DashboardRoute>} />
+          <Route path="/admin/logs" element={<DashboardRoute requiredRole="admin"><AdminLogs /></DashboardRoute>} />
+
+          {/* Dealer Routes */}
           <Route 
             path="/dealer-dashboard" 
             element={
               <DashboardRoute requiredRole="dealer">
-                <DealerDashboard />
+                <DealerDashboardPage />
               </DashboardRoute>
             } 
           />
+          <Route path="/dealer/my-vehicles" element={<DashboardRoute requiredRole="dealer"><DealerInventory /></DashboardRoute>} />
+          <Route path="/dealer/inventory" element={<DashboardRoute requiredRole="dealer"><DealerInventory /></DashboardRoute>} />
+          <Route path="/dealer/sales" element={<DashboardRoute requiredRole="dealer"><DealerSales /></DashboardRoute>} />
+          <Route path="/dealer/messages" element={<DashboardRoute requiredRole="dealer"><DealerMessages /></DashboardRoute>} />
+          <Route path="/dealer/profile" element={<DashboardRoute requiredRole="dealer"><DealerProfile /></DashboardRoute>} />
+          <Route path="/dealer/manage-listings" element={<DashboardRoute requiredRole="dealer"><DealerInventory /></DashboardRoute>} />
+
+          {/* Service Provider Routes */}
           <Route 
             path="/service-provider-dashboard" 
             element={
-              <DashboardRoute requiredRole="service-provider">
-                <ServiceProviderDashboard />
+              <DashboardRoute requiredRole="service_provider">
+                <ServiceProviderDashboardPage />
               </DashboardRoute>
             } 
           />
+          <Route path="/service-provider/appointments" element={<DashboardRoute requiredRole="service_provider"><ServiceProviderBookings /></DashboardRoute>} />
+          <Route path="/service-provider/bookings" element={<DashboardRoute requiredRole="service_provider"><ServiceProviderBookings /></DashboardRoute>} />
+          <Route path="/service-provider/services" element={<DashboardRoute requiredRole="service_provider"><ServiceProviderServices /></DashboardRoute>} />
+          <Route path="/service-provider/messages" element={<DashboardRoute requiredRole="service_provider"><ServiceProviderMessages /></DashboardRoute>} />
+          <Route path="/service-provider/profile" element={<DashboardRoute requiredRole="service_provider"><ServiceProviderProfilePage /></DashboardRoute>} />
+          <Route path="/service-provider/service-settings" element={<DashboardRoute requiredRole="service_provider"><ServiceProviderProfilePage /></DashboardRoute>} />
+          <Route path="/service-provider/availability" element={<DashboardRoute requiredRole="service_provider"><ServiceProviderAvailability /></DashboardRoute>} />
         </Routes>
       </main>
       {showFooter && <Footer />}
@@ -923,7 +975,9 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <AppContent />
+        <NotificationProvider>
+          <AppContent />
+        </NotificationProvider>
       </Router>
     </AuthProvider>
   );

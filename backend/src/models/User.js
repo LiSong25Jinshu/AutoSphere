@@ -1,6 +1,7 @@
 import { DataTypes, Op } from 'sequelize';
 import { sequelize } from '../config/database.js';
 import { hashPassword, comparePassword } from '../utils/password.js';
+import crypto from 'crypto';
 
 const User = sequelize.define('User', {
   id: {
@@ -231,18 +232,16 @@ User.prototype.validatePassword = async function(password) {
 };
 
 User.prototype.generateEmailVerificationToken = function() {
-  const crypto = require('crypto');
   const token = crypto.randomBytes(32).toString('hex');
   this.emailVerificationToken = token;
-  this.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+  this.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
   return token;
 };
 
 User.prototype.generatePasswordResetToken = function() {
-  const crypto = require('crypto');
   const token = crypto.randomBytes(32).toString('hex');
   this.passwordResetToken = token;
-  this.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+  this.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000);
   return token;
 };
 

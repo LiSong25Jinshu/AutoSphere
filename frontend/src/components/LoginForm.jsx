@@ -1,221 +1,141 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useAuthOperations } from '../hooks/useAuthOperations';
-import GoogleLoginButton from './GoogleLoginButton';
 import '../pages/public/Auth.css';
+
+const SocialButtons = () => {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+      <button
+        type="button"
+        className="btn social google full-width"
+        onClick={() => { window.location.href = '/api/auth/google'; }}
+        aria-label="Continue with Google"
+      >
+        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true" style={{ marginRight: '8px' }}>
+          <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/>
+          <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/>
+          <path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/>
+          <path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z"/>
+        </svg>
+        Continue with Google
+      </button>
+    </div>
+  );
+};
 
 const LoginForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, error, clearError } = useAuth();
+  const { isAuthenticated, user, error, clearError } = useAuth();
   const { handleLogin, isSubmitting } = useAuthOperations();
 
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
   const [loginError, setLoginError] = useState('');
-  const [emailNotVerified, setEmailNotVerified] = useState(false);
 
-  // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      const from = location.state?.from?.pathname || '/dashboard';
-      navigate(from, { replace: true });
+      const from = location.state?.from?.pathname;
+      const roleHome = {
+        user: '/dashboard',
+        dealer: '/dealer-dashboard',
+        service_provider: '/service-provider-dashboard',
+        admin: '/admin-dashboard',
+      };
+      const dest = from && from !== '/login' ? from : (roleHome[user?.role] || '/dashboard');
+      navigate(dest, { replace: true });
     }
-  }, [isAuthenticated, navigate, location]);
+  }, [isAuthenticated, navigate, location, user]);
 
-  // Clear errors when component mounts or form data changes
   useEffect(() => {
     clearError();
     setLoginError('');
-  }, [clearError, formData]);
+  }, [clearError]);
 
   const validateForm = () => {
     const errors = {};
-
-    // Email validation
-    if (!formData.email) {
-      errors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = 'Please enter a valid email address';
-    }
-
-    // Password validation
-    if (!formData.password) {
-      errors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      errors.password = 'Password must be at least 6 characters';
-    }
-
+    if (!formData.email) errors.email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) errors.email = 'Please enter a valid email address';
+    if (!formData.password) errors.password = 'Password is required';
+    else if (formData.password.length < 6) errors.password = 'Password must be at least 6 characters';
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    // Clear validation error for this field
-    if (validationErrors[name]) {
-      setValidationErrors(prev => ({
-        ...prev,
-        [name]: '',
-      }));
-    }
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (validationErrors[name]) setValidationErrors(prev => ({ ...prev, [name]: '' }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-
-    setEmailNotVerified(false);
+    if (!validateForm()) return;
     const result = await handleLogin(formData);
-    
-    if (!result.success) {
-      setLoginError(result.error);
-      
-      // Check if error is related to email verification
-      if (result.error && (
-        result.error.toLowerCase().includes('verify') || 
-        result.error.toLowerCase().includes('verification') ||
-        result.error.toLowerCase().includes('not verified')
-      )) {
-        setEmailNotVerified(true);
-      }
-    }
-  };
-
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
+    if (!result.success) setLoginError(result.error);
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-container">
-        <div className="auth-card">
-          <div className="auth-header">
-            <h1>Sign In</h1>
-            <p>Welcome back to AutoSphere</p>
+    <div className="auth-page auth-page-centered">
+      <div className="auth-card">
+        <div className="auth-header">
+          <h1>Sign In</h1>
+          <p>Welcome back to AutoSphere</p>
+        </div>
+
+        {(error || loginError) && (
+          <div className="error-message">{error || loginError}</div>
+        )}
+
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label htmlFor="email">Email Address</label>
+            <input
+              type="email" id="email" name="email"
+              className={`form-input ${validationErrors.email ? 'error' : ''}`}
+              placeholder="Enter your email"
+              value={formData.email} onChange={handleInputChange}
+              autoComplete="email" autoFocus required
+            />
+            {validationErrors.email && <span className="error-message">{validationErrors.email}</span>}
           </div>
 
-          {(error || loginError) && (
-            <div className="error-message">
-              {error || loginError}
-              {emailNotVerified && (
-                <div style={{ marginTop: '10px' }}>
-                  <Link 
-                    to={`/verify-email?email=${encodeURIComponent(formData.email)}`}
-                    className="auth-link"
-                    style={{ fontSize: '0.9em' }}
-                  >
-                    Click here to resend verification email
-                  </Link>
-                </div>
-              )}
-            </div>
-          )}
-
-          <form className="auth-form" onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label htmlFor="email">Email Address</label>
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
+            <div style={{ position: 'relative' }}>
               <input
-                type="email"
-                id="email"
-                name="email"
-                className={`form-input ${validationErrors.email ? 'error' : ''}`}
-                placeholder="Enter your email"
-                value={formData.email}
-                onChange={handleInputChange}
-                autoComplete="email"
-                autoFocus
-                required
+                type={showPassword ? 'text' : 'password'} id="password" name="password"
+                className={`form-input ${validationErrors.password ? 'error' : ''}`}
+                placeholder="Enter your password"
+                value={formData.password} onChange={handleInputChange}
+                autoComplete="current-password" required
               />
-              {validationErrors.email && (
-                <span className="error-message">{validationErrors.email}</span>
-              )}
+              <button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)} aria-label="Toggle password visibility">
+                {showPassword ? '👁️' : '👁️‍🗨️'}
+              </button>
             </div>
-            
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  id="password"
-                  name="password"
-                  className={`form-input ${validationErrors.password ? 'error' : ''}`}
-                  placeholder="Enter your password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  autoComplete="current-password"
-                  required
-                />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={togglePasswordVisibility}
-                  aria-label="Toggle password visibility"
-                >
-                  {showPassword ? '👁️' : '👁️‍🗨️'}
-                </button>
-              </div>
-              {validationErrors.password && (
-                <span className="error-message">{validationErrors.password}</span>
-              )}
-            </div>
+            {validationErrors.password && <span className="error-message">{validationErrors.password}</span>}
+          </div>
 
-            <button
-              type="submit"
-              className="btn primary full-width"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Signing In...' : 'Sign In'}
-            </button>
+          <button type="submit" className="btn primary full-width" disabled={isSubmitting}>
+            {isSubmitting ? 'Signing In...' : 'Sign In'}
+          </button>
 
-            <div className="auth-divider">
-              <span>OR</span>
-            </div>
+          <div className="form-options">
+            <Link to="/forgot-password" className="forgot-link">Forgot your password?</Link>
+          </div>
 
-            <GoogleLoginButton 
-              disabled={isSubmitting}
-            />
+          <div className="auth-divider"><span>OR</span></div>
 
-            <div className="form-options">
-              <Link to="/forgot-password" className="forgot-link">
-                Forgot your password?
-              </Link>
-            </div>
+          <SocialButtons />
 
-            <div className="auth-footer">
-              <p>
-                Don't have an account?{' '}
-                <Link to="/register" className="auth-link">
-                  Sign up here
-                </Link>
-              </p>
-            </div>
-          </form>
-        </div>
-
-        <div className="auth-info">
-          <h2>Join AutoSphere</h2>
-          <ul>
-            <li>Browse and purchase vehicles from trusted dealers</li>
-            <li>Book automotive services with certified providers</li>
-            <li>Get AI-powered vehicle recommendations</li>
-            <li>Connect with automotive professionals</li>
-            <li>Access exclusive deals and offers</li>
-          </ul>
-        </div>
+          <div className="auth-footer">
+            <p>Don't have an account?{' '}<Link to="/register" className="auth-link">Sign up here</Link></p>
+          </div>
+        </form>
       </div>
     </div>
   );

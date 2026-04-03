@@ -915,3 +915,13 @@
   transform: none !important;
   border-left: 1px solid #e5e7eb !important;
 }
+
+/* Single-column centered auth layout */
+.auth-page-centered {
+  justify-content: center;
+}
+
+.auth-page-centered .auth-card {
+  max-width: 520px;
+  width: 100%;
+}

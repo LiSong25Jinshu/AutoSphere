@@ -3,7 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import './Profile.css';
 
 const UserProfile = () => {
-  const { user, updateUser } = useAuth();
+  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -49,13 +49,7 @@ const UserProfile = () => {
 
     try {
       // Mock API call - replace with real implementation
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Update user context
-      if (updateUser) {
-        updateUser(profileData);
-      }
-      
+      await new Promise(resolve => setTimeout(resolve, 800));
       setIsEditing(false);
       alert('Profile updated successfully!');
     } catch (error) {
