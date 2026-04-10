@@ -6,6 +6,10 @@ import Conversation from './Conversation.js';
 import Message from './Message.js';
 import UserVehicleInteraction from '.../UserVehicleInteraction.js';
 import SavedSearch from './SavedSearch.js';
+import Notification from './Notification.js';
+import PushSubscription from './PushSubscription.js';
+import ServiceOffering from './ServiceOffering.js';
+import ProviderSchedule from './ProviderSchedule.js';
 
 // Define associations
 const defineAssociations = () => {
@@ -50,6 +54,22 @@ const defineAssociations = () => {
   // SavedSearch associations
   User.hasMany(SavedSearch, { foreignKey: 'userId', as: 'savedSearches' });
   SavedSearch.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+  // Notification associations
+  User.hasMany(Notification, { foreignKey: 'userId', as: 'notifications' });
+  Notification.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+  // PushSubscription associations
+  User.hasMany(PushSubscription, { foreignKey: 'userId', as: 'pushSubscriptions' });
+  PushSubscription.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+  // ServiceOffering associations
+  User.hasMany(ServiceOffering, { foreignKey: 'providerId', as: 'serviceOfferings' });
+  ServiceOffering.belongsTo(User, { foreignKey: 'providerId', as: 'provider' });
+
+  // ProviderSchedule associations
+  User.hasOne(ProviderSchedule, { foreignKey: 'providerId', as: 'schedule' });
+  ProviderSchedule.belongsTo(User, { foreignKey: 'providerId', as: 'provider' });
 };
 
 // Initialize associations
@@ -76,6 +96,10 @@ export {
   Message,
   UserVehicleInteraction,
   SavedSearch,
+  Notification,
+  PushSubscription,
+  ServiceOffering,
+  ProviderSchedule,
   syncDatabase,
 };
 
@@ -88,5 +112,7 @@ export default {
   Message,
   UserVehicleInteraction,
   SavedSearch,
+  ServiceOffering,
+  ProviderSchedule,
   syncDatabase,
 };

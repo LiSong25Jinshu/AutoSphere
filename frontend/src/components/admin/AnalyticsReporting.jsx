@@ -18,6 +18,8 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import {
   TrendingUp,
@@ -25,35 +27,30 @@ import {
   Download as DownloadIcon,
   Assessment as AssessmentIcon,
 } from '@mui/icons-material';
+import { adminAPI } from '../../services/api';
 
 const AnalyticsReporting = () => {
-  const [timeRange, setTimeRange] = useState('7d');
+  const [timeRange, setTimeRange] = useState('30');
   const [reportType, setReportType] = useState('overview');
-  const [analyticsData, setAnalyticsData] = useState({});
-  const [topPerformers, setTopPerformers] = useState([]);
+  const [analyticsData, setAnalyticsData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Mock data - in real implementation, this would come from API
   useEffect(() => {
-    const fetchAnalyticsData = () => {
-      setAnalyticsData({
-        totalRevenue: 125000,
-        totalBookings: 342,
-        averageBookingValue: 165,
-        customerSatisfaction: 4.7,
-        revenueGrowth: 12.5,
-        bookingGrowth: 8.3,
-        conversionRate: 3.2,
-      });
-
-      setTopPerformers([
-        { id: 1, name: 'AutoCare Plus', bookings: 45, revenue: 8500, rating: 4.9 },
-        { id: 2, name: 'QuickFix Motors', bookings: 38, revenue: 6200, rating: 4.6 },
-        { id: 3, name: 'Premium Auto Service', bookings: 32, revenue: 9800, rating: 4.8 },
-      ]);
+    const fetchAnalyticsData = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const res = await adminAPI.getAnalytics(parseInt(timeRange));
+        setAnalyticsData(res.data.data);
+      } catch (err) {
+        setError(err.response?.data?.message || 'Failed to load analytics');
+      } finally {
+        setLoading(false);
+      }
     };
-
     fetchAnalyticsData();
-  }, [timeRange, reportType]);
+  }, [timeRange]);
 
   const handleExportReport = () => {
     // Mock export functionality
@@ -99,130 +96,84 @@ const AnalyticsReporting = () => {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h5" gutterBottom>
-          Analytics & Reporting
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<DownloadIcon />}
-          onClick={handleExportReport}
-        >
+        <Typography variant="h5" gutterBottom>Analytics & Reporting</Typography>
+        <Button variant="contained" startIcon={<DownloadIcon />} onClick={handleExportReport}>
           Export Report
         </Button>
       </Box>
 
-      {/* Filters */}
       <Paper sx={{ p: 2, mb: 3 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={3}>
-            <FormControl fullWidth>
-              <InputLabel>Time Range</InputLabel>
-              <Select
-                value={timeRange}
-                label="Time Range"
-                onChange={(e) => setTimeRange(e.target.value)}
-              >
-                <MenuItem value="7d">Last 7 Days</MenuItem>
-                <MenuItem value="30d">Last 30 Days</MenuItem>
-                <MenuItem value="90d">Last 90 Days</MenuItem>
-                <MenuItem value="1y">Last Year</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <FormControl fullWidth>
-              <InputLabel>Report Type</InputLabel>
-              <Select
-                value={reportType}
-                label="Report Type"
-                onChange={(e) => setReportType(e.target.value)}
-              >
-                <MenuItem value="overview">Overview</MenuItem>
-                <MenuItem value="revenue">Revenue</MenuItem>
-                <MenuItem value="bookings">Bookings</MenuItem>
-                <MenuItem value="users">Users</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
+        <FormControl size="small" sx={{ minWidth: 160 }}>
+          <InputLabel>Time Range</InputLabel>
+          <Select value={timeRange} label="Time Range" onChange={(e) => setTimeRange(e.target.value)}>
+            <MenuItem value="7">Last 7 Days</MenuItem>
+            <MenuItem value="30">Last 30 Days</MenuItem>
+            <MenuItem value="90">Last 90 Days</MenuItem>
+            <MenuItem value="365">Last Year</MenuItem>
+          </Select>
+        </FormControl>
       </Paper>
 
-      {/* Key Metrics */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <MetricCard
-            title="Total Revenue"
-            value={`$${analyticsData.totalRevenue?.toLocaleString()}`}
-            change={analyticsData.revenueGrowth}
-            icon={<AssessmentIcon fontSize="large" />}
-            color="success"
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <MetricCard
-            title="Total Bookings"
-            value={analyticsData.totalBookings?.toLocaleString()}
-            change={analyticsData.bookingGrowth}
-            icon={<TrendingUp fontSize="large" />}
-            color="primary"
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <MetricCard
-            title="Avg Booking Value"
-            value={`$${analyticsData.averageBookingValue}`}
-            change={5.2}
-            icon={<AssessmentIcon fontSize="large" />}
-            color="info"
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <MetricCard
-            title="Customer Rating"
-            value={`${analyticsData.customerSatisfaction}/5.0`}
-            change={2.1}
-            icon={<TrendingUp fontSize="large" />}
-            color="warning"
-          />
-        </Grid>
-      </Grid>
+      {loading && <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>}
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      {/* Top Performers */}
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Top Performing Service Providers
-        </Typography>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Provider</TableCell>
-                <TableCell align="right">Bookings</TableCell>
-                <TableCell align="right">Revenue</TableCell>
-                <TableCell align="right">Rating</TableCell>
-                <TableCell align="right">Status</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {topPerformers.map((provider) => (
-                <TableRow key={provider.id}>
-                  <TableCell>{provider.name}</TableCell>
-                  <TableCell align="right">{provider.bookings}</TableCell>
-                  <TableCell align="right">${provider.revenue.toLocaleString()}</TableCell>
-                  <TableCell align="right">{provider.rating}/5.0</TableCell>
-                  <TableCell align="right">
-                    <Chip
-                      label="Active"
-                      color="success"
-                      size="small"
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
+      {!loading && !error && analyticsData && (
+        <>
+          <Grid container spacing={3} sx={{ mb: 3 }}>
+            <Grid item xs={12} sm={6} md={3}>
+              <MetricCard title="Total Bookings" value={analyticsData.totalBookings?.toLocaleString()}
+                icon={<TrendingUp fontSize="large" />} color="primary" />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <MetricCard title="Completed" value={analyticsData.completedBookings?.toLocaleString()}
+                icon={<AssessmentIcon fontSize="large" />} color="success" />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <MetricCard title="Completion Rate" value={`${analyticsData.completionRate}%`}
+                icon={<TrendingUp fontSize="large" />} color="info" />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <MetricCard title="New Users" value={analyticsData.newUsers?.toLocaleString()}
+                icon={<AssessmentIcon fontSize="large" />} color="warning" />
+            </Grid>
+          </Grid>
+
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" gutterBottom>Top Service Providers</Typography>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Provider</TableCell>
+                    <TableCell align="right">Bookings</TableCell>
+                    <TableCell align="right">Avg Rating</TableCell>
+                    <TableCell align="right">Status</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {analyticsData.topProviders?.length > 0 ? (
+                    analyticsData.topProviders.map((p) => (
+                      <TableRow key={p.id}>
+                        <TableCell>
+                          <div>{p.name}</div>
+                          <div style={{ fontSize: '0.75rem', color: '#666' }}>{p.email}</div>
+                        </TableCell>
+                        <TableCell align="right">{p.bookings}</TableCell>
+                        <TableCell align="right">{p.avgRating ? `${p.avgRating}/5.0` : '—'}</TableCell>
+                        <TableCell align="right"><Chip label="Active" color="success" size="small" /></TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={4} align="center">No data for this period</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
+        </>
+      )}
     </Box>
   );
 };

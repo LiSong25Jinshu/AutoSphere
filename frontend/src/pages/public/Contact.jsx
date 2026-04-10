@@ -1,5 +1,8 @@
 import { useState } from 'react';
+import axios from 'axios';
 import './Contact.css';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -10,6 +13,7 @@ const Contact = () => {
   });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [activeFaq, setActiveFaq] = useState(null);
 
   const handleChange = (e) => {
@@ -22,19 +26,20 @@ const Contact = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
-    // Mock form submission
-    setTimeout(() => {
-      console.log('Contact form submitted:', formData);
+    setError('');
+
+    try {
+      await axios.post(`${API_URL}/api/contact`, formData);
       setSubmitted(true);
+      setFormData({ name: '', email: '', subject: '', message: '' });
+      setTimeout(() => setSubmitted(false), 5000);
+    } catch (err) {
+      setError(
+        err.response?.data?.message || 'Failed to send message. Please try again.'
+      );
+    } finally {
       setLoading(false);
-      
-      // Reset form after 3 seconds
-      setTimeout(() => {
-        setSubmitted(false);
-        setFormData({ name: '', email: '', subject: '', message: '' });
-      }, 3000);
-    }, 1000);
+    }
   };
 
   const toggleFaq = (index) => {
@@ -107,6 +112,12 @@ const Contact = () => {
             {submitted && (
               <div className="success-message">
                 Thank you for your message! We'll get back to you soon.
+              </div>
+            )}
+
+            {error && (
+              <div className="error-message" style={{ color: '#f44336', background: '#ffebee', padding: '12px 16px', borderRadius: '6px', marginBottom: '16px', border: '1px solid #ffcdd2' }}>
+                {error}
               </div>
             )}
 

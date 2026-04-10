@@ -1,139 +1,27 @@
-import { useState, useEffect } from 'react';
+import { useNotifications } from '../../contexts/NotificationContext';
 import './Notifications.css';
+import { useState } from 'react';
+
+const TYPE_ICON = { message: '💬', booking: '📅', system: '🔔', alert: '⚠️' };
+
+const fmt = (iso) => {
+  const d = new Date(iso);
+  const diff = Date.now() - d.getTime();
+  if (diff < 60000) return 'just now';
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+  return d.toLocaleDateString();
+};
 
 const UserNotifications = () => {
-  const [notifications, setNotifications] = useState([]);
+  const { notifications, unreadCount, loading, markRead, markAllRead, remove, reload } = useNotifications();
   const [filter, setFilter] = useState('all');
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
-
-  const fetchNotifications = async () => {
-    setLoading(true);
-    // Mock data - replace with real API call
-    setTimeout(() => {
-      setNotifications([
-        {
-          id: 1,
-          type: 'appointment',
-          title: 'Appointment Confirmed',
-          message: 'Your oil change appointment with QuickFix Motors is confirmed for tomorrow at 10:00 AM.',
-          timestamp: '2024-01-20T14:30:00Z',
-          read: false,
-          icon: '📅'
-        },
-        {
-          id: 2,
-          type: 'message',
-          title: 'New Message',
-          message: 'AutoCare Plus sent you a message about your brake service.',
-          timestamp: '2024-01-20T12:15:00Z',
-          read: false,
-          icon: '💬'
-        },
-        {
-          id: 3,
-          type: 'reminder',
-          title: 'Service Reminder',
-          message: 'Your vehicle is due for maintenance. Book your next service appointment.',
-          timestamp: '2024-01-19T09:00:00Z',
-          read: true,
-          icon: '🔔'
-        },
-        {
-          id: 4,
-          type: 'promotion',
-          title: 'Special Offer',
-          message: '20% off on tire services this week! Book now and save.',
-          timestamp: '2024-01-18T16:45:00Z',
-          read: true,
-          icon: '🎉'
-        },
-        {
-          id: 5,
-          type: 'system',
-          title: 'Profile Updated',
-          message: 'Your profile information has been successfully updated.',
-          timestamp: '2024-01-17T11:20:00Z',
-          read: true,
-          icon: '✅'
-        }
-      ]);
-      setLoading(false);
-    }, 1000);
-  };
-
-  const filteredNotifications = notifications.filter(notification => {
+  const filtered = notifications.filter((n) => {
     if (filter === 'all') return true;
-    if (filter === 'unread') return !notification.read;
-    return notification.type === filter;
+    if (filter === 'unread') return !n.read;
+    return n.type === filter;
   });
-
-  const markAsRead = (notificationId) => {
-    setNotifications(prev =>
-      prev.map(notification =>
-        notification.id === notificationId
-          ? { ...notification, read: true }
-          : notification
-      )
-    );
-  };
-
-  const markAllAsRead = () => {
-    setNotifications(prev =>
-      prev.map(notification => ({ ...notification, read: true }))
-    );
-  };
-
-  const deleteNotification = (notificationId) => {
-    setNotifications(prev =>
-      prev.filter(notification => notification.id !== notificationId)
-    );
-  };
-
-  const getTypeColor = (type) => {
-    switch (type) {
-      case 'appointment': return 'type-appointment';
-      case 'message': return 'type-message';
-      case 'reminder': return 'type-reminder';
-      case 'promotion': return 'type-promotion';
-      case 'system': return 'type-system';
-      default: return 'type-default';
-    }
-  };
-
-  const formatTime = (timestamp) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
-    
-    if (diffInHours < 1) {
-      const diffInMinutes = Math.floor((now - date) / (1000 * 60));
-      return `${diffInMinutes}m ago`;
-    } else if (diffInHours < 24) {
-      return `${diffInHours}h ago`;
-    } else {
-      const diffInDays = Math.floor(diffInHours / 24);
-      return `${diffInDays}d ago`;
-    }
-  };
-
-  const unreadCount = notifications.filter(n => !n.read).length;
-
-  if (loading) {
-    return (
-      <div className="notifications-page">
-        <div className="notifications-container">
-          <div className="loading-state">
-            <div className="loading-spinner"></div>
-            <p>Loading notifications...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="notifications-page">
@@ -145,113 +33,101 @@ const UserNotifications = () => {
           </div>
           <div className="header-actions">
             {unreadCount > 0 && (
-              <button className="btn secondary" onClick={markAllAsRead}>
+              <button className="btn secondary" onClick={markAllRead}>
                 Mark All Read ({unreadCount})
               </button>
             )}
+            <button className="btn secondary" onClick={reload} style={{ marginLeft: '0.5rem' }}>
+              Refresh
+            </button>
           </div>
         </div>
 
         <div className="notifications-filters">
-          <button 
-            className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
-            onClick={() => setFilter('all')}
-          >
-            All ({notifications.length})
-          </button>
-          <button 
-            className={`filter-btn ${filter === 'unread' ? 'active' : ''}`}
-            onClick={() => setFilter('unread')}
-          >
-            Unread ({unreadCount})
-          </button>
-          <button 
-            className={`filter-btn ${filter === 'appointment' ? 'active' : ''}`}
-            onClick={() => setFilter('appointment')}
-          >
-            Appointments
-          </button>
-          <button 
-            className={`filter-btn ${filter === 'message' ? 'active' : ''}`}
-            onClick={() => setFilter('message')}
-          >
-            Messages
-          </button>
-          <button 
-            className={`filter-btn ${filter === 'reminder' ? 'active' : ''}`}
-            onClick={() => setFilter('reminder')}
-          >
-            Reminders
-          </button>
+          {[
+            ['all', `All (${notifications.length})`],
+            ['unread', `Unread (${unreadCount})`],
+            ['booking', 'Bookings'],
+            ['message', 'Messages'],
+            ['system', 'System'],
+          ].map(([val, label]) => (
+            <button
+              key={val}
+              className={`filter-btn ${filter === val ? 'active' : ''}`}
+              onClick={() => setFilter(val)}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
-        <div className="notifications-list">
-          {filteredNotifications.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-icon">🔔</div>
-              <h3>No notifications found</h3>
-              <p>
-                {filter === 'all' 
-                  ? "You're all caught up! No notifications to show."
-                  : `No ${filter} notifications found.`
-                }
-              </p>
-            </div>
-          ) : (
-            filteredNotifications.map(notification => (
-              <div 
-                key={notification.id} 
-                className={`notification-item ${!notification.read ? 'unread' : ''}`}
-              >
-                <div className="notification-content">
-                  <div className="notification-header">
-                    <div className="notification-icon">
-                      {notification.icon}
-                    </div>
-                    <div className="notification-info">
-                      <h4>{notification.title}</h4>
-                      <span className={`notification-type ${getTypeColor(notification.type)}`}>
-                        {notification.type}
-                      </span>
-                    </div>
-                    <div className="notification-meta">
-                      <span className="notification-time">
-                        {formatTime(notification.timestamp)}
-                      </span>
-                      {!notification.read && (
-                        <div className="unread-dot"></div>
-                      )}
-                    </div>
-                  </div>
-                  <p className="notification-message">
-                    {notification.message}
-                  </p>
-                </div>
-                
-                <div className="notification-actions">
-                  {!notification.read && (
-                    <button 
-                      className="action-btn"
-                      onClick={() => markAsRead(notification.id)}
-                      title="Mark as read"
-                    >
-                      ✓
-                    </button>
-                  )}
-                  <button 
-                    className="action-btn delete"
-                    onClick={() => deleteNotification(notification.id)}
-                    title="Delete notification"
-                  >
-                    🗑️
-                  </button>
-                </div>
+        {loading ? (
+          <div className="loading-state">
+            <div className="loading-spinner" />
+            <p>Loading notifications...</p>
+          </div>
+        ) : (
+          <div className="notifications-list">
+            {filtered.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-icon">🔔</div>
+                <h3>No notifications found</h3>
+                <p>
+                  {filter === 'all'
+                    ? "You're all caught up!"
+                    : `No ${filter} notifications found.`}
+                </p>
               </div>
-            ))
-          )}
-        </div>
+            ) : (
+              filtered.map((n) => (
+                <div
+                  key={n.id}
+                  className={`notification-item ${!n.read ? 'unread' : ''}`}
+                  onClick={() => !n.read && markRead(n.id)}
+                  style={{ cursor: !n.read ? 'pointer' : 'default' }}
+                >
+                  <div className="notification-content">
+                    <div className="notification-header">
+                      <div className="notification-icon">
+                        {TYPE_ICON[n.type] || '🔔'}
+                      </div>
+                      <div className="notification-info">
+                        <h4>{n.title}</h4>
+                        <span className={`notification-type type-${n.type}`}>{n.type}</span>
+                      </div>
+                      <div className="notification-meta">
+                        <span className="notification-time">{fmt(n.timestamp || n.createdAt)}</span>
+                        {!n.read && <div className="unread-dot" />}
+                      </div>
+                    </div>
+                    <p className="notification-message">{n.message}</p>
+                  </div>
 
-        {filteredNotifications.length > 0 && (
+                  <div className="notification-actions">
+                    {!n.read && (
+                      <button
+                        className="action-btn"
+                        onClick={(e) => { e.stopPropagation(); markRead(n.id); }}
+                        title="Mark as read"
+                      >
+                        ✓
+                      </button>
+                    )}
+                    <button
+                      className="action-btn delete"
+                      onClick={(e) => { e.stopPropagation(); remove(n.id); }}
+                      title="Delete"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {filtered.length > 0 && (
           <div className="notifications-summary">
             <div className="summary-stats">
               <div className="summary-stat">
@@ -263,7 +139,7 @@ const UserNotifications = () => {
                 <span className="stat-label">Unread</span>
               </div>
               <div className="summary-stat">
-                <span className="stat-number">{notifications.filter(n => n.read).length}</span>
+                <span className="stat-number">{notifications.length - unreadCount}</span>
                 <span className="stat-label">Read</span>
               </div>
             </div>

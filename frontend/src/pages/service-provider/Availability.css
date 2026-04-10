@@ -146,3 +146,29 @@
 .save-btn:hover {
   background: #1a1a1a;
 }
+
+.avail-loading {
+  padding: 2rem;
+  text-align: center;
+  color: #6b7280;
+}
+
+.avail-error {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+.avail-success {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}

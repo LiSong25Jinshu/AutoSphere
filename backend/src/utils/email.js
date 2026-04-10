@@ -3,16 +3,67 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Create transporter (singleton)
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.SMTP_PORT) || 587,
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+// ─── Transporter factory ──────────────────────────────────────────────────────
+// In development: auto-creates an Ethereal test account — no SMTP config needed.
+// Emails are captured at https://ethereal.email — the preview URL is logged.
+// In production: uses SMTP_* env vars (Gmail, SendGrid, AWS SES, etc.)
+
+let _transporter = null;
+
+const getTransporter = async () => {
+  if (_transporter) return _transporter;
+
+  const isConfigured =
+    process.env.SMTP_USER &&
+    process.env.SMTP_PASS &&
+    !process.env.SMTP_USER.includes('your-email') &&
+    !process.env.SMTP_PASS.includes('your-app-password');
+
+  if (process.env.NODE_ENV !== 'production' && !isConfigured) {
+    // Auto-create a free Ethereal test account
+    const testAccount = await nodemailer.createTestAccount();
+    console.log('📧 Email: using Ethereal test account');
+    console.log(`   User: ${testAccount.user}`);
+    console.log(`   Pass: ${testAccount.pass}`);
+    console.log('   Preview emails at https://ethereal.email/messages');
+
+    _transporter = nodemailer.createTransport({
+      host: 'smtp.ethereal.email',
+      port: 587,
+      secure: false,
+      auth: { user: testAccount.user, pass: testAccount.pass },
+    });
+  } else {
+    _transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.SMTP_PORT) || 587,
+      secure: parseInt(process.env.SMTP_PORT) === 465,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+  }
+
+  return _transporter;
+};
+
+/**
+ * Send an email. Logs the Ethereal preview URL in development.
+ */
+const sendMail = async (mailOptions) => {
+  const transport = await getTransporter();
+  const info = await transport.sendMail(mailOptions);
+
+  if (process.env.NODE_ENV !== 'production') {
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    if (previewUrl) {
+      console.log(`📧 Email preview: ${previewUrl}`);
+    }
+  }
+
+  return info;
+};
 
 /**
  * Send email verification email
@@ -61,7 +112,7 @@ export const sendVerificationEmail = async (email, firstName, verificationToken)
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
+    const info = await sendMail(mailOptions);
     console.log('Verification email sent:', info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
@@ -119,7 +170,7 @@ export const sendPasswordResetEmail = async (email, firstName, resetToken) => {
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
+    const info = await sendMail(mailOptions);
     console.log('Password reset email sent:', info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
@@ -172,7 +223,7 @@ export const sendWelcomeEmail = async (email, firstName) => {
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
+    const info = await sendMail(mailOptions);
     console.log('Welcome email sent:', info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
@@ -263,7 +314,7 @@ export const sendBookingConfirmationEmail = async (email, firstName, bookingDeta
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
+    const info = await sendMail(mailOptions);
     console.log('Booking confirmation email sent:', info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
@@ -390,7 +441,7 @@ export const sendBookingStatusChangeEmail = async (email, firstName, bookingDeta
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
+    const info = await sendMail(mailOptions);
     console.log('Booking status change email sent:', info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
@@ -497,7 +548,7 @@ export const sendServiceProviderBookingNotification = async (email, providerName
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
+    const info = await sendMail(mailOptions);
     console.log('Service provider booking notification sent:', info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
@@ -600,7 +651,7 @@ export const sendBookingRescheduleEmail = async (email, firstName, bookingDetail
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
+    const info = await sendMail(mailOptions);
     console.log('Booking reschedule email sent:', info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
@@ -685,11 +736,62 @@ export const sendBookingCancellationEmail = async (email, firstName, bookingDeta
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
+    const info = await sendMail(mailOptions);
     console.log('Booking cancellation email sent:', info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error('Failed to send booking cancellation email:', error);
     return { success: false, error: error.message };
   }
+};
+
+/**
+ * Send contact form submission email to support
+ * @param {Object} contactData - { name, email, subject, message }
+ */
+export const sendContactEmail = async ({ name, email, subject, message }) => {
+  const supportEmail = process.env.SUPPORT_EMAIL || process.env.EMAIL_FROM || 'support@autosphere.com';
+
+  const mailOptions = {
+    from: process.env.EMAIL_FROM || 'noreply@autosphere.com',
+    to: supportEmail,
+    replyTo: email,
+    subject: `[Contact Form] ${subject}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #1976d2;">New Contact Form Submission</h2>
+
+        <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 8px 0; color: #666; width: 100px;"><strong>Name:</strong></td>
+              <td style="padding: 8px 0;">${name}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666;"><strong>Email:</strong></td>
+              <td style="padding: 8px 0;"><a href="mailto:${email}">${email}</a></td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666;"><strong>Subject:</strong></td>
+              <td style="padding: 8px 0;">${subject}</td>
+            </tr>
+          </table>
+        </div>
+
+        <div style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px;">
+          <h3 style="margin-top: 0; color: #333;">Message</h3>
+          <p style="white-space: pre-wrap; color: #444;">${message}</p>
+        </div>
+
+        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+        <p style="color: #999; font-size: 12px;">
+          Reply directly to this email to respond to ${name} at ${email}
+        </p>
+      </div>
+    `,
+  };
+
+  const info = await sendMail(mailOptions);
+  console.log('Contact form email sent:', info.messageId);
+  return { success: true, messageId: info.messageId };
 };

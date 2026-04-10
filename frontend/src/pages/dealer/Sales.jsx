@@ -17,14 +17,14 @@ const DealerSales = () => {
     setLoading(true);
     setError('');
     try {
-      const res = await vehicleAPI.getByDealer(user?.id);
-      setVehicles(res.data?.data || res.data || []);
+      const res = await vehicleAPI.getMyVehicles();
+      setVehicles(res.data?.data || []);
     } catch (e) {
       setError(e.response?.data?.message || 'Failed to load vehicles');
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, []);
 
   useEffect(() => { fetchVehicles(); }, [fetchVehicles]);
 

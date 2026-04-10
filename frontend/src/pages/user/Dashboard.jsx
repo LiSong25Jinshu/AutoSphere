@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { bookingAPI, messageAPI } from '../../services/api';
 import './Dashboard.css';
 
 const UserDashboard = () => {
@@ -11,74 +12,69 @@ const UserDashboard = () => {
     totalAppointments: 0,
     completedServices: 0,
     savedVehicles: 0,
-    unreadMessages: 0
+    unreadMessages: 0,
   });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchUserData();
   }, []);
 
   const fetchUserData = async () => {
-    // Mock data - replace with real API calls
-    setAppointments([
-      {
-        id: 1,
-        serviceType: 'Oil Change',
-        date: '2024-01-25',
-        time: '10:00 AM',
-        status: 'confirmed',
-        provider: 'QuickFix Motors'
-      },
-      {
-        id: 2,
-        serviceType: 'Brake Service',
-        date: '2024-01-30',
-        time: '2:00 PM',
-        status: 'pending',
-        provider: 'AutoCare Plus'
-      }
-    ]);
+    try {
+      const [bookingsRes, conversationsRes] = await Promise.allSettled([
+        bookingAPI.getAll({ limit: 20 }),
+        messageAPI.getConversations({ limit: 1 }),
+      ]);
 
-    setStats({
-      totalAppointments: 12,
-      completedServices: 8,
-      savedVehicles: 5,
-      unreadMessages: 3
-    });
+      if (bookingsRes.status === 'fulfilled' && bookingsRes.value.data.success) {
+        const allBookings = bookingsRes.value.data.data || [];
+        const upcoming = allBookings
+          .filter(b => ['pending', 'confirmed'].includes(b.status))
+          .slice(0, 3);
+
+        setAppointments(upcoming.map(b => ({
+          id: b.id,
+          serviceType: b.serviceType || b.title || 'Service',
+          date: b.scheduledDate ? new Date(b.scheduledDate).toLocaleDateString() : 'TBD',
+          time: b.scheduledTime || 'TBD',
+          status: b.status,
+          provider: b.serviceProvider
+            ? `${b.serviceProvider.firstName} ${b.serviceProvider.lastName}`
+            : 'Provider',
+        })));
+
+        const completed = allBookings.filter(b => b.status === 'completed').length;
+        setStats(prev => ({
+          ...prev,
+          totalAppointments: bookingsRes.value.data.pagination?.total || allBookings.length,
+          completedServices: completed,
+        }));
+      }
+
+      // Unread messages count from conversations
+      if (conversationsRes.status === 'fulfilled' && conversationsRes.value.data.success) {
+        const conversations = conversationsRes.value.data.data || [];
+        const unread = conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
+        setStats(prev => ({ ...prev, unreadMessages: unread }));
+      }
+    } catch (err) {
+      console.error('Dashboard fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const quickActions = [
-    {
-      title: 'Book Service',
-      description: 'Schedule maintenance or repairs',
-      icon: '🔧',
-      className: 'primary',
-      action: () => navigate('/book-service')
-    },
-    {
-      title: 'Browse Vehicles',
-      description: 'Find your next car',
-      icon: '🚗',
-      className: 'secondary',
-      action: () => navigate('/vehicles')
-    },
-    {
-      title: 'Messages',
-      description: 'Chat with dealers & providers',
-      icon: '💬',
-      className: 'success',
-      action: () => navigate('/user-messages')
-    },
-    {
-      title: 'Vehicle Insights',
-      description: 'Track your vehicle data',
-      icon: '📊',
-      className: 'info',
-      action: () => navigate('/vehicle-insights')
-    }
+    { title: 'Book Service', description: 'Schedule maintenance or repairs', icon: '🔧', className: 'primary', action: () => navigate('/book-service') },
+    { title: 'Browse Vehicles', description: 'Find your next car', icon: '🚗', className: 'secondary', action: () => navigate('/vehicles') },
+    { title: 'Messages', description: 'Chat with dealers & providers', icon: '💬', className: 'success', action: () => navigate('/user-messages') },
+    { title: 'Vehicle Insights', description: 'Track your vehicle data', icon: '📊', className: 'info', action: () => navigate('/vehicle-insights') },
   ];
 
-  const completionRate = Math.round((stats.completedServices / stats.totalAppointments) * 100);
+  const completionRate = stats.totalAppointments > 0
+    ? Math.round((stats.completedServices / stats.totalAppointments) * 100)
+    : 0;
 
   return (
     <div className="dashboard-container">

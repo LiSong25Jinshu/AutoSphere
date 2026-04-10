@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import axios from 'axios';
 import './Profile.css';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+
 const UserProfile = () => {
-  const { user } = useAuth();
+  const { user, token, updateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
   const [profileData, setProfileData] = useState({
     firstName: '',
     lastName: '',
@@ -16,7 +21,7 @@ const UserProfile = () => {
     state: '',
     zipCode: '',
     dateOfBirth: '',
-    bio: ''
+    bio: '',
   });
 
   useEffect(() => {
@@ -31,36 +36,50 @@ const UserProfile = () => {
         state: user.state || '',
         zipCode: user.zipCode || '',
         dateOfBirth: user.dateOfBirth || '',
-        bio: user.bio || ''
+        bio: user.bio || '',
       });
     }
   }, [user]);
 
   const handleChange = (e) => {
-    setProfileData({
-      ...profileData,
-      [e.target.name]: e.target.value
-    });
+    setProfileData({ ...profileData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setSuccessMsg('');
+    setErrorMsg('');
 
     try {
-      // Mock API call - replace with real implementation
-      await new Promise(resolve => setTimeout(resolve, 800));
-      setIsEditing(false);
-      alert('Profile updated successfully!');
+      const res = await axios.put(`${API_URL}/api/users/profile`, {
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        phone: profileData.phone,
+        email: profileData.email,
+        address: profileData.address,
+        city: profileData.city,
+        state: profileData.state,
+        zipCode: profileData.zipCode,
+        bio: profileData.bio,
+        dateOfBirth: profileData.dateOfBirth || undefined,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.data.success) {
+        updateUser(res.data.data);
+        setSuccessMsg('Profile updated successfully!');
+        setIsEditing(false);
+      }
     } catch (error) {
-      alert('Failed to update profile. Please try again.');
+      setErrorMsg(error.response?.data?.message || 'Failed to update profile. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleCancel = () => {
-    // Reset form data
     if (user) {
       setProfileData({
         firstName: user.firstName || '',
@@ -72,10 +91,11 @@ const UserProfile = () => {
         state: user.state || '',
         zipCode: user.zipCode || '',
         dateOfBirth: user.dateOfBirth || '',
-        bio: user.bio || ''
+        bio: user.bio || '',
       });
     }
     setIsEditing(false);
+    setErrorMsg('');
   };
 
   return (
@@ -136,6 +156,8 @@ const UserProfile = () => {
           <div className="profile-main">
             <div className="profile-section">
               <h2>Personal Information</h2>
+              {successMsg && <div style={{ background: '#e8f5e9', color: '#2e7d32', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem' }}>{successMsg}</div>}
+              {errorMsg && <div style={{ background: '#ffebee', color: '#d32f2f', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem' }}>{errorMsg}</div>}
               <form className="profile-form" onSubmit={handleSubmit}>
                 <div className="form-row">
                   <div className="form-group">

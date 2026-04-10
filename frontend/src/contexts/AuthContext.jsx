@@ -87,6 +87,11 @@ const authReducer = (state, action) => {
         ...state,
         isLoading: action.payload,
       };
+    case 'UPDATE_USER':
+      return {
+        ...state,
+        user: { ...state.user, ...action.payload },
+      };
     default:
       return state;
   }
@@ -251,6 +256,13 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
   }, []);
 
+  // Update user data in context + localStorage (used after profile save)
+  const updateUser = useCallback((updatedUser) => {
+    const merged = { ...state.user, ...updatedUser };
+    localStorage.setItem('user', JSON.stringify(merged));
+    dispatch({ type: 'UPDATE_USER', payload: updatedUser });
+  }, [state.user]);
+
   // Check if user has specific role
   const hasRole = (role) => {
     return state.user?.role === role;
@@ -268,6 +280,7 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     clearError,
+    updateUser,
     hasRole,
     hasAnyRole,
   };

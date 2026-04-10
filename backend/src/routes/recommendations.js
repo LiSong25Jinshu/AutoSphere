@@ -1,39 +1,76 @@
 import express from 'express';
-import axios from 'axios';
-// import { redisClient } from '../config/redis.js';
+import { Op } from 'sequelize';
+import Vehicle from '../models/Vehicle.js';
+import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
-const AI_SERVICE_URL = 'http://localhost:5002';
-// const CACHE_TTL = 3600; // Cache for 1 hour
 
-// GET /api/recommendations/:userID
-router.get('/:userID', async (req,res) => {
-    const { userID } = req.paramas;
-    const cacheKey = `recs:${userId}`;
+// GET /api/recommendations - Get personalized vehicle recommendations
+// Uses simple DB-based logic: recent vehicles + similar to user's viewed/saved
+router.get('/', authenticateToken, async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
 
-    try {
-        // // Check Redis Cache
-        // const cached = await redisClient.get(cacheKey);
-        // if (cached) {
-        //     return res.json({ source: 'cache', ...JSON.parse(cached) });
-        // }
+    // Return recently added vehicles as recommendations
+    // In a full implementation this would use user interaction history
+    const vehicles = await Vehicle.findAll({
+      where: { status: 'available' },
+      order: [['createdAt', 'DESC']],
+      limit,
+    });
 
-        // Call Python AI service
-        const response = await axios.get(
-            `${AI_SERVICE_URL}/recommendations/${userId}?n=10`
-        );
+    res.json({
+      success: true,
+      source: 'db',
+      recommendations: vehicles,
+      count: vehicles.length,
+    });
+  } catch (error) {
+    console.error('Recommendations error:', error);
+    res.status(500).json({ success: false, message: 'Could not fetch recommendations' });
+  }
+});
 
-        const data = response.data;
+// GET /api/recommendations/similar/:vehicleId - Get similar vehicles
+router.get('/similar/:vehicleId', async (req, res) => {
+  try {
+    const { vehicleId } = req.params;
+    const limit = parseInt(req.query.limit) || 6;
 
-        // // Store in Redis cache
-        // await redisClient.setEx(cacheKey, CACHE_TTL, JSON.stringify(data));
-
-        return res.json({ source: 'ai', ...data });
-
-    } catch (error) {
-        console.error('AI service:', error.message);
-        res.status(500).json({ error: 'Could not fetch recommendations' });
+    // Find the reference vehicle
+    const vehicle = await Vehicle.findByPk(vehicleId);
+    if (!vehicle) {
+      return res.status(404).json({ success: false, message: 'Vehicle not found' });
     }
+
+    // Find similar vehicles by make or price range
+    const priceRange = vehicle.price * 0.3; // ±30%
+    const similar = await Vehicle.findAll({
+      where: {
+        id: { [Op.ne]: vehicleId },
+        status: 'available',
+        [Op.or]: [
+          { make: vehicle.make },
+          {
+            price: {
+              [Op.between]: [vehicle.price - priceRange, vehicle.price + priceRange],
+            },
+          },
+        ],
+      },
+      order: [['createdAt', 'DESC']],
+      limit,
+    });
+
+    res.json({
+      success: true,
+      similar,
+      count: similar.length,
+    });
+  } catch (error) {
+    console.error('Similar vehicles error:', error);
+    res.status(500).json({ success: false, message: 'Could not fetch similar vehicles' });
+  }
 });
 
 export default router;

@@ -1,216 +1,135 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { bookingAPI } from '../../services/api';
 import './Dashboard.css';
+
+const fmt = (time) => {
+  if (!time) return '';
+  const [h, m] = time.split(':');
+  const hour = parseInt(h);
+  return `${hour > 12 ? hour - 12 : hour || 12}:${m} ${hour >= 12 ? 'PM' : 'AM'}`;
+};
+
+const STATUS_CLASS = {
+  confirmed: 'confirmed',
+  pending: 'pending',
+  in_progress: 'in-progress',
+  completed: 'completed',
+};
 
 const ServiceProviderDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [bookings, setBookings] = useState([]);
-  const [stats, setStats] = useState({
-    todaysBookings: 0,
-    weeklyRevenue: 0,
-    customerRating: 0,
-    activeServices: 0
-  });
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    fetchDashboardData();
+    const load = async () => {
+      try {
+        const res = await bookingAPI.getProviderStats();
+        if (res.data?.success) setStats(res.data.data);
+      } catch (e) {
+        setError('Could not load dashboard data.');
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
   }, []);
 
-  const fetchDashboardData = async () => {
-    // Mock data - replace with real API calls
-    setBookings([
-      {
-        id: 1,
-        customerName: 'John Smith',
-        serviceType: 'Oil Change',
-        vehicle: '2020 Honda Civic',
-        time: '10:00 AM',
-        status: 'in_progress',
-        price: '$45'
-      },
-      {
-        id: 2,
-        customerName: 'Sarah Johnson',
-        serviceType: 'Premium Car Wash',
-        vehicle: '2019 BMW X5',
-        time: '11:30 AM',
-        status: 'confirmed',
-        price: '$35'
-      },
-      {
-        id: 3,
-        customerName: 'Mike Chen',
-        serviceType: 'Brake Service',
-        vehicle: '2021 Toyota Camry',
-        time: '2:00 PM',
-        status: 'pending',
-        price: '$120'
-      }
-    ]);
-
-    setStats({
-      todaysBookings: 12,
-      weeklyRevenue: 2850,
-      customerRating: 4.8,
-      activeServices: 23
-    });
-  };
+  const statCards = stats
+    ? [
+        { label: "Today's Bookings", value: stats.todaysCount, icon: '📅', note: `${stats.pendingCount} pending` },
+        { label: 'Weekly Revenue', value: `$${stats.weeklyRevenue.toLocaleString()}`, icon: '💰', note: 'This week' },
+        { label: 'Customer Rating', value: stats.avgRating ?? '—', icon: '⭐', note: stats.ratingCount ? `${stats.ratingCount} reviews` : 'No reviews yet' },
+        { label: 'Completed', value: stats.completedTotal, icon: '✅', note: 'All time' },
+      ]
+    : [];
 
   const quickActions = [
-    {
-      title: 'Manage Schedule',
-      description: 'View and update availability',
-      icon: '📅',
-      className: 'primary',
-      action: () => navigate('/service-provider/schedule')
-    },
-    {
-      title: 'Add Service',
-      description: 'Create new service offering',
-      icon: '➕',
-      className: 'secondary',
-      action: () => navigate('/service-provider/services')
-    },
-    {
-      title: 'View Messages',
-      description: 'Chat with customers',
-      icon: '💬',
-      className: 'success',
-      action: () => navigate('/service-provider/messages')
-    },
-    {
-      title: 'View Bookings',
-      description: 'Manage all appointments',
-      icon: '📋',
-      className: 'info',
-      action: () => navigate('/service-provider/bookings')
-    }
+    { title: 'Manage Schedule', icon: '📅', path: '/service-provider/schedule' },
+    { title: 'Add Service', icon: '➕', path: '/service-provider/services' },
+    { title: 'Messages', icon: '💬', path: '/service-provider/messages' },
+    { title: 'All Bookings', icon: '📋', path: '/service-provider/bookings' },
   ];
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'confirmed': return 'confirmed';
-      case 'pending': return 'pending';
-      case 'in_progress': return 'in-progress';
-      case 'completed': return 'completed';
-      default: return 'pending';
-    }
-  };
 
   return (
     <div className="dashboard-container">
-      {/* Welcome Header */}
       <div className="dashboard-header">
-        <div className="dashboard-avatar">
-          🔧
-        </div>
+        <div className="dashboard-avatar">🔧</div>
         <div className="dashboard-welcome">
-          <h1>Welcome back, {user?.firstName || 'Service Provider'}!</h1>
-          <p>Manage your car wash and maintenance services</p>
+          <h1>Welcome back, {user?.firstName || 'Provider'}!</h1>
+          <p>Here's your service overview for today</p>
         </div>
-        <button 
-          className="settings-btn"
-          onClick={() => navigate('/service-provider/profile')}
-        >
+        <button className="settings-btn" onClick={() => navigate('/service-provider/profile')}>
           ⚙️ Settings
         </button>
       </div>
 
-      {/* Stats Cards */}
+      {error && <div className="sp-error">{error}</div>}
+
+      {/* Stats */}
       <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-card-content">
-            <div className="stat-info">
-              <h3>Today's Bookings</h3>
-              <div className="stat-number">{stats.todaysBookings}</div>
-            </div>
-            <div className="stat-icon primary">📅</div>
-          </div>
-        </div>
-        
-        <div className="stat-card">
-          <div className="stat-card-content">
-            <div className="stat-info">
-              <h3>Weekly Revenue</h3>
-              <div className="stat-number">${stats.weeklyRevenue.toLocaleString()}</div>
-            </div>
-            <div className="stat-icon success">💰</div>
-          </div>
-        </div>
-        
-        <div className="stat-card">
-          <div className="stat-card-content">
-            <div className="stat-info">
-              <h3>Customer Rating</h3>
-              <div className="stat-number">{stats.customerRating}</div>
-            </div>
-            <div className="stat-icon secondary">⭐</div>
-          </div>
-        </div>
-        
-        <div className="stat-card">
-          <div className="stat-card-content">
-            <div className="stat-info">
-              <h3>Active Services</h3>
-              <div className="stat-number">{stats.activeServices}</div>
-            </div>
-            <div className="stat-icon info">🔧</div>
-          </div>
-        </div>
+        {loading
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="stat-card stat-card--skeleton" />
+            ))
+          : statCards.map((card) => (
+              <div key={card.label} className="stat-card">
+                <div className="stat-card-content">
+                  <div className="stat-info">
+                    <h3>{card.label}</h3>
+                    <div className="stat-number">{card.value}</div>
+                    <div className="stat-note">{card.note}</div>
+                  </div>
+                  <div className="stat-icon">{card.icon}</div>
+                </div>
+              </div>
+            ))}
       </div>
 
       <div className="dashboard-main">
-        {/* Main Content */}
         <div>
           {/* Quick Actions */}
           <div className="quick-actions">
             <h2>Quick Actions</h2>
             <div className="actions-grid">
-              {quickActions.map((action, index) => (
-                <div 
-                  key={index}
-                  className="action-card"
-                  onClick={action.action}
-                >
+              {quickActions.map((a) => (
+                <div key={a.title} className="action-card" onClick={() => navigate(a.path)}>
                   <div className="action-header">
-                    <span className={`action-icon ${action.className}`}>
-                      {action.icon}
-                    </span>
-                    <h3>{action.title}</h3>
+                    <span className="action-icon">{a.icon}</span>
+                    <h3>{a.title}</h3>
                   </div>
-                  <p>{action.description}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Recent Bookings */}
+          {/* Today's Appointments */}
           <div className="appointments-section">
             <div className="appointments-header">
               <h2>Today's Appointments</h2>
-              <button 
-                className="view-all-btn"
-                onClick={() => navigate('/service-provider/bookings')}
-              >
+              <button className="view-all-btn" onClick={() => navigate('/service-provider/bookings')}>
                 View All
               </button>
             </div>
-            
-            {bookings.length > 0 ? (
+
+            {loading ? (
+              <p className="sp-loading">Loading...</p>
+            ) : stats?.todaysBookings?.length ? (
               <ul className="appointments-list">
-                {bookings.map((booking) => (
-                  <li key={booking.id} className="appointment-item">
-                    <div className="appointment-icon">
-                      {booking.serviceType.includes('Wash') ? '🚿' : '🔧'}
-                    </div>
+                {stats.todaysBookings.map((b) => (
+                  <li key={b.id} className="appointment-item">
+                    <div className="appointment-icon">🔧</div>
                     <div className="appointment-details">
-                      <h4>{booking.customerName} - {booking.serviceType}</h4>
-                      <p>{booking.time} • {booking.vehicle} • {booking.price}</p>
+                      <h4>{b.customerName} — {b.serviceType.replace(/_/g, ' ')}</h4>
+                      <p>{fmt(b.scheduledTime)}{b.estimatedCost ? ` • $${b.estimatedCost}` : ''}</p>
                     </div>
-                    <span className={`appointment-status ${getStatusColor(booking.status)}`}>
-                      {booking.status.replace('_', ' ')}
+                    <span className={`appointment-status ${STATUS_CLASS[b.status] || 'pending'}`}>
+                      {b.status.replace('_', ' ')}
                     </span>
                   </li>
                 ))}
@@ -225,66 +144,27 @@ const ServiceProviderDashboard = () => {
 
         {/* Sidebar */}
         <div className="dashboard-sidebar">
-          {/* Service Performance */}
-          <div className="service-performance">
-            <h2>Service Performance</h2>
-            
-            <div className="service-breakdown">
-              <div className="service-item">
-                <div className="service-item-header">
-                  <span className="service-icon">🚿</span>
-                  <span className="service-name">Car Wash</span>
-                </div>
-                <div className="service-stats">
-                  <span className="service-count">15 bookings</span>
-                  <span className="service-revenue">$450</span>
-                </div>
-                <div className="progress-bar">
-                  <div className="progress-fill" style={{ width: '65%' }}></div>
-                </div>
-              </div>
-
-              <div className="service-item">
-                <div className="service-item-header">
-                  <span className="service-icon">🔧</span>
-                  <span className="service-name">Maintenance</span>
-                </div>
-                <div className="service-stats">
-                  <span className="service-count">8 bookings</span>
-                  <span className="service-revenue">$1,200</span>
-                </div>
-                <div className="progress-bar">
-                  <div className="progress-fill" style={{ width: '35%' }}></div>
-                </div>
-              </div>
-            </div>
-
-            <button
-              className="view-analytics-btn"
-              onClick={() => navigate('/service-provider/services')}
-            >
-              View All Services
-            </button>
-          </div>
-
-          {/* Business Summary */}
           <div className="business-summary">
-            <h2>Business Summary</h2>
+            <h2>Summary</h2>
             <div className="summary-item">
-              <span className="summary-label">Total Customers</span>
-              <span className="summary-value">127</span>
+              <span className="summary-label">Pending Bookings</span>
+              <span className="summary-value">{loading ? '—' : stats?.pendingCount ?? '—'}</span>
             </div>
             <div className="summary-item">
               <span className="summary-label">Completed Services</span>
-              <span className="summary-value">342</span>
+              <span className="summary-value">{loading ? '—' : stats?.completedTotal ?? '—'}</span>
             </div>
             <div className="summary-item">
               <span className="summary-label">Average Rating</span>
-              <span className="summary-value">⭐ {stats.customerRating}/5.0</span>
+              <span className="summary-value">
+                {loading ? '—' : stats?.avgRating ? `⭐ ${stats.avgRating}/5.0` : 'No ratings yet'}
+              </span>
             </div>
             <div className="summary-item">
-              <span className="summary-label">Response Time</span>
-              <span className="summary-value">~15 min</span>
+              <span className="summary-label">Weekly Revenue</span>
+              <span className="summary-value">
+                {loading ? '—' : `$${stats?.weeklyRevenue?.toLocaleString() ?? 0}`}
+              </span>
             </div>
           </div>
         </div>

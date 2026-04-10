@@ -1,4 +1,5 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
+import { adminAPI } from '../../services/api';
 import './Admin.css';
 import './SystemSettings.css';
 
@@ -6,60 +7,86 @@ const SECTIONS = ['General', 'Email', 'Security', 'Notifications', 'Maintenance'
 
 const AdminSystemSettings = () => {
   const [activeSection, setActiveSection] = useState('General');
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [toast, setToast] = useState('');
+  const [error, setError] = useState('');
 
   const [general, setGeneral] = useState({
-    siteName: 'AutoSphere',
-    siteUrl: 'https://autosphere.com',
-    supportEmail: 'support@autosphere.com',
-    maxUploadSizeMB: 10,
-    defaultCurrency: 'USD',
-    timezone: 'America/New_York',
+    siteName: 'AutoSphere', siteUrl: '', supportEmail: '',
+    maxUploadSizeMB: 10, defaultCurrency: 'USD', timezone: 'America/New_York',
   });
-
   const [email, setEmail] = useState({
-    smtpHost: 'smtp.gmail.com',
-    smtpPort: 587,
-    smtpUser: '',
-    fromName: 'AutoSphere',
-    fromEmail: 'noreply@autosphere.com',
-    enableEmailVerification: true,
-    enableBookingEmails: true,
-    enableMarketingEmails: false,
+    smtpHost: '', smtpPort: 587, smtpUser: '', fromName: 'AutoSphere', fromEmail: '',
+    enableEmailVerification: true, enableBookingEmails: true, enableMarketingEmails: false,
   });
-
   const [security, setSecurity] = useState({
-    requireEmailVerification: true,
-    sessionTimeoutHours: 24,
-    maxLoginAttempts: 5,
-    enableGoogleOAuth: true,
-    enableRateLimit: true,
-    rateLimitWindowMinutes: 15,
-    rateLimitMaxRequests: 100,
+    requireEmailVerification: true, sessionTimeoutHours: 24, maxLoginAttempts: 5,
+    enableGoogleOAuth: false, enableRateLimit: true,
+    rateLimitWindowMinutes: 15, rateLimitMaxRequests: 100,
   });
-
   const [notifications, setNotifications] = useState({
-    enablePushNotifications: false,
-    enableEmailNotifications: true,
-    enableBookingAlerts: true,
-    enableMessageAlerts: true,
-    enableSystemAlerts: true,
+    enablePushNotifications: false, enableEmailNotifications: true,
+    enableBookingAlerts: true, enableMessageAlerts: true, enableSystemAlerts: true,
   });
-
   const [maintenance, setMaintenance] = useState({
     maintenanceMode: false,
-    maintenanceMessage: 'We are currently performing scheduled maintenance. Please check back soon.',
-    enableDebugLogs: false,
-    logRetentionDays: 30,
+    maintenanceMessage: 'We are currently performing scheduled maintenance.',
+    enableDebugLogs: false, logRetentionDays: 30,
   });
+
+  // Load settings on mount
+  useEffect(() => {
+    adminAPI.getSettings()
+      .then((res) => {
+        const d = res.data?.data;
+        if (!d) return;
+        if (d.general) setGeneral(d.general);
+        if (d.email) setEmail(d.email);
+        if (d.security) setSecurity(d.security);
+        if (d.notifications) setNotifications(d.notifications);
+        if (d.maintenance) setMaintenance(d.maintenance);
+      })
+      .catch(() => setError('Failed to load settings'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(''), 3000);
+  };
 
   const handleSave = async () => {
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 700));
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setError('');
+    try {
+      await adminAPI.saveSettings({ general, email, security, notifications, maintenance });
+      showToast('Settings saved successfully');
+    } catch (e) {
+      setError(e.response?.data?.message || 'Failed to save settings');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleClearCache = async () => {
+    if (!window.confirm('Clear all cached data and sessions?')) return;
+    try {
+      const res = await adminAPI.clearCache();
+      showToast(res.data?.message || 'Cache cleared');
+    } catch (e) {
+      setError(e.response?.data?.message || 'Failed to clear cache');
+    }
+  };
+
+  const handlePurgeLogs = async () => {
+    if (!window.confirm(`Delete logs older than ${maintenance.logRetentionDays} days?`)) return;
+    try {
+      const res = await adminAPI.purgeLogs();
+      showToast(res.data?.message || 'Logs purged');
+    } catch (e) {
+      setError(e.response?.data?.message || 'Failed to purge logs');
+    }
   };
 
   const Field = ({ label, children }) => (
@@ -84,17 +111,20 @@ const AdminSystemSettings = () => {
 
   return (
     <div className="admin-sub-page ss-page">
+      {toast && <div className="ss-toast">{toast}</div>}
+
       <div className="admin-sub-header">
         <div>
           <h1>System Settings</h1>
           <p>Configure platform-wide settings and preferences</p>
         </div>
-        <button className="ss-save-btn" onClick={handleSave} disabled={saving}>
+        <button className="ss-save-btn" onClick={handleSave} disabled={saving || loading}>
           {saving ? 'Saving...' : 'Save Changes'}
         </button>
       </div>
 
-      {saved && <div className="ss-saved">Settings saved successfully!</div>}
+      {error && <div className="ss-error">{error}</div>}
+      {loading && <div className="admin-loading">Loading settings...</div>}
 
       <div className="ss-layout">
         <nav className="ss-nav">
@@ -265,14 +295,14 @@ const AdminSystemSettings = () => {
                     <div className="ss-danger-title">Clear Cache</div>
                     <div className="ss-danger-desc">Clear all cached data and sessions</div>
                   </div>
-                  <button className="ss-danger-btn" onClick={() => alert('Cache cleared (demo)')}>Clear Cache</button>
+                  <button className="ss-danger-btn" onClick={handleClearCache}>Clear Cache</button>
                 </div>
                 <div className="ss-danger-actions">
                   <div>
                     <div className="ss-danger-title">Purge Old Logs</div>
                     <div className="ss-danger-desc">Delete logs older than {maintenance.logRetentionDays} days</div>
                   </div>
-                  <button className="ss-danger-btn" onClick={() => alert('Logs purged (demo)')}>Purge Logs</button>
+                  <button className="ss-danger-btn" onClick={handlePurgeLogs}>Purge Logs</button>
                 </div>
               </div>
             </div>

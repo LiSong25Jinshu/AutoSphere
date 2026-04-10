@@ -69,8 +69,10 @@ const VehiclesPage = () => {
       const result = await vehicleService.getVehicles(apiFilters);
       
       if (result.success) {
-        setVehicles(result.data.data || result.data);
-        setTotalCount(result.data.pagination?.total || result.data.length);
+        // Backend returns: { success, data: [...], pagination: { total, page, limit, pages } }
+        const responseBody = result.data;
+        setVehicles(responseBody.data || []);
+        setTotalCount(responseBody.pagination?.total || responseBody.data?.length || 0);
       } else {
         setError(result.message || 'Failed to load vehicles');
       }

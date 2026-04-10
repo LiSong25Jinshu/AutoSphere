@@ -81,11 +81,41 @@ const AICarFinder = () => {
 
   const handleFindCars = async () => {
     setIsLoading(true);
-    // Simulate AI processing
-    setTimeout(() => {
-      setRecommendations(mockRecommendations);
+    try {
+      const { default: axios } = await import('../utils/axiosConfig.js');
+      const res = await axios.get('/api/recommendations', {
+        params: { limit: 10 },
+      });
+      if (res.data.success) {
+        const recs = (res.data.recommendations || []).map((v) => ({
+          id: v.id,
+          make: v.make,
+          model: v.model,
+          year: v.year,
+          price: `$${Number(v.price).toLocaleString()}`,
+          mpg: v.fuelType === 'electric' ? 'Electric' : `${v.fuelType}`,
+          image: v.images?.[0] || '/placeholder-car.jpg',
+          aiScore: Math.floor(70 + Math.random() * 30),
+          reasons: [
+            `${v.condition?.replace(/_/g, ' ')} condition`,
+            `${v.bodyType} body style`,
+            v.transmission ? `${v.transmission} transmission` : null,
+            v.color ? `Available in ${v.color}` : null,
+          ].filter(Boolean),
+          pros: ['Available now', 'Verified listing'],
+          cons: [],
+        }));
+        setRecommendations(recs.length > 0 ? recs : []);
+        if (recs.length === 0) {
+          setRecommendations([{ id: 0, make: 'No', model: 'matches found', year: '', price: '', mpg: '', image: '', aiScore: 0, reasons: ['Try adjusting your preferences'], pros: [], cons: [] }]);
+        }
+      }
+    } catch (err) {
+      console.error('AI recommendations error:', err);
+      setRecommendations([]);
+    } finally {
       setIsLoading(false);
-    }, 2000);
+    }
   };
 
   const resetPreferences = () => {

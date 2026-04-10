@@ -3,61 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { appointmentService } from '../../services/appointmentService';
 import './Appointments.css';
 
-const MOCK_APPOINTMENTS = [
-  {
-    id: 1,
-    serviceType: 'Oil Change',
-    provider: 'QuickFix Motors',
-    date: '2024-02-10',
-    time: '10:00',
-    status: 'confirmed',
-    price: 45,
-    address: '123 Service St, Detroit, MI 48201',
-    notes: 'Standard oil change with filter replacement',
-    priority: 'normal',
-    confirmationNumber: 'AS-000001',
-  },
-  {
-    id: 2,
-    serviceType: 'Brake Inspection',
-    provider: 'AutoCare Plus',
-    date: '2024-02-15',
-    time: '14:00',
-    status: 'pending',
-    price: 80,
-    address: '456 Auto Ave, Detroit, MI 48202',
-    notes: 'Front and rear brake check',
-    priority: 'high',
-    confirmationNumber: 'AS-000002',
-  },
-  {
-    id: 3,
-    serviceType: 'Full Detail',
-    provider: 'Shine & Drive',
-    date: '2024-01-20',
-    time: '09:00',
-    status: 'completed',
-    price: 120,
-    address: '789 Clean Blvd, Detroit, MI 48203',
-    notes: 'Interior and exterior detailing',
-    priority: 'normal',
-    confirmationNumber: 'AS-000003',
-  },
-  {
-    id: 4,
-    serviceType: 'Tire Rotation',
-    provider: 'QuickFix Motors',
-    date: '2024-01-10',
-    time: '11:00',
-    status: 'completed',
-    price: 35,
-    address: '123 Service St, Detroit, MI 48201',
-    notes: '',
-    priority: 'normal',
-    confirmationNumber: 'AS-000004',
-  },
-];
-
 const UserAppointments = () => {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
@@ -74,39 +19,33 @@ const UserAppointments = () => {
   const fetchAppointments = async () => {
     setLoading(true);
     setError('');
-    
     try {
       const response = await appointmentService.getUserAppointments();
-      
       if (response.success) {
-        const transformedAppointments = response.data.map(booking => ({
+        const transformed = response.data.map(booking => ({
           id: booking.id,
-          serviceType: booking.title,
-          provider: booking.serviceProvider ? 
-            `${booking.serviceProvider.firstName} ${booking.serviceProvider.lastName}` : 
-            'AutoSphere Service',
+          serviceType: booking.serviceType || booking.title || 'Service',
+          provider: booking.serviceProvider
+            ? `${booking.serviceProvider.firstName} ${booking.serviceProvider.lastName}`
+            : 'AutoSphere Service',
           date: new Date(booking.scheduledDate).toISOString().split('T')[0],
           time: booking.scheduledTime,
           status: booking.status,
-          price: booking.estimatedCost || booking.actualCost || 0,
-          address: booking.location?.address || '123 Service St, City, ST 12345',
-          notes: booking.customerNotes || booking.description,
-          priority: booking.priority,
-          confirmationNumber: `AS-${booking.id.toString().padStart(6, '0')}`,
-          createdAt: booking.createdAt,
-          updatedAt: booking.updatedAt,
-          originalBooking: booking
+          price: booking.actualCost || booking.estimatedCost || 0,
+          address: booking.location?.address || '',
+          notes: booking.customerNotes || booking.description || '',
+          priority: booking.priority || 'normal',
+          confirmationNumber: `AS-${String(booking.id).padStart(6, '0')}`,
+          rating: booking.rating,
+          review: booking.review,
         }));
-        
-        setAppointments(transformedAppointments);
+        setAppointments(transformed);
       } else {
-        // Fall back to mock data
-        setAppointments(MOCK_APPOINTMENTS);
+        setError(response.message || 'Failed to load appointments');
       }
-    } catch (error) {
-      console.error('Fetch appointments error:', error);
-      // Fall back to mock data silently
-      setAppointments(MOCK_APPOINTMENTS);
+    } catch (err) {
+      console.error('Fetch appointments error:', err);
+      setError('Failed to load appointments. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -129,29 +68,18 @@ const UserAppointments = () => {
   };
 
   const handleCancelAppointment = async (appointmentId) => {
-    const reason = prompt('Please provide a reason for cancellation (optional):');
-    
-    if (window.confirm('Are you sure you want to cancel this appointment?')) {
-      try {
-        const response = await appointmentService.cancelAppointment(appointmentId, reason);
-        
-        if (response.success) {
-          // Update local state
-          setAppointments(prev => 
-            prev.map(apt => 
-              apt.id === appointmentId 
-                ? { ...apt, status: 'cancelled' }
-                : apt
-            )
-          );
-          alert('Appointment cancelled successfully!');
-        } else {
-          alert(response.message || 'Failed to cancel appointment');
-        }
-      } catch (error) {
-        console.error('Cancel appointment error:', error);
-        alert('Failed to cancel appointment. Please try again.');
+    if (!window.confirm('Are you sure you want to cancel this appointment?')) return;
+    try {
+      const response = await appointmentService.cancelAppointment(appointmentId);
+      if (response.success) {
+        setAppointments(prev =>
+          prev.map(apt => apt.id === appointmentId ? { ...apt, status: 'cancelled' } : apt)
+        );
+      } else {
+        setError(response.message || 'Failed to cancel appointment');
       }
+    } catch (err) {
+      setError('Failed to cancel appointment. Please try again.');
     }
   };
 
@@ -168,43 +96,33 @@ const UserAppointments = () => {
 
   const submitReschedule = async () => {
     if (!rescheduleData.date || !rescheduleData.time) {
-      alert('Please select both date and time');
+      setError('Please select both date and time');
       return;
     }
-
-    // Validate date is not in the past
     const selectedDate = new Date(`${rescheduleData.date}T${rescheduleData.time}`);
-    const now = new Date();
-    if (selectedDate <= now) {
-      alert('Please select a future date and time!');
+    if (selectedDate <= new Date()) {
+      setError('Please select a future date and time');
       return;
     }
-
     try {
       const response = await appointmentService.rescheduleAppointment(
-        rescheduleModal,
-        rescheduleData.date,
-        rescheduleData.time
+        rescheduleModal, rescheduleData.date, rescheduleData.time
       );
-
       if (response.success) {
-        // Update local state
-        setAppointments(prev => 
-          prev.map(apt => 
-            apt.id === rescheduleModal 
+        setAppointments(prev =>
+          prev.map(apt =>
+            apt.id === rescheduleModal
               ? { ...apt, date: rescheduleData.date, time: rescheduleData.time }
               : apt
           )
         );
         setRescheduleModal(null);
         setRescheduleData({ date: '', time: '' });
-        alert('Appointment rescheduled successfully!');
       } else {
-        alert(response.message || 'Failed to reschedule appointment');
+        setError(response.message || 'Failed to reschedule appointment');
       }
-    } catch (error) {
-      console.error('Reschedule appointment error:', error);
-      alert('Failed to reschedule appointment. Please try again.');
+    } catch (err) {
+      setError('Failed to reschedule appointment. Please try again.');
     }
   };
 
@@ -214,23 +132,18 @@ const UserAppointments = () => {
   };
 
   const handleLeaveReview = async (appointmentId) => {
-    const rating = prompt('Rate your experience (1-5 stars):');
-    if (rating && rating >= 1 && rating <= 5) {
-      const review = prompt('Leave a review (optional):');
-      
-      try {
-        const response = await appointmentService.addReview(appointmentId, parseInt(rating), review);
-        
-        if (response.success) {
-          alert('Thank you for your review!');
-          fetchAppointments(); // Refresh to show updated data
-        } else {
-          alert(response.message || 'Failed to submit review');
-        }
-      } catch (error) {
-        console.error('Add review error:', error);
-        alert('Failed to submit review. Please try again.');
+    const rating = parseInt(prompt('Rate your experience (1-5 stars):') || '0');
+    if (!rating || rating < 1 || rating > 5) return;
+    const review = prompt('Leave a review (optional):') || '';
+    try {
+      const response = await appointmentService.addReview(appointmentId, rating, review);
+      if (response.success) {
+        fetchAppointments();
+      } else {
+        setError(response.message || 'Failed to submit review');
       }
+    } catch (err) {
+      setError('Failed to submit review. Please try again.');
     }
   };
 
@@ -247,6 +160,21 @@ const UserAppointments = () => {
           <div className="loading-state">
             <div className="loading-spinner"></div>
             <p>Loading appointments...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="appointments-page">
+        <div className="appointments-container">
+          <div className="loading-state">
+            <p style={{ color: '#d32f2f' }}>{error}</p>
+            <button className="btn primary" onClick={fetchAppointments} style={{ marginTop: '1rem' }}>
+              Retry
+            </button>
           </div>
         </div>
       </div>

@@ -1,9 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from '../contexts/AuthContext';
+import { messageAPI } from '../services/api';
+
+const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 export const useMessaging = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [conversations, setConversations] = useState([]);
@@ -12,93 +15,121 @@ export const useMessaging = () => {
   const [unreadCounts, setUnreadCounts] = useState({});
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [typingUsers, setTypingUsers] = useState(new Set());
-  
+  const [loadingConversations, setLoadingConversations] = useState(false);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+
   const typingTimeoutRef = useRef(null);
+  const activeConvRef = useRef(null);
+  activeConvRef.current = activeConversation;
 
-  // Initialize socket connection
+  // ── REST: load conversations from DB ──────────────────────────────────────
+  const loadConversations = useCallback(async () => {
+    if (!token) return;
+    setLoadingConversations(true);
+    try {
+      const res = await messageAPI.getConversations({ limit: 50 });
+      if (res.data.success) {
+        const convs = res.data.data.map((c) => ({
+          ...c,
+          // Normalise the "other participant" for display
+          name: c.otherParticipant
+            ? `${c.otherParticipant.firstName} ${c.otherParticipant.lastName}`
+            : 'Unknown',
+          avatar: c.otherParticipant
+            ? `${c.otherParticipant.firstName?.[0] || ''}${c.otherParticipant.lastName?.[0] || ''}`
+            : '?',
+          lastMessage: c.lastMessage?.content || '',
+          timestamp: c.lastMessage?.createdAt
+            ? new Date(c.lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            : '',
+          unread: c.unreadCount || 0,
+        }));
+        setConversations(convs);
+        // Seed unread counts
+        const counts = {};
+        convs.forEach((c) => { counts[c.id] = c.unread; });
+        setUnreadCounts(counts);
+      }
+    } catch (err) {
+      console.error('loadConversations error:', err.message);
+    } finally {
+      setLoadingConversations(false);
+    }
+  }, [token]);
+
+  // ── REST: load messages for a conversation ────────────────────────────────
+  const loadMessages = useCallback(async (conversationId) => {
+    if (!token) return;
+    setLoadingMessages(true);
+    try {
+      const res = await messageAPI.getMessages(conversationId, { limit: 100 });
+      if (res.data.success) {
+        setMessages(res.data.data);
+      }
+    } catch (err) {
+      console.error('loadMessages error:', err.message);
+    } finally {
+      setLoadingMessages(false);
+    }
+  }, [token]);
+
+  // ── Socket connection ─────────────────────────────────────────────────────
   const connect = useCallback(() => {
-    if (!user || socket) return;
+    if (!user || !token || socket) return;
 
-    const newSocket = io(process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001', {
-      auth: {
-        token: localStorage.getItem('token'),
-      },
+    const newSocket = io(SOCKET_URL, {
+      auth: { token },
       transports: ['websocket', 'polling'],
+      reconnectionAttempts: 5,
     });
 
-    newSocket.on('connect', () => {
-      console.log('Connected to messaging server');
-      setIsConnected(true);
-    });
-
-    newSocket.on('disconnect', () => {
-      console.log('Disconnected from messaging server');
-      setIsConnected(false);
-    });
-
-    newSocket.on('conversations', (conversationList) => {
-      setConversations(conversationList);
-    });
-
-    newSocket.on('messages', (messageList) => {
-      setMessages(messageList);
-    });
+    newSocket.on('connect', () => setIsConnected(true));
+    newSocket.on('disconnect', () => setIsConnected(false));
 
     newSocket.on('message:new', (message) => {
-      setMessages(prev => [...prev, message]);
-      
-      // Update unread count if message is not from current user and not in active conversation
-      if (message.senderId !== user.id && 
-          (!activeConversation || message.conversationId !== activeConversation.id)) {
-        setUnreadCounts(prev => ({
+      // Append to messages if it belongs to the active conversation
+      if (activeConvRef.current?.id === message.conversationId) {
+        setMessages((prev) => [...prev, message]);
+      }
+      // Increment unread if not in active conversation
+      if (!activeConvRef.current || message.conversationId !== activeConvRef.current.id) {
+        setUnreadCounts((prev) => ({
           ...prev,
-          [message.conversationId]: (prev[message.conversationId] || 0) + 1
+          [message.conversationId]: (prev[message.conversationId] || 0) + 1,
         }));
       }
-    });
-
-    newSocket.on('message:read', ({ messageId, conversationId, readBy, readAt }) => {
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === messageId ? { ...msg, isRead: true, readAt } : msg
+      // Update conversation preview
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === message.conversationId
+            ? { ...c, lastMessage: message.content, timestamp: 'Just now' }
+            : c
         )
       );
     });
 
     newSocket.on('typing:user', ({ userId, conversationId, isTyping }) => {
-      if (activeConversation && conversationId === activeConversation.id) {
-        setTypingUsers(prev => {
-          const newSet = new Set(prev);
-          if (isTyping) {
-            newSet.add(userId);
-          } else {
-            newSet.delete(userId);
-          }
-          return newSet;
+      if (activeConvRef.current?.id === conversationId) {
+        setTypingUsers((prev) => {
+          const s = new Set(prev);
+          isTyping ? s.add(userId) : s.delete(userId);
+          return s;
         });
       }
     });
 
-    newSocket.on('user:online', ({ userId }) => {
-      setOnlineUsers(prev => new Set([...prev, userId]));
-    });
+    newSocket.on('user:online', ({ userId }) =>
+      setOnlineUsers((prev) => new Set([...prev, userId]))
+    );
+    newSocket.on('user:offline', ({ userId }) =>
+      setOnlineUsers((prev) => { const s = new Set(prev); s.delete(userId); return s; })
+    );
 
-    newSocket.on('user:offline', ({ userId }) => {
-      setOnlineUsers(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(userId);
-        return newSet;
-      });
-    });
-
-    newSocket.on('error', (error) => {
-      console.error('Socket error:', error);
-    });
+    newSocket.on('connect_error', (err) => console.warn('Messaging socket error:', err.message));
 
     setSocket(newSocket);
-  }, [user, activeConversation]);
+  }, [user, token, socket]);
 
-  // Disconnect socket
   const disconnect = useCallback(() => {
     if (socket) {
       socket.disconnect();
@@ -107,123 +138,106 @@ export const useMessaging = () => {
     }
   }, [socket]);
 
-  // Load conversations
-  const loadConversations = useCallback(() => {
-    if (socket && isConnected) {
-      socket.emit('get_conversations');
-    }
-  }, [socket, isConnected]);
+  // Auto-connect when authenticated
+  useEffect(() => {
+    if (user && token && !socket) connect();
+    return () => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    };
+  }, [user, token]);
 
-  // Select conversation
-  const selectConversation = useCallback((conversation) => {
+  // Load conversations on mount
+  useEffect(() => {
+    if (token) loadConversations();
+  }, [token, loadConversations]);
+
+  // ── Actions ───────────────────────────────────────────────────────────────
+  const selectConversation = useCallback(async (conversation) => {
     setActiveConversation(conversation);
     setMessages([]);
-    
-    // Clear unread count for this conversation
-    setUnreadCounts(prev => ({
-      ...prev,
-      [conversation.id]: 0
-    }));
-    
+    setTypingUsers(new Set());
+    setUnreadCounts((prev) => ({ ...prev, [conversation.id]: 0 }));
+
+    // Join socket room
     if (socket && isConnected) {
       socket.emit('conversation:join', conversation.id);
-      socket.emit('get_messages', conversation.id);
     }
-  }, [socket, isConnected]);
 
-  // Send message
-  const sendMessage = useCallback((content, attachments = []) => {
-    if (!activeConversation || !socket || !isConnected || !content.trim()) {
+    // Load messages from DB
+    await loadMessages(conversation.id);
+  }, [socket, isConnected, loadMessages]);
+
+  const sendMessage = useCallback(async (content) => {
+    if (!activeConvRef.current || !content.trim()) return false;
+    const convId = activeConvRef.current.id;
+
+    try {
+      const res = await messageAPI.sendMessage(convId, content.trim());
+      if (res.data.success) {
+        // Optimistically add to messages
+        setMessages((prev) => [...prev, res.data.data]);
+        // Update conversation preview
+        setConversations((prev) =>
+          prev.map((c) =>
+            c.id === convId ? { ...c, lastMessage: content.trim(), timestamp: 'Just now' } : c
+          )
+        );
+      }
+    } catch (err) {
+      console.error('sendMessage error:', err.message);
       return false;
     }
 
-    const messageData = {
-      conversationId: activeConversation.id,
-      content: content.trim(),
-      attachments
-    };
-
-    socket.emit('message:send', messageData);
-    
-    // Stop typing indicator
-    socket.emit('typing:stop', {
-      conversationId: activeConversation.id
-    });
-
-    return true;
-  }, [activeConversation, socket, isConnected]);
-
-  // Send typing indicator
-  const sendTypingIndicator = useCallback((isTyping) => {
-    if (!activeConversation || !socket || !isConnected) return;
-
-    // Clear existing timeout
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
+    // Stop typing
+    if (socket && isConnected) {
+      socket.emit('typing:stop', { conversationId: convId });
     }
+    return true;
+  }, [socket, isConnected]);
 
-    const eventName = isTyping ? 'typing:start' : 'typing:stop';
-    socket.emit(eventName, {
-      conversationId: activeConversation.id
+  const sendTypingIndicator = useCallback((isTyping) => {
+    if (!activeConvRef.current || !socket || !isConnected) return;
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    socket.emit(isTyping ? 'typing:start' : 'typing:stop', {
+      conversationId: activeConvRef.current.id,
     });
-
-    // Auto-stop typing after 2 seconds if still typing
     if (isTyping) {
       typingTimeoutRef.current = setTimeout(() => {
-        socket.emit('typing:stop', {
-          conversationId: activeConversation.id
-        });
+        socket.emit('typing:stop', { conversationId: activeConvRef.current?.id });
       }, 2000);
     }
-  }, [activeConversation, socket, isConnected]);
-
-  // Mark message as read
-  const markMessageAsRead = useCallback((messageId, conversationId) => {
-    if (socket && isConnected) {
-      socket.emit('message:read', { messageId, conversationId });
-    }
   }, [socket, isConnected]);
 
-  // Create new conversation
-  const createConversation = useCallback((participantId) => {
-    if (socket && isConnected) {
-      socket.emit('create_conversation', { participantId });
-    }
-  }, [socket, isConnected]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
+  const createConversation = useCallback(async (participantId, initialMessage) => {
+    try {
+      const res = await messageAPI.startConversation(participantId, initialMessage);
+      if (res.data.success) {
+        await loadConversations();
+        return res.data.data;
       }
-      disconnect();
-    };
-  }, [disconnect]);
+    } catch (err) {
+      console.error('createConversation error:', err.message);
+    }
+    return null;
+  }, [loadConversations]);
 
   return {
-    // Connection state
     isConnected,
     connect,
     disconnect,
-    
-    // Data
     conversations,
     activeConversation,
     messages,
     unreadCounts,
     onlineUsers,
     typingUsers,
-    
-    // Actions
+    loadingConversations,
+    loadingMessages,
     loadConversations,
     selectConversation,
     sendMessage,
     sendTypingIndicator,
-    markMessageAsRead,
     createConversation,
-    
-    // Utilities
-    getTotalUnreadCount: () => Object.values(unreadCounts).reduce((sum, count) => sum + count, 0),
+    getTotalUnreadCount: () => Object.values(unreadCounts).reduce((s, c) => s + c, 0),
   };
 };

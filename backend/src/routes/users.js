@@ -4,8 +4,42 @@ import { Op } from 'sequelize';
 import { authenticateToken, requireRole, requireAdmin } from '../middleware/auth.js';
 import User from '../models/User.js';
 import { hashPassword } from '../utils/password.js';
+import Booking from '../models/Booking.js';
 
 const router = express.Router();
+
+// GET /api/users/stats — stats for the authenticated user
+router.get('/stats', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const [totalBookings, completedBookings, ratingData] = await Promise.all([
+      Booking.count({ where: { userId } }),
+      Booking.count({ where: { userId, status: 'completed' } }),
+      Booking.findOne({
+        where: { userId, rating: { [Op.ne]: null } },
+        attributes: [
+          [Booking.sequelize.fn('AVG', Booking.sequelize.col('rating')), 'avgRating'],
+          [Booking.sequelize.fn('COUNT', Booking.sequelize.col('rating')), 'ratingCount'],
+        ],
+        raw: true,
+      }),
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        totalBookings,
+        completedBookings,
+        avgRating: ratingData?.avgRating ? parseFloat(ratingData.avgRating).toFixed(1) : null,
+        ratingCount: parseInt(ratingData?.ratingCount || 0),
+      },
+    });
+  } catch (err) {
+    console.error('User stats error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
 
 // Get user profile
 router.get('/profile', authenticateToken, async (req, res) => {
@@ -37,8 +71,14 @@ router.get('/profile', authenticateToken, async (req, res) => {
 router.put('/profile', [
   body('firstName').optional().trim().isLength({ min: 2, max: 100 }),
   body('lastName').optional().trim().isLength({ min: 2, max: 100 }),
-  body('phone').optional().trim().isLength({ min: 10, max: 20 }),
+  body('phone').optional().trim().isLength({ min: 7, max: 20 }),
   body('email').optional().isEmail().normalizeEmail(),
+  body('address').optional().trim().isLength({ max: 255 }),
+  body('city').optional().trim().isLength({ max: 100 }),
+  body('state').optional().trim().isLength({ max: 100 }),
+  body('zipCode').optional().trim().isLength({ max: 20 }),
+  body('bio').optional().trim().isLength({ max: 1000 }),
+  body('dateOfBirth').optional().isISO8601().withMessage('Invalid date format'),
 ], authenticateToken, async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -71,7 +111,7 @@ router.put('/profile', [
     }
 
     // Update allowed fields
-    const allowedFields = ['firstName', 'lastName', 'phone', 'email'];
+    const allowedFields = ['firstName', 'lastName', 'phone', 'email', 'address', 'city', 'state', 'zipCode', 'bio', 'dateOfBirth'];
     const updateData = {};
     
     allowedFields.forEach(field => {

@@ -7,6 +7,8 @@ import morgan from 'morgan';
 import session from 'express-session';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 import { connectDB } from './config/database.js';
 import { rateLimiter } from './middleware/rateLimiter.js';
@@ -17,8 +19,13 @@ import userRoutes from './routes/users.js';
 import vehicleRoutes from './routes/vehicles.js';
 import bookingRoutes from './routes/bookings.js';
 import messageRoutes from './routes/messages.js';
-import recommendationsRouter from './routes/recommendations.js';
+import recommendationsRoutes from './routes/recommendations.js';
+import servicesRoutes from './routes/services.js';
 import savedSearchesRoutes from './routes/savedSearches.js';
+import contactRoutes from './routes/contact.js';
+import notificationRoutes from './routes/notifications.js';
+import adminRoutes from './routes/admin.js';
+import pushRoutes from './routes/push.js';
 
 import { initializeMessageSocket } from './sockets/messageSocket.js';
 
@@ -49,6 +56,11 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Serve uploaded vehicle photos as static files
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const uploadDir = process.env.UPLOAD_PATH || 'uploads/vehicles';
+app.use('/uploads/vehicles', express.static(path.resolve(__dirname, '../../', uploadDir)));
+
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
@@ -69,8 +81,13 @@ app.use('/api/users', userRoutes);
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/messages', messageRoutes);
-app.use('/api/recommendations', recommendationsRouter);
+app.use('/api/recommendations', recommendationsRoutes);
+app.use('/api/services', servicesRoutes);
 app.use('/api/saved-searches', savedSearchesRoutes);
+app.use('/api/contact', contactRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/push', pushRoutes);
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({

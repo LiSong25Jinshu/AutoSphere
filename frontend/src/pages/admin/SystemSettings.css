@@ -101,3 +101,22 @@
   .ss-nav { flex-direction: row; flex-wrap: wrap; }
   .ss-row { grid-template-columns: 1fr; }
 }
+
+.ss-toast {
+  position: fixed; bottom: 2rem; right: 2rem;
+  background: #1a1a1a; color: #fff;
+  padding: .75rem 1.5rem; border-radius: 8px;
+  font-size: .875rem; font-weight: 500;
+  z-index: 2000; box-shadow: 0 4px 12px rgba(0,0,0,.2);
+  animation: ss-fadeup .2s ease;
+}
+@keyframes ss-fadeup {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.ss-error {
+  background: #fef2f2; color: #dc2626;
+  border: 1px solid #fecaca; border-radius: 8px;
+  padding: .75rem 1rem; margin-bottom: 1rem; font-size: .875rem;
+}

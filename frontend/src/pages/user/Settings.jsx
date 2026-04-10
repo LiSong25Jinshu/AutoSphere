@@ -53,10 +53,13 @@ const UserSettings = () => {
   const handleSaveSettings = async () => {
     setIsLoading(true);
     setSaveMessage('');
-    
     try {
-      // Mock save - replace with real API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Save notification preferences to user profile
+      const { data } = await import('../../services/api').then(m => m.userAPI.updateProfile({
+        notificationPreferences: settings.notifications,
+        privacySettings: settings.privacy,
+        preferences: settings.preferences,
+      }));
       setSaveMessage('Settings saved successfully!');
       setTimeout(() => setSaveMessage(''), 3000);
     } catch (error) {

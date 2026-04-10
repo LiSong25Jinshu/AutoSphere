@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from '../utils/axiosConfig.js';
 
 export const vehicleService = {
   // Get all vehicles with filters
@@ -7,12 +7,12 @@ export const vehicleService = {
       const response = await axios.get('/api/vehicles', { params: filters });
       return {
         success: true,
-        data: response.data
+        data: response.data  // { success, data: [...], pagination: {...} }
       };
     } catch (error) {
       return {
         success: false,
-        message: 'Failed to fetch vehicles',
+        message: error.response?.data?.message || 'Failed to fetch vehicles',
         error: error.response?.data
       };
     }
@@ -24,12 +24,12 @@ export const vehicleService = {
       const response = await axios.get(`/api/vehicles/${vehicleId}`);
       return {
         success: true,
-        data: response.data
+        data: response.data  // { success, data: vehicle }
       };
     } catch (error) {
       return {
         success: false,
-        message: 'Failed to fetch vehicle details',
+        message: error.response?.data?.message || 'Failed to fetch vehicle details',
         error: error.response?.data
       };
     }
@@ -47,7 +47,7 @@ export const vehicleService = {
     } catch (error) {
       return {
         success: false,
-        message: 'Failed to add vehicle',
+        message: error.response?.data?.message || 'Failed to add vehicle',
         error: error.response?.data
       };
     }
@@ -65,7 +65,7 @@ export const vehicleService = {
     } catch (error) {
       return {
         success: false,
-        message: 'Failed to update vehicle',
+        message: error.response?.data?.message || 'Failed to update vehicle',
         error: error.response?.data
       };
     }
@@ -83,17 +83,17 @@ export const vehicleService = {
     } catch (error) {
       return {
         success: false,
-        message: 'Failed to delete vehicle',
+        message: error.response?.data?.message || 'Failed to delete vehicle',
         error: error.response?.data
       };
     }
   },
 
-  // Search vehicles
+  // Search vehicles (uses main getVehicles with search param)
   searchVehicles: async (searchQuery) => {
     try {
-      const response = await axios.get('/api/vehicles/search', { 
-        params: { q: searchQuery } 
+      const response = await axios.get('/api/vehicles', {
+        params: { search: searchQuery }
       });
       return {
         success: true,
@@ -102,7 +102,7 @@ export const vehicleService = {
     } catch (error) {
       return {
         success: false,
-        message: 'Failed to search vehicles',
+        message: error.response?.data?.message || 'Failed to search vehicles',
         error: error.response?.data
       };
     }

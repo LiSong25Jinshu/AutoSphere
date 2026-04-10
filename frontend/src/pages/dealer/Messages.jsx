@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { io } from 'socket.io-client';
 import { messageAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import './Messages.css';
+
+const SOCKET_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
 
 const DealerMessages = () => {
   const { user } = useAuth();
@@ -14,6 +17,11 @@ const DealerMessages = () => {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const messagesEndRef = useRef(null);
+  const socketRef = useRef(null);
+  const activeConvRef = useRef(null);
+
+  // keep ref in sync so socket handler always has current conversation id
+  useEffect(() => { activeConvRef.current = activeConv; }, [activeConv]);
 
   const fetchConversations = useCallback(async () => {
     setLoading(true);
@@ -25,6 +33,37 @@ const DealerMessages = () => {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  // Connect socket once on mount
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const socket = io(SOCKET_URL, { auth: { token }, transports: ['websocket'] });
+    socketRef.current = socket;
+
+    socket.on('new_message', (msg) => {
+      // Append to open conversation
+      if (msg.conversationId === activeConvRef.current?.id) {
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === msg.id)) return prev;
+          return [...prev, msg];
+        });
+      }
+      // Bump conversation preview + unread count
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === msg.conversationId
+            ? {
+                ...c,
+                lastMessage: { content: msg.content, createdAt: msg.createdAt },
+                unreadCount: c.id === activeConvRef.current?.id ? 0 : (c.unreadCount || 0) + 1,
+              }
+            : c
+        )
+      );
+    });
+
+    return () => socket.disconnect();
   }, []);
 
   useEffect(() => { fetchConversations(); }, [fetchConversations]);
@@ -56,8 +95,9 @@ const DealerMessages = () => {
     setSending(true);
     try {
       const res = await messageAPI.sendMessage(activeConv.id, newMsg.trim());
-      const sent = res.data?.data || res.data;
-      setMessages((prev) => [...prev, sent]);
+      const sent = res.data?.data;
+      // Only add locally if socket hasn't already delivered it
+      setMessages((prev) => prev.some((m) => m.id === sent?.id) ? prev : [...prev, sent]);
       setConversations((prev) =>
         prev.map((c) => c.id === activeConv.id
           ? { ...c, lastMessage: { content: newMsg.trim(), createdAt: new Date().toISOString() } }

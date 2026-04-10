@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { vehicleAPI } from '../../services/api';
 import './Inventory.css';
 
 const UserInventory = () => {
@@ -15,69 +16,20 @@ const UserInventory = () => {
 
   const fetchInventory = async () => {
     setLoading(true);
-    // Mock data - replace with real API call
-    setTimeout(() => {
-      setVehicles([
-        {
-          id: 1,
-          make: 'Honda',
-          model: 'Civic',
-          year: 2020,
-          vin: '1HGBH41JXMN109186',
-          mileage: 45000,
-          color: 'Silver',
-          status: 'active',
-          lastService: '2024-01-15',
-          nextService: '2024-04-15',
-          image: '/api/placeholder/300/200',
-          documents: ['Registration', 'Insurance', 'Service Records']
-        },
-        {
-          id: 2,
-          make: 'Toyota',
-          model: 'Camry',
-          year: 2018,
-          vin: '4T1BF1FK5GU260429',
-          mileage: 72000,
-          color: 'Blue',
-          status: 'maintenance',
-          lastService: '2024-01-10',
-          nextService: '2024-03-10',
-          image: '/api/placeholder/300/200',
-          documents: ['Registration', 'Insurance']
-        }
-      ]);
-
-      setSavedVehicles([
-        {
-          id: 3,
-          make: 'BMW',
-          model: 'X5',
-          year: 2022,
-          price: 65000,
-          mileage: 15000,
-          color: 'Black',
-          dealer: 'Premium Motors',
-          location: 'Downtown',
-          image: '/api/placeholder/300/200',
-          savedDate: '2024-01-18'
-        },
-        {
-          id: 4,
-          make: 'Mercedes',
-          model: 'C-Class',
-          year: 2021,
-          price: 45000,
-          mileage: 25000,
-          color: 'White',
-          dealer: 'Luxury Auto',
-          location: 'Midtown',
-          image: '/api/placeholder/300/200',
-          savedDate: '2024-01-16'
-        }
-      ]);
+    try {
+      // Load saved vehicle searches from the real API
+      const res = await vehicleAPI.getAll({ limit: 20 });
+      // "Saved vehicles" = vehicles the user has viewed/saved (using savedSearches as proxy)
+      // For now show recently available vehicles as browsing history
+      // The "owned" tab stays as placeholder until a user-vehicle model is added
+      setVehicles([]); // No user-owned vehicle model yet
+      setSavedVehicles(res.data?.data || []);
+    } catch (err) {
+      console.error('Inventory fetch error:', err);
+      setSavedVehicles([]);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const getStatusColor = (status) => {
@@ -233,50 +185,36 @@ const UserInventory = () => {
                   {savedVehicles.map(vehicle => (
                     <div key={vehicle.id} className="vehicle-card saved">
                       <div className="vehicle-image">
-                        <img src={vehicle.image} alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`} />
-                        <button 
-                          className="remove-saved"
-                          onClick={() => removeSavedVehicle(vehicle.id)}
-                          title="Remove from saved"
-                        >
-                          ❤️
-                        </button>
+                        <img
+                          src={vehicle.images?.[0] || '/api/placeholder/300/200'}
+                          alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+                        />
                       </div>
-                      
                       <div className="vehicle-info">
                         <h3>{vehicle.year} {vehicle.make} {vehicle.model}</h3>
-                        <div className="vehicle-price">
-                          ${vehicle.price.toLocaleString()}
-                        </div>
-                        
+                        <div className="vehicle-price">${Number(vehicle.price).toLocaleString()}</div>
                         <div className="vehicle-details">
                           <div className="detail-item">
                             <span className="detail-label">Mileage:</span>
-                            <span className="detail-value">{vehicle.mileage.toLocaleString()} miles</span>
+                            <span className="detail-value">{vehicle.mileage ? `${Number(vehicle.mileage).toLocaleString()} miles` : '—'}</span>
                           </div>
                           <div className="detail-item">
                             <span className="detail-label">Color:</span>
-                            <span className="detail-value">{vehicle.color}</span>
+                            <span className="detail-value">{vehicle.color || '—'}</span>
                           </div>
                           <div className="detail-item">
-                            <span className="detail-label">Dealer:</span>
-                            <span className="detail-value">{vehicle.dealer}</span>
+                            <span className="detail-label">Condition:</span>
+                            <span className="detail-value">{vehicle.condition?.replace(/_/g, ' ') || '—'}</span>
                           </div>
                           <div className="detail-item">
-                            <span className="detail-label">Location:</span>
-                            <span className="detail-value">{vehicle.location}</span>
-                          </div>
-                          <div className="detail-item">
-                            <span className="detail-label">Saved:</span>
-                            <span className="detail-value">{vehicle.savedDate}</span>
+                            <span className="detail-label">Status:</span>
+                            <span className="detail-value">{vehicle.status}</span>
                           </div>
                         </div>
                       </div>
-                      
                       <div className="vehicle-actions">
-                        <button className="btn secondary small">View Details</button>
-                        <button className="btn primary small">Contact Dealer</button>
-                        <button className="btn secondary small">Compare</button>
+                        <button className="btn secondary small" onClick={() => navigate(`/vehicles/${vehicle.id}`)}>View Details</button>
+                        <button className="btn primary small" onClick={() => navigate('/book-service')}>Book Service</button>
                       </div>
                     </div>
                   ))}

@@ -1,124 +1,234 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { serviceAPI } from '../../services/api';
 import './Services.css';
 
-const STORAGE_KEY = 'sp_services';
+const EMPTY_FORM = {
+  name: '', description: '', category: 'car_wash',
+  price: '', duration: '', isActive: true,
+};
 
-const DEFAULT_SERVICES = [
-  { id: 1, name: 'Basic Car Wash', description: 'Exterior wash and dry', category: 'car_wash', price: 25, duration: 30, bookingCount: 45, isActive: true },
-  { id: 2, name: 'Premium Car Wash', description: 'Exterior wash, interior vacuum, tire shine', category: 'car_wash', price: 35, duration: 45, bookingCount: 32, isActive: true },
-  { id: 3, name: 'Full Detail', description: 'Complete interior and exterior detailing', category: 'car_wash', price: 120, duration: 180, bookingCount: 18, isActive: true },
-  { id: 4, name: 'Oil Change', description: 'Standard oil and filter change', category: 'maintenance', price: 45, duration: 30, bookingCount: 67, isActive: true },
-  { id: 5, name: 'Brake Service', description: 'Brake inspection and pad replacement', category: 'maintenance', price: 120, duration: 90, bookingCount: 23, isActive: true },
-  { id: 6, name: 'Tire Rotation', description: 'Rotate and balance all four tires', category: 'maintenance', price: 35, duration: 45, bookingCount: 41, isActive: true },
-  { id: 7, name: 'Engine Diagnostics', description: 'Computer diagnostic scan and report', category: 'maintenance', price: 80, duration: 60, bookingCount: 15, isActive: true },
+const CATEGORIES = [
+  { value: 'car_wash', label: 'Car Wash', icon: '🚿' },
+  { value: 'maintenance', label: 'Maintenance', icon: '🔧' },
+  { value: 'repair', label: 'Repair', icon: '🛠️' },
+  { value: 'other', label: 'Other', icon: '⚙️' },
 ];
 
-const EMPTY_FORM = { name: '', description: '', category: 'car_wash', price: '', duration: '', isActive: true };
+const catLabel = (val) => CATEGORIES.find((c) => c.value === val)?.label || val;
+const catIcon = (val) => CATEGORIES.find((c) => c.value === val)?.icon || '⚙️';
 
 const ServiceProviderServices = () => {
   const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingService, setEditingService] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [formData, setFormData] = useState(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [toast, setToast] = useState('');
 
-  useEffect(() => {
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(''), 3000);
+  };
+
+  const fetchServices = useCallback(async () => {
+    setLoading(true);
+    setError('');
     try {
-      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
-      setServices(stored || DEFAULT_SERVICES);
-      if (!stored) localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_SERVICES));
-    } catch {
-      setServices(DEFAULT_SERVICES);
+      const res = await serviceAPI.getMyServices();
+      setServices(res.data?.data || []);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to load services');
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  const persist = (updated) => {
-    setServices(updated);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-  };
+  useEffect(() => { fetchServices(); }, [fetchServices]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((f) => ({ ...f, [name]: type === 'checkbox' ? checked : value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (editingService) {
-      persist(services.map((s) =>
-        s.id === editingService.id
-          ? { ...s, ...formData, price: parseFloat(formData.price), duration: parseInt(formData.duration) }
-          : s
-      ));
-    } else {
-      persist([...services, { id: Date.now(), ...formData, price: parseFloat(formData.price), duration: parseInt(formData.duration), bookingCount: 0 }]);
+    setSaving(true);
+    setFormError('');
+    try {
+      const payload = {
+        ...formData,
+        price: parseFloat(formData.price),
+        duration: parseInt(formData.duration),
+      };
+      if (editingService) {
+        const res = await serviceAPI.update(editingService.id, payload);
+        const updated = res.data?.data;
+        setServices((prev) => prev.map((s) => (s.id === editingService.id ? updated : s)));
+        showToast('Service updated');
+      } else {
+        const res = await serviceAPI.create(payload);
+        const created = res.data?.data;
+        setServices((prev) => [created, ...prev]);
+        showToast('Service added');
+      }
+      closeModal();
+    } catch (err) {
+      setFormError(err.response?.data?.message || 'Failed to save service');
+    } finally {
+      setSaving(false);
     }
-    closeModal();
   };
 
   const handleEdit = (service) => {
     setEditingService(service);
-    setFormData({ name: service.name, description: service.description, category: service.category, price: String(service.price), duration: String(service.duration), isActive: service.isActive });
+    setFormData({
+      name: service.name,
+      description: service.description || '',
+      category: service.category,
+      price: String(service.price),
+      duration: String(service.duration),
+      isActive: service.isActive,
+    });
+    setFormError('');
     setShowModal(true);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('Delete this service?')) persist(services.filter((s) => s.id !== id));
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this service? This cannot be undone.')) return;
+    try {
+      await serviceAPI.delete(id);
+      setServices((prev) => prev.filter((s) => s.id !== id));
+      showToast('Service deleted');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to delete service');
+    }
   };
 
-  const closeModal = () => { setShowModal(false); setEditingService(null); setFormData(EMPTY_FORM); };
+  const toggleActive = async (service) => {
+    try {
+      const res = await serviceAPI.update(service.id, { isActive: !service.isActive });
+      const updated = res.data?.data;
+      setServices((prev) => prev.map((s) => (s.id === service.id ? updated : s)));
+      showToast(updated.isActive ? 'Service activated' : 'Service deactivated');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update service');
+    }
+  };
 
-  const filtered = selectedCategory === 'all' ? services : services.filter((s) => s.category === selectedCategory);
+  const openAdd = () => {
+    setEditingService(null);
+    setFormData(EMPTY_FORM);
+    setFormError('');
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setEditingService(null);
+    setFormData(EMPTY_FORM);
+    setFormError('');
+  };
+
+  const filtered = selectedCategory === 'all'
+    ? services
+    : services.filter((s) => s.category === selectedCategory);
 
   return (
     <div className="services-container">
+      {toast && <div className="svc-toast">{toast}</div>}
+
       <div className="services-header">
         <div>
           <h1>Service Management</h1>
-          <p>Manage your car wash and maintenance services</p>
+          <p>{services.length} service{services.length !== 1 ? 's' : ''} configured</p>
         </div>
-        <button className="add-service-btn" onClick={() => setShowModal(true)}>➕ Add New Service</button>
+        <button className="add-service-btn" onClick={openAdd}>➕ Add New Service</button>
       </div>
+
+      {error && (
+        <div className="svc-error">
+          {error}
+          <button onClick={fetchServices}>Retry</button>
+        </div>
+      )}
 
       <div className="category-filter">
-        <button className={`filter-btn ${selectedCategory === 'all' ? 'active' : ''}`} onClick={() => setSelectedCategory('all')}>
+        <button
+          className={`filter-btn ${selectedCategory === 'all' ? 'active' : ''}`}
+          onClick={() => setSelectedCategory('all')}
+        >
           All Services ({services.length})
         </button>
-        <button className={`filter-btn ${selectedCategory === 'car_wash' ? 'active' : ''}`} onClick={() => setSelectedCategory('car_wash')}>
-          🚿 Car Wash ({services.filter((s) => s.category === 'car_wash').length})
-        </button>
-        <button className={`filter-btn ${selectedCategory === 'maintenance' ? 'active' : ''}`} onClick={() => setSelectedCategory('maintenance')}>
-          🔧 Maintenance ({services.filter((s) => s.category === 'maintenance').length})
-        </button>
+        {CATEGORIES.map(({ value, label, icon }) => {
+          const count = services.filter((s) => s.category === value).length;
+          if (count === 0) return null;
+          return (
+            <button
+              key={value}
+              className={`filter-btn ${selectedCategory === value ? 'active' : ''}`}
+              onClick={() => setSelectedCategory(value)}
+            >
+              {icon} {label} ({count})
+            </button>
+          );
+        })}
       </div>
 
-      <div className="services-grid">
-        {filtered.map((service) => (
-          <div key={service.id} className="service-card">
-            <div className="service-card-header">
-              <span className="service-category-icon">{service.category === 'car_wash' ? '🚿' : '🔧'}</span>
-              <span className={`service-status ${service.isActive ? 'active' : 'inactive'}`}>{service.isActive ? 'Active' : 'Inactive'}</span>
+      {loading ? (
+        <div className="svc-loading">Loading services...</div>
+      ) : (
+        <div className="services-grid">
+          {filtered.map((service) => (
+            <div key={service.id} className="service-card">
+              <div className="service-card-header">
+                <span className="service-category-icon">{catIcon(service.category)}</span>
+                <span className={`service-status ${service.isActive ? 'active' : 'inactive'}`}>
+                  {service.isActive ? 'Active' : 'Inactive'}
+                </span>
+              </div>
+              <h3>{service.name}</h3>
+              <p className="service-description">{service.description}</p>
+              <div className="service-details">
+                <div className="service-detail-item">
+                  <span className="detail-label">Category</span>
+                  <span className="detail-value">{catLabel(service.category)}</span>
+                </div>
+                <div className="service-detail-item">
+                  <span className="detail-label">Price</span>
+                  <span className="detail-value price">${Number(service.price).toFixed(2)}</span>
+                </div>
+                <div className="service-detail-item">
+                  <span className="detail-label">Duration</span>
+                  <span className="detail-value">{service.duration} min</span>
+                </div>
+                <div className="service-detail-item">
+                  <span className="detail-label">Bookings</span>
+                  <span className="detail-value">{service.bookingCount || 0}</span>
+                </div>
+              </div>
+              <div className="service-actions">
+                <button className="edit-btn" onClick={() => handleEdit(service)}>✏️ Edit</button>
+                <button
+                  className={`toggle-btn ${service.isActive ? 'deactivate' : 'activate'}`}
+                  onClick={() => toggleActive(service)}
+                >
+                  {service.isActive ? '⏸ Deactivate' : '▶ Activate'}
+                </button>
+                <button className="delete-btn" onClick={() => handleDelete(service.id)}>🗑️</button>
+              </div>
             </div>
-            <h3>{service.name}</h3>
-            <p className="service-description">{service.description}</p>
-            <div className="service-details">
-              <div className="service-detail-item"><span className="detail-label">Category</span><span className="detail-value">{service.category === 'car_wash' ? 'Car Wash' : 'Maintenance'}</span></div>
-              <div className="service-detail-item"><span className="detail-label">Price</span><span className="detail-value price">${service.price}</span></div>
-              <div className="service-detail-item"><span className="detail-label">Duration</span><span className="detail-value">{service.duration} min</span></div>
-              <div className="service-detail-item"><span className="detail-label">Bookings</span><span className="detail-value">{service.bookingCount}</span></div>
-            </div>
-            <div className="service-actions">
-              <button className="edit-btn" onClick={() => handleEdit(service)}>✏️ Edit</button>
-              <button className="delete-btn" onClick={() => handleDelete(service.id)}>🗑️ Delete</button>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
 
-      {filtered.length === 0 && (
-        <div className="no-services">
-          <p>No services found in this category</p>
-          <button className="add-first-btn" onClick={() => setShowModal(true)}>Add Your First Service</button>
+          {filtered.length === 0 && (
+            <div className="no-services">
+              <p>No services found{selectedCategory !== 'all' ? ' in this category' : ''}</p>
+              <button className="add-first-btn" onClick={openAdd}>Add Your First Service</button>
+            </div>
+          )}
         </div>
       )}
 
@@ -129,41 +239,60 @@ const ServiceProviderServices = () => {
               <h2>{editingService ? 'Edit Service' : 'Add New Service'}</h2>
               <button className="close-btn" onClick={closeModal}>✕</button>
             </div>
+            {formError && <div className="svc-form-error">{formError}</div>}
             <form onSubmit={handleSubmit} className="service-form">
               <div className="form-group">
                 <label>Service Name *</label>
-                <input type="text" name="name" value={formData.name} onChange={handleInputChange} required placeholder="e.g., Premium Car Wash" />
+                <input
+                  type="text" name="name" value={formData.name}
+                  onChange={handleInputChange} required placeholder="e.g., Premium Car Wash"
+                />
               </div>
               <div className="form-group">
-                <label>Description *</label>
-                <textarea name="description" value={formData.description} onChange={handleInputChange} required rows="3" placeholder="Describe what's included" />
+                <label>Description</label>
+                <textarea
+                  name="description" value={formData.description}
+                  onChange={handleInputChange} rows="3" placeholder="Describe what's included"
+                />
               </div>
               <div className="form-row">
                 <div className="form-group">
                   <label>Category *</label>
                   <select name="category" value={formData.category} onChange={handleInputChange} required>
-                    <option value="car_wash">Car Wash</option>
-                    <option value="maintenance">Maintenance</option>
+                    {CATEGORIES.map(({ value, label }) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="form-group">
                   <label>Price ($) *</label>
-                  <input type="number" name="price" value={formData.price} onChange={handleInputChange} required min="0" step="0.01" placeholder="0.00" />
+                  <input
+                    type="number" name="price" value={formData.price}
+                    onChange={handleInputChange} required min="0" step="0.01" placeholder="0.00"
+                  />
                 </div>
               </div>
               <div className="form-group">
                 <label>Duration (minutes) *</label>
-                <input type="number" name="duration" value={formData.duration} onChange={handleInputChange} required min="15" step="15" placeholder="30" />
+                <input
+                  type="number" name="duration" value={formData.duration}
+                  onChange={handleInputChange} required min="15" step="15" placeholder="30"
+                />
               </div>
               <div className="form-group checkbox-group">
                 <label className="checkbox-label">
-                  <input type="checkbox" name="isActive" checked={formData.isActive} onChange={handleInputChange} />
+                  <input
+                    type="checkbox" name="isActive"
+                    checked={formData.isActive} onChange={handleInputChange}
+                  />
                   <span>Service is active and available for booking</span>
                 </label>
               </div>
               <div className="modal-actions">
                 <button type="button" className="cancel-btn" onClick={closeModal}>Cancel</button>
-                <button type="submit" className="submit-btn">{editingService ? 'Update Service' : 'Add Service'}</button>
+                <button type="submit" className="submit-btn" disabled={saving}>
+                  {saving ? 'Saving...' : editingService ? 'Update Service' : 'Add Service'}
+                </button>
               </div>
             </form>
           </div>

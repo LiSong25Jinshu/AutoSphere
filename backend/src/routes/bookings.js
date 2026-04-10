@@ -1,5 +1,6 @@
 import express from 'express';
 import { body, query, validationResult } from 'express-validator';
+import { Op } from 'sequelize';
 import { authenticateToken, requireRole, requireProvider } from '../middleware/auth.js';
 import Booking from '../models/Booking.js';
 import User from '../models/User.js';
@@ -24,6 +25,97 @@ const isDatabaseAvailable = async () => {
     return false;
   }
 };
+
+// GET /api/bookings/provider/stats — real stats for the authenticated service provider
+router.get('/provider/stats', authenticateToken, requireProvider, async (req, res) => {
+  try {
+    const providerId = req.user.id;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+
+    const [
+      todaysBookings,
+      pendingCount,
+      completedTotal,
+      weeklyBookings,
+      ratingData,
+    ] = await Promise.all([
+      // Today's bookings
+      Booking.findAll({
+        where: {
+          serviceProviderId: providerId,
+          scheduledDate: { [Op.gte]: today, [Op.lt]: tomorrow },
+        },
+        include: [{ model: User, as: 'user', attributes: ['firstName', 'lastName'] }],
+        order: [['scheduledTime', 'ASC']],
+        limit: 10,
+      }),
+      // Pending/confirmed count
+      Booking.count({
+        where: {
+          serviceProviderId: providerId,
+          status: { [Op.in]: ['pending', 'confirmed'] },
+        },
+      }),
+      // All-time completed
+      Booking.count({
+        where: { serviceProviderId: providerId, status: 'completed' },
+      }),
+      // This week's bookings for revenue estimate
+      Booking.findAll({
+        where: {
+          serviceProviderId: providerId,
+          scheduledDate: { [Op.gte]: startOfWeek },
+          status: { [Op.in]: ['confirmed', 'in_progress', 'completed'] },
+        },
+        attributes: ['estimatedCost', 'actualCost'],
+      }),
+      // Average rating
+      Booking.findOne({
+        where: {
+          serviceProviderId: providerId,
+          rating: { [Op.ne]: null },
+        },
+        attributes: [
+          [Booking.sequelize.fn('AVG', Booking.sequelize.col('rating')), 'avgRating'],
+          [Booking.sequelize.fn('COUNT', Booking.sequelize.col('rating')), 'ratingCount'],
+        ],
+        raw: true,
+      }),
+    ]);
+
+    const weeklyRevenue = weeklyBookings.reduce((sum, b) => {
+      return sum + parseFloat(b.actualCost || b.estimatedCost || 0);
+    }, 0);
+
+    res.json({
+      success: true,
+      data: {
+        todaysCount: todaysBookings.length,
+        pendingCount,
+        completedTotal,
+        weeklyRevenue: Math.round(weeklyRevenue),
+        avgRating: ratingData?.avgRating ? parseFloat(ratingData.avgRating).toFixed(1) : null,
+        ratingCount: parseInt(ratingData?.ratingCount || 0),
+        todaysBookings: todaysBookings.map((b) => ({
+          id: b.id,
+          customerName: b.user ? `${b.user.firstName} ${b.user.lastName}` : 'Customer',
+          serviceType: b.serviceType,
+          scheduledTime: b.scheduledTime,
+          status: b.status,
+          estimatedCost: b.estimatedCost,
+        })),
+      },
+    });
+  } catch (err) {
+    console.error('Provider stats error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
 
 // Get bookings for authenticated user
 router.get('/', [

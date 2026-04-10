@@ -1,6 +1,9 @@
 import express from 'express';
 import { body, query, validationResult } from 'express-validator';
 import { Op } from 'sequelize';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 import { authenticateToken, requireRole, optionalAuth } from '../middleware/auth.js';
 import Vehicle from '../models/Vehicle.js';
 import User from '../models/User.js';
@@ -8,6 +11,29 @@ import UserVehicleInteraction from '../models/UserVehicleInteraction.js';
 import { mockVehicleService } from '../utils/mockData.js';
 
 const router = express.Router();
+
+// ─── Multer setup for vehicle photo uploads ───────────────────────────────────
+const UPLOAD_DIR = process.env.UPLOAD_PATH || 'uploads/vehicles';
+if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
+  filename: (_req, file, cb) => {
+    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    cb(null, `vehicle-${unique}${path.extname(file.originalname)}`);
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: parseInt(process.env.MAX_FILE_SIZE) || 10 * 1024 * 1024 }, // 10 MB
+  fileFilter: (_req, file, cb) => {
+    const allowed = /jpeg|jpg|png|webp/;
+    const ok = allowed.test(path.extname(file.originalname).toLowerCase()) &&
+               allowed.test(file.mimetype);
+    ok ? cb(null, true) : cb(new Error('Only JPEG, PNG and WebP images are allowed'));
+  },
+});
 
 // Get all vehicles with search and filtering
 router.get('/', [
@@ -435,6 +461,88 @@ router.delete('/:id', authenticateToken, requireRole('dealer'), async (req, res)
   }
 });
 
+// GET /api/vehicles/my — fetch only the authenticated dealer's vehicles
+router.get('/my', authenticateToken, requireRole('dealer'), async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 100;
+    const offset = (page - 1) * limit;
+
+    const [vehicles, total] = await Promise.all([
+      Vehicle.findAll({
+        where: { dealerId: req.user.id },
+        order: [['createdAt', 'DESC']],
+        limit,
+        offset,
+      }),
+      Vehicle.count({ where: { dealerId: req.user.id } }),
+    ]);
+
+    res.json({
+      success: true,
+      data: vehicles,
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+    });
+  } catch (err) {
+    console.error('Get my vehicles error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// GET /api/vehicles/dealer/stats — real stats for the authenticated dealer
+router.get('/dealer/stats', authenticateToken, requireRole('dealer'), async (req, res) => {
+  try {
+    const dealerId = req.user.id;
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+
+    const [
+      totalInventory,
+      availableVehicles,
+      soldThisMonth,
+      totalViews,
+    ] = await Promise.all([
+      Vehicle.count({ where: { dealerId } }),
+      Vehicle.count({ where: { dealerId, status: 'available' } }),
+      Vehicle.count({ where: { dealerId, status: 'sold', updatedAt: { [Op.gte]: startOfMonth } } }),
+      Vehicle.sum('viewCount', { where: { dealerId } }),
+    ]);
+
+    // Top performing vehicles by views
+    const topVehicles = await Vehicle.findAll({
+      where: { dealerId },
+      attributes: ['id', 'make', 'model', 'year', 'price', 'viewCount', 'status'],
+      order: [['viewCount', 'DESC']],
+      limit: 5,
+    });
+
+    // New vehicles added this month
+    const newThisMonth = await Vehicle.count({
+      where: { dealerId, createdAt: { [Op.gte]: startOfMonth } },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        totalInventory,
+        availableVehicles,
+        soldThisMonth,
+        totalViews: totalViews || 0,
+        newThisMonth,
+        topVehicles: topVehicles.map(v => ({
+          id: v.id,
+          model: `${v.year} ${v.make} ${v.model}`,
+          views: v.viewCount || 0,
+          price: `$${Number(v.price).toLocaleString()}`,
+          status: v.status,
+        })),
+      },
+    });
+  } catch (err) {
+    console.error('Dealer stats error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
 // Get vehicles by dealer
 router.get('/dealer/:dealerId', async (req, res) => {
   try {
@@ -466,6 +574,76 @@ router.get('/dealer/:dealerId', async (req, res) => {
       success: false,
       message: 'Internal server error'
     });
+  }
+});
+
+// POST /api/vehicles/:id/photos — upload up to 10 photos for a vehicle
+router.post('/:id/photos', authenticateToken, requireRole('dealer'), upload.array('photos', 10), async (req, res) => {
+  try {
+    const vehicleId = parseInt(req.params.id);
+    if (isNaN(vehicleId)) {
+      return res.status(400).json({ success: false, message: 'Invalid vehicle ID' });
+    }
+
+    const vehicle = await Vehicle.findByPk(vehicleId);
+    if (!vehicle) {
+      return res.status(404).json({ success: false, message: 'Vehicle not found' });
+    }
+    if (vehicle.dealerId !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'You can only upload photos for your own vehicles' });
+    }
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ success: false, message: 'No files uploaded' });
+    }
+
+    const baseUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5001}`;
+    const newUrls = req.files.map((f) => `${baseUrl}/uploads/vehicles/${f.filename}`);
+    const existing = Array.isArray(vehicle.images) ? vehicle.images : [];
+    const images = [...existing, ...newUrls].slice(0, 20); // cap at 20 total
+
+    await vehicle.update({ images });
+
+    res.json({ success: true, data: { images }, message: `${req.files.length} photo(s) uploaded` });
+  } catch (err) {
+    console.error('Photo upload error:', err);
+    if (err.message?.includes('Only JPEG')) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// DELETE /api/vehicles/:id/photos — remove a photo by URL
+router.delete('/:id/photos', authenticateToken, requireRole('dealer'), async (req, res) => {
+  try {
+    const vehicleId = parseInt(req.params.id);
+    const { url } = req.body;
+
+    if (!url) return res.status(400).json({ success: false, message: 'Photo URL is required' });
+
+    const vehicle = await Vehicle.findByPk(vehicleId);
+    if (!vehicle) return res.status(404).json({ success: false, message: 'Vehicle not found' });
+    if (vehicle.dealerId !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    const images = (vehicle.images || []).filter((img) => img !== url);
+    await vehicle.update({ images });
+
+    // Try to delete the file from disk
+    try {
+      const filename = url.split('/uploads/vehicles/').pop();
+      if (filename) {
+        const filePath = path.join(UPLOAD_DIR, filename);
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      }
+    } catch (_) { /* ignore disk errors */ }
+
+    res.json({ success: true, data: { images } });
+  } catch (err) {
+    console.error('Delete photo error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 
