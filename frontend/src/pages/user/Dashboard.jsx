@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { bookingAPI, messageAPI } from '../../services/api';
+import { bookingAPI, messageAPI, userAPI } from '../../services/api';
 import './Dashboard.css';
 
 const UserDashboard = () => {
@@ -13,6 +13,8 @@ const UserDashboard = () => {
     completedServices: 0,
     savedVehicles: 0,
     unreadMessages: 0,
+    avgRating: null,
+    ratingCount: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -22,9 +24,10 @@ const UserDashboard = () => {
 
   const fetchUserData = async () => {
     try {
-      const [bookingsRes, conversationsRes] = await Promise.allSettled([
+      const [bookingsRes, conversationsRes, userStatsRes] = await Promise.allSettled([
         bookingAPI.getAll({ limit: 20 }),
         messageAPI.getConversations({ limit: 1 }),
+        userAPI.getStats(),
       ]);
 
       if (bookingsRes.status === 'fulfilled' && bookingsRes.value.data.success) {
@@ -43,13 +46,6 @@ const UserDashboard = () => {
             ? `${b.serviceProvider.firstName} ${b.serviceProvider.lastName}`
             : 'Provider',
         })));
-
-        const completed = allBookings.filter(b => b.status === 'completed').length;
-        setStats(prev => ({
-          ...prev,
-          totalAppointments: bookingsRes.value.data.pagination?.total || allBookings.length,
-          completedServices: completed,
-        }));
       }
 
       // Unread messages count from conversations
@@ -57,6 +53,18 @@ const UserDashboard = () => {
         const conversations = conversationsRes.value.data.data || [];
         const unread = conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
         setStats(prev => ({ ...prev, unreadMessages: unread }));
+      }
+
+      // Real user stats from dedicated endpoint
+      if (userStatsRes.status === 'fulfilled' && userStatsRes.value.data.success) {
+        const s = userStatsRes.value.data.data;
+        setStats(prev => ({
+          ...prev,
+          totalAppointments: s.totalBookings,
+          completedServices: s.completedBookings,
+          avgRating: s.avgRating,
+          ratingCount: s.ratingCount,
+        }));
       }
     } catch (err) {
       console.error('Dashboard fetch error:', err);
@@ -239,7 +247,11 @@ const UserDashboard = () => {
             
             <div className="rating-info">
               <span className="rating-star">⭐</span>
-              <span>Average Rating: 4.8/5.0</span>
+              <span>
+                {stats.avgRating
+                  ? `Average Rating: ${stats.avgRating}/5.0 (${stats.ratingCount} review${stats.ratingCount !== 1 ? 's' : ''})`
+                  : 'No ratings yet'}
+              </span>
             </div>
             
             <button

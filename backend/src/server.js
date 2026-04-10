@@ -26,6 +26,12 @@ import contactRoutes from './routes/contact.js';
 import notificationRoutes from './routes/notifications.js';
 import adminRoutes from './routes/admin.js';
 import pushRoutes from './routes/push.js';
+import cors from "cors";
+
+app.use(cors({
+  origin: "http://localhost:3000",
+  credentials: true
+}));
 
 import { initializeMessageSocket } from './sockets/messageSocket.js';
 
