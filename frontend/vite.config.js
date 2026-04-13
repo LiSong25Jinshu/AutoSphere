@@ -3,20 +3,40 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig(({ mode }) => ({
   plugins: [react()],
-  
+
   build: {
     outDir: 'dist',
     sourcemap: mode !== 'production',
     minify: 'esbuild',
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          mui: ['@mui/material', '@mui/icons-material'],
+        manualChunks(id) {
+          // Core React runtime — always needed
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
+            return 'react-core';
+          }
+          // Router
+          if (id.includes('node_modules/react-router-dom/') || id.includes('node_modules/react-router/')) {
+            return 'router';
+          }
+          // MUI — large, split from app code
+          if (id.includes('node_modules/@mui/')) {
+            return 'mui';
+          }
+          // Other large vendor libs
+          if (id.includes('node_modules/')) {
+            return 'vendor';
+          }
+          // Role-based page chunks
+          if (id.includes('/pages/admin/')) return 'pages-admin';
+          if (id.includes('/pages/dealer/')) return 'pages-dealer';
+          if (id.includes('/pages/service-provider/')) return 'pages-service-provider';
+          if (id.includes('/pages/user/')) return 'pages-user';
+          if (id.includes('/pages/public/')) return 'pages-public';
         },
       },
     },
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 600,
   },
 
   server: {
