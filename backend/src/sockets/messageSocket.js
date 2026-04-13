@@ -3,287 +3,161 @@ import { Op } from 'sequelize';
 import Message from '../models/Message.js';
 import Conversation from '../models/Conversation.js';
 import User from '../models/User.js';
-import { sendNotification } from '../utils/pushNotifications.js';
 
-// Store active users and their socket connections
-const activeUsers = new Map();
-const typingUsers = new Map();
+const activeUsers = new Map(); // userId -> socketId
+const typingUsers = new Map(); // "convId:userId" -> timestamp
 
-/**
- * Initialize WebSocket handlers for messaging
- * @param {Server} io - Socket.io server instance
- */
+const isParticipant = (conv, userId) =>
+  conv.participant1 === userId || conv.participant2 === userId;
+
 export const initializeMessageSocket = (io) => {
-  // Middleware to authenticate socket connections
+  // Auth middleware
   io.use(async (socket, next) => {
     try {
       const token = socket.handshake.auth.token;
-      
-      if (!token) {
-        return next(new Error('Authentication token required'));
-      }
-
+      if (!token) return next(new Error('Authentication token required'));
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
       socket.userId = decoded.id;
-      socket.userEmail = decoded.email;
-      
       next();
-    } catch (error) {
+    } catch {
       next(new Error('Invalid authentication token'));
     }
   });
 
   io.on('connection', (socket) => {
-    console.log(`User connected: ${socket.userId}`);
-    
-    // Add user to active users
-    activeUsers.set(socket.userId, socket.id);
-    
-    // Notify others that user is online
-    socket.broadcast.emit('user:online', { userId: socket.userId });
+    const uid = socket.userId;
+    activeUsers.set(uid, socket.id);
+    socket.join(`user:${uid}`);
+    socket.broadcast.emit('user:online', { userId: uid });
 
-    // Join user to their personal room
-    socket.join(`user:${socket.userId}`);
-
-    // Handle joining conversation rooms
+    // Join conversation room
     socket.on('conversation:join', async (conversationId) => {
       try {
-        // Verify user is part of this conversation
-        const conversation = await Conversation.findOne({
-          where: {
-            id: conversationId,
-          },
-        });
-
-        if (!conversation) {
-          socket.emit('error', { message: 'Conversation not found' });
-          return;
+        const conv = await Conversation.findByPk(conversationId);
+        if (!conv || !isParticipant(conv, uid)) {
+          return socket.emit('error', { message: 'Not authorized' });
         }
-
-        // Check if user is participant
-        const participants = conversation.participants || [];
-        if (!participants.includes(socket.userId)) {
-          socket.emit('error', { message: 'Not authorized to join this conversation' });
-          return;
-        }
-
         socket.join(`conversation:${conversationId}`);
-        console.log(`User ${socket.userId} joined conversation ${conversationId}`);
-      } catch (error) {
-        console.error('Error joining conversation:', error);
+      } catch (e) {
         socket.emit('error', { message: 'Failed to join conversation' });
       }
     });
 
-    // Handle leaving conversation rooms
     socket.on('conversation:leave', (conversationId) => {
       socket.leave(`conversation:${conversationId}`);
-      console.log(`User ${socket.userId} left conversation ${conversationId}`);
     });
 
-    // Handle new messages
-    socket.on('message:send', async (data) => {
+    // Send message via socket (real-time broadcast)
+    socket.on('message:send', async ({ conversationId, content, attachments }) => {
       try {
-        const { conversationId, content, attachments } = data;
-
-        // Verify user is part of this conversation
-        const conversation = await Conversation.findByPk(conversationId);
-        if (!conversation) {
-          socket.emit('error', { message: 'Conversation not found' });
-          return;
+        const conv = await Conversation.findByPk(conversationId);
+        if (!conv || !isParticipant(conv, uid)) {
+          return socket.emit('error', { message: 'Not authorized' });
         }
 
-        const participants = conversation.participants || [];
-        if (!participants.includes(socket.userId)) {
-          socket.emit('error', { message: 'Not authorized to send messages in this conversation' });
-          return;
-        }
-
-        // Create message
-        const message = await Message.create({
+        const msg = await Message.create({
           conversationId,
-          senderId: socket.userId,
+          senderId: uid,
           content,
           attachments: attachments || [],
-          isRead: false,
         });
 
-        // Update conversation's last message
-        await conversation.update({
-          lastMessageAt: new Date(),
-          updatedAt: new Date(),
+        // Update conversation
+        const otherId = conv.participant1 === uid ? conv.participant2 : conv.participant1;
+        if (conv.participant1 === otherId) {
+          conv.unreadCount1 += 1;
+        } else {
+          conv.unreadCount2 += 1;
+        }
+        conv.lastMessageAt = new Date();
+        conv.lastMessageId = msg.id;
+        await conv.save();
+
+        const full = await Message.findByPk(msg.id, {
+          include: [{ model: User, as: 'sender', attributes: ['id', 'firstName', 'lastName'] }],
         });
 
-        // Fetch complete message with sender info
-        const completeMessage = await Message.findByPk(message.id, {
-          include: [{
-            model: User,
-            as: 'sender',
-            attributes: ['id', 'firstName', 'lastName', 'email'],
-          }],
+        io.to(`conversation:${conversationId}`).emit('message:new', full);
+
+        // Notify recipient
+        io.to(`user:${otherId}`).emit('notification:new', {
+          type: 'message',
+          conversationId,
+          message: content.length > 60 ? content.slice(0, 57) + '...' : content,
+          timestamp: new Date().toISOString(),
         });
-
-        // Emit to all users in the conversation
-        io.to(`conversation:${conversationId}`).emit('message:new', completeMessage);
-
-        // Send notification to offline users (and persist for online users too)
-        const recipientIds = participants.filter(id => id !== socket.userId);
-        const senderName = completeMessage.sender
-          ? `${completeMessage.sender.firstName} ${completeMessage.sender.lastName}`
-          : 'Someone';
-        const preview = content.length > 60 ? content.slice(0, 57) + '...' : content;
-
-        recipientIds.forEach((recipientId) => {
-          sendNotification(
-            recipientId,
-            'message',
-            `New message from ${senderName}`,
-            preview,
-            { linkType: 'conversation', linkId: conversationId, url: '/messages' }
-          ).catch(() => {});
-
-          // Also emit notification:new via socket so the bell updates in real time
-          io.to(`user:${recipientId}`).emit('notification:new', {
-            id: `msg-${message.id}`,
-            type: 'message',
-            title: `New message from ${senderName}`,
-            message: preview,
-            timestamp: new Date().toISOString(),
-            read: false,
-            linkType: 'conversation',
-            linkId: conversationId,
-          });
-        });
-
-      } catch (error) {
-        console.error('Error sending message:', error);
+      } catch (e) {
+        console.error('message:send error', e);
         socket.emit('error', { message: 'Failed to send message' });
       }
     });
 
-    // Handle typing indicators
+    // Typing indicators
     socket.on('typing:start', ({ conversationId }) => {
-      const key = `${conversationId}:${socket.userId}`;
-      
-      if (!typingUsers.has(key)) {
-        typingUsers.set(key, Date.now());
-        
-        // Broadcast to others in the conversation
-        socket.to(`conversation:${conversationId}`).emit('typing:user', {
-          conversationId,
-          userId: socket.userId,
-          isTyping: true,
-        });
-      }
+      const key = `${conversationId}:${uid}`;
+      typingUsers.set(key, Date.now());
+      socket.to(`conversation:${conversationId}`).emit('typing:user', {
+        conversationId, userId: uid, isTyping: true,
+      });
     });
 
     socket.on('typing:stop', ({ conversationId }) => {
-      const key = `${conversationId}:${socket.userId}`;
-      
-      if (typingUsers.has(key)) {
-        typingUsers.delete(key);
-        
-        // Broadcast to others in the conversation
-        socket.to(`conversation:${conversationId}`).emit('typing:user', {
-          conversationId,
-          userId: socket.userId,
-          isTyping: false,
-        });
-      }
+      typingUsers.delete(`${conversationId}:${uid}`);
+      socket.to(`conversation:${conversationId}`).emit('typing:user', {
+        conversationId, userId: uid, isTyping: false,
+      });
     });
 
-    // Handle message read receipts
-    socket.on('message:read', async ({ messageId, conversationId }) => {
-      try {
-        const message = await Message.findByPk(messageId);
-        
-        if (message && !message.isRead) {
-          await message.update({ isRead: true, readAt: new Date() });
-          
-          // Notify sender that message was read
-          io.to(`conversation:${conversationId}`).emit('message:read', {
-            messageId,
-            conversationId,
-            readBy: socket.userId,
-            readAt: new Date(),
-          });
-        }
-      } catch (error) {
-        console.error('Error marking message as read:', error);
-      }
-    });
-
-    // Handle marking all messages in conversation as read
+    // Mark conversation as read
     socket.on('conversation:markRead', async ({ conversationId }) => {
       try {
         await Message.update(
           { isRead: true, readAt: new Date() },
-          {
-            where: {
-              conversationId,
-              senderId: { [Op.ne]: socket.userId },
-              isRead: false,
-            },
-          }
+          { where: { conversationId, senderId: { [Op.ne]: uid }, isRead: false } }
         );
-
-        // Notify others in the conversation
+        const conv = await Conversation.findByPk(conversationId);
+        if (conv) {
+          if (conv.participant1 === uid) conv.unreadCount1 = 0;
+          else conv.unreadCount2 = 0;
+          await conv.save();
+        }
         socket.to(`conversation:${conversationId}`).emit('conversation:read', {
-          conversationId,
-          readBy: socket.userId,
+          conversationId, readBy: uid,
         });
-      } catch (error) {
-        console.error('Error marking conversation as read:', error);
+      } catch (e) {
+        console.error('markRead error', e);
       }
     });
 
-    // Handle disconnect
+    // Disconnect
     socket.on('disconnect', () => {
-      console.log(`User disconnected: ${socket.userId}`);
-      
-      // Remove from active users
-      activeUsers.delete(socket.userId);
-      
-      // Clear typing indicators
-      for (const [key, _] of typingUsers.entries()) {
-        if (key.endsWith(`:${socket.userId}`)) {
-          const conversationId = key.split(':')[0];
+      activeUsers.delete(uid);
+      for (const [key] of typingUsers) {
+        if (key.endsWith(`:${uid}`)) {
+          const convId = key.split(':')[0];
           typingUsers.delete(key);
-          
-          // Notify others that user stopped typing
-          socket.to(`conversation:${conversationId}`).emit('typing:user', {
-            conversationId,
-            userId: socket.userId,
-            isTyping: false,
+          socket.to(`conversation:${convId}`).emit('typing:user', {
+            conversationId: convId, userId: uid, isTyping: false,
           });
         }
       }
-      
-      // Notify others that user is offline
-      socket.broadcast.emit('user:offline', { userId: socket.userId });
+      socket.broadcast.emit('user:offline', { userId: uid });
     });
   });
 
-  // Clean up stale typing indicators every 10 seconds
+  // Stale typing cleanup every 10s
   setInterval(() => {
     const now = Date.now();
-    const timeout = 10000; // 10 seconds
-    
-    for (const [key, timestamp] of typingUsers.entries()) {
-      if (now - timestamp > timeout) {
+    for (const [key, ts] of typingUsers) {
+      if (now - ts > 10000) {
         typingUsers.delete(key);
-        
-        const [conversationId, userId] = key.split(':');
-        io.to(`conversation:${conversationId}`).emit('typing:user', {
-          conversationId,
-          userId: parseInt(userId),
-          isTyping: false,
+        const [convId, userId] = key.split(':');
+        io.to(`conversation:${convId}`).emit('typing:user', {
+          conversationId: convId, userId: parseInt(userId), isTyping: false,
         });
       }
     }
   }, 10000);
-
-  console.log('Message socket handlers initialized');
 };
 
 export { activeUsers, typingUsers };

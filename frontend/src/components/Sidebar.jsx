@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -42,19 +42,35 @@ const NAV_BY_ROLE = {
   ],
 };
 
-const Sidebar = () => {
+const STORAGE_KEY = 'sidebar-collapsed';
+
+const Sidebar = ({ collapsed, onToggle }) => {
   const location = useLocation();
   const { user } = useAuth();
 
-  const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
+  const isActive = (path) =>
+    location.pathname === path || location.pathname.startsWith(path + '/');
 
   const items = NAV_BY_ROLE[user?.role] || NAV_BY_ROLE.user;
 
   return (
-    <aside className="dashboard-sidebar">
+    <aside className={`dashboard-sidebar${collapsed ? ' sidebar-collapsed' : ''}`}>
+      {/* Header: logo + toggle button */}
       <div className="sidebar-header">
-        <Link to="/" className="sidebar-logo">AutoSphere</Link>
+        {!collapsed && (
+          <Link to="/" className="sidebar-logo">AutoSphere</Link>
+        )}
+        <button
+          className="sidebar-toggle-btn"
+          onClick={onToggle}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {collapsed ? '▶' : '◀'}
+        </button>
       </div>
+
+      {/* Nav items */}
       <div className="sidebar-content">
         <nav className="sidebar-nav">
           {items.map((item) => (
@@ -62,9 +78,12 @@ const Sidebar = () => {
               key={item.path}
               to={item.path}
               className={`sidebar-item ${isActive(item.path) ? 'active' : ''}`}
+              title={collapsed ? item.label : undefined}
             >
               <span className="sidebar-icon">{item.icon}</span>
-              <span className="sidebar-label">{item.label}</span>
+              {!collapsed && (
+                <span className="sidebar-label">{item.label}</span>
+              )}
             </Link>
           ))}
         </nav>

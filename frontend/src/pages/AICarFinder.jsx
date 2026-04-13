@@ -427,7 +427,7 @@ const AICarFinder = () => {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes loading {
           0% { transform: translateX(-100%); }
           100% { transform: translateX(400%); }

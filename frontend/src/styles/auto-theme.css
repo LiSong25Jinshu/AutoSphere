@@ -860,16 +860,22 @@ body {
   color: var(--autosphere-white);
 }
 
-/* Dashboard Layout Styles - Professional SaaS Pattern */
+/* Dashboard Layout Styles - Collapsible Push Sidebar */
+:root {
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 64px;
+  --sidebar-transition: 0.25s ease;
+}
+
 .dashboard-layout {
   display: flex;
   min-height: 100vh;
   background-color: var(--autosphere-platinum);
 }
 
-/* Sidebar Styles */
+/* ── Sidebar ── */
 .dashboard-sidebar {
-  width: 260px;
+  width: var(--sidebar-width);
   background: var(--autosphere-white);
   border-right: 1px solid var(--autosphere-platinum);
   flex-shrink: 0;
@@ -880,21 +886,63 @@ body {
   left: 0;
   height: 100vh;
   overflow-y: auto;
+  overflow-x: hidden;
   z-index: 1000;
+  transition: width var(--sidebar-transition);
+}
+
+/* Collapsed state */
+.dashboard-sidebar.sidebar-collapsed {
+  width: var(--sidebar-collapsed-width);
 }
 
 .sidebar-header {
-  padding: var(--autosphere-space-6);
+  padding: var(--autosphere-space-4) var(--autosphere-space-4);
   border-bottom: 1px solid var(--autosphere-platinum);
   background: var(--autosphere-white);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 64px;
+  gap: var(--autosphere-space-2);
 }
 
 .sidebar-logo {
-  font-size: var(--autosphere-text-2xl);
+  font-size: var(--autosphere-text-xl);
   font-weight: var(--autosphere-weight-bold);
   color: var(--autosphere-black);
   text-decoration: none;
   letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* Toggle button */
+.sidebar-toggle-btn {
+  background: none;
+  border: 1px solid var(--autosphere-platinum);
+  border-radius: var(--autosphere-radius-md);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--autosphere-medium-grey);
+  font-size: 12px;
+  flex-shrink: 0;
+  transition: var(--autosphere-transition-fast);
+}
+
+.sidebar-toggle-btn:hover {
+  background: var(--autosphere-platinum);
+  color: var(--autosphere-charcoal);
+}
+
+/* Collapsed: center the toggle button */
+.sidebar-collapsed .sidebar-header {
+  justify-content: center;
+  padding: var(--autosphere-space-4) var(--autosphere-space-2);
 }
 
 .sidebar-content {
@@ -919,6 +967,8 @@ body {
   font-weight: var(--autosphere-weight-medium);
   transition: var(--autosphere-transition-fast);
   border-right: 3px solid transparent;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .sidebar-item:hover {
@@ -933,23 +983,58 @@ body {
   font-weight: var(--autosphere-weight-semibold);
 }
 
+/* Collapsed: center icons */
+.sidebar-collapsed .sidebar-item {
+  padding: var(--autosphere-space-3);
+  justify-content: center;
+  gap: 0;
+}
+
 .sidebar-icon {
   font-size: var(--autosphere-text-lg);
   width: 24px;
   text-align: center;
+  flex-shrink: 0;
 }
 
 .sidebar-label {
   flex: 1;
+  transition: opacity var(--sidebar-transition);
 }
 
-/* Dashboard Content Area */
-.dashboard-content {
+/* ── Body (header + main) shifts with sidebar ── */
+.dashboard-body {
   flex: 1;
-  margin-left: 260px; /* Account for fixed sidebar */
+  margin-left: var(--sidebar-width);
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  transition: margin-left var(--sidebar-transition);
+}
+
+.sidebar-is-collapsed .dashboard-body {
+  margin-left: var(--sidebar-collapsed-width);
+}
+
+/* Dashboard Content Area (legacy class kept for compat) */
+.dashboard-content {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  transition: margin-left var(--sidebar-transition);
+}
+
+.sidebar-is-collapsed .dashboard-content {
+  margin-left: var(--sidebar-collapsed-width);
+}
+
+.dashboard-main-content {
+  flex: 1;
+  padding: var(--autosphere-space-6);
+  background-color: var(--autosphere-platinum);
+  overflow-y: auto;
 }
 
 /* Dashboard Header */
@@ -1009,10 +1094,10 @@ body {
   background-color: var(--autosphere-platinum);
   overflow-y: auto;
   width: 100%;
-  max-width: none; /* Remove any width restrictions */
+  max-width: none;
 }
 
-/* Dashboard Page Content - Full Width */
+/* Dashboard Page Content */
 .dashboard-page {
   width: 100%;
   max-width: none;
@@ -1046,28 +1131,12 @@ body {
   width: 100%;
 }
 
-/* Grid Layouts for Dashboard */
-.dashboard-grid {
-  display: grid;
-  gap: var(--autosphere-space-6);
-  width: 100%;
-}
-
-.dashboard-grid-2 {
-  grid-template-columns: 1fr 1fr;
-}
-
-.dashboard-grid-3 {
-  grid-template-columns: 1fr 1fr 1fr;
-}
-
-.dashboard-grid-4 {
-  grid-template-columns: repeat(4, 1fr);
-}
-
-.dashboard-grid-auto {
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-}
+/* Grid Layouts */
+.dashboard-grid { display: grid; gap: var(--autosphere-space-6); width: 100%; }
+.dashboard-grid-2 { grid-template-columns: 1fr 1fr; }
+.dashboard-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+.dashboard-grid-4 { grid-template-columns: repeat(4, 1fr); }
+.dashboard-grid-auto { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
 
 /* Dashboard Cards */
 .dashboard-card {
@@ -1100,85 +1169,100 @@ body {
   margin: 0;
 }
 
-.dashboard-card-content {
-  width: 100%;
+.dashboard-card-content { width: 100%; }
+
+/* App Layout */
+.App { padding-top: 80px; }
+.App.dashboard-app { padding-top: 0; }
+
+/* Dashboard Layout - Header Only (legacy) */
+.dashboard-layout-header-only {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
-/* App Layout Adjustments */
-.App {
-  padding-top: 80px; /* For public pages with navigation */
+.dashboard-main-full-width {
+  flex: 1;
+  padding: var(--autosphere-space-6);
+  background-color: var(--autosphere-platinum);
 }
 
-.App.dashboard-app {
-  padding-top: 0; /* No padding for dashboard pages */
-}
-
-/* Mobile Dashboard Layout */
+/* ── Mobile: sidebar becomes top bar ── */
 @media (max-width: 1024px) {
+  :root {
+    --sidebar-width: 220px;
+    --sidebar-collapsed-width: 56px;
+  }
+}
+
+@media (max-width: 768px) {
   .dashboard-sidebar {
-    width: 100%;
+    width: 100% !important;
     height: auto;
     position: static;
     border-right: none;
     border-bottom: 1px solid var(--autosphere-platinum);
   }
-  
+
+  .dashboard-sidebar.sidebar-collapsed {
+    width: 100% !important;
+  }
+
   .sidebar-header {
-    display: none; /* Hide logo in mobile, it's in the header */
+    display: none;
   }
-  
+
   .sidebar-content {
-    padding: var(--autosphere-space-3) 0;
+    padding: var(--autosphere-space-2) 0;
   }
-  
+
   .sidebar-nav {
     flex-direction: row;
     overflow-x: auto;
-    padding: 0 var(--autosphere-space-4);
-    gap: var(--autosphere-space-2);
+    padding: 0 var(--autosphere-space-3);
+    gap: var(--autosphere-space-1);
   }
-  
+
   .sidebar-item {
     flex-shrink: 0;
-    padding: var(--autosphere-space-2) var(--autosphere-space-4);
+    padding: var(--autosphere-space-2) var(--autosphere-space-3);
     border-right: none;
     border-bottom: 3px solid transparent;
     white-space: nowrap;
+    justify-content: flex-start;
+    gap: var(--autosphere-space-2);
   }
-  
+
   .sidebar-item.active {
     border-right: none;
     border-bottom-color: var(--autosphere-dark-grey);
   }
-  
-  .dashboard-content {
-    margin-left: 0;
+
+  .sidebar-collapsed .sidebar-item {
+    justify-content: flex-start;
+    padding: var(--autosphere-space-2) var(--autosphere-space-3);
+    gap: var(--autosphere-space-2);
   }
-  
+
+  .sidebar-label {
+    display: inline;
+  }
+
+  .dashboard-body,
+  .dashboard-content {
+    margin-left: 0 !important;
+  }
+
   .dashboard-layout {
     flex-direction: column;
   }
-  
-  .dashboard-main {
+
+  .dashboard-main,
+  .dashboard-main-content {
     padding: var(--autosphere-space-4);
   }
-}
 
-@media (max-width: 768px) {
-  .sidebar-item {
-    padding: var(--autosphere-space-2) var(--autosphere-space-3);
-    font-size: var(--autosphere-text-xs);
-  }
-  
-  .sidebar-icon {
-    font-size: var(--autosphere-text-base);
-    width: 20px;
-  }
-  
-  .dashboard-main {
-    padding: var(--autosphere-space-3);
-  }
-  
   .dashboard-header {
     padding: 0 var(--autosphere-space-4);
     height: 56px;
@@ -1187,14 +1271,14 @@ body {
 
 @media (max-width: 480px) {
   .sidebar-label {
-    display: none; /* Hide labels on very small screens, show only icons */
+    display: none;
   }
-  
+
   .sidebar-item {
     padding: var(--autosphere-space-2);
     justify-content: center;
   }
-  
+
   .dashboard-header {
     padding: 0 var(--autosphere-space-3);
   }

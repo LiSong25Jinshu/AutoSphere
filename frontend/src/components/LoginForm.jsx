@@ -5,6 +5,12 @@ import { useAuthOperations } from '../hooks/useAuthOperations';
 import '../pages/public/Auth.css';
 
 const SocialButtons = () => {
+  // Only show Google button if OAuth is configured on the backend
+  const googleConfigured = !window.location.hostname.includes('localhost') ||
+    import.meta.env.VITE_GOOGLE_OAUTH_ENABLED === 'true';
+
+  if (!googleConfigured) return null;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
       <button
