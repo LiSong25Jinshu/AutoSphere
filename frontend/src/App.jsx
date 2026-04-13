@@ -33,6 +33,8 @@ import About from './pages/public/About';
 import Contact from './pages/public/Contact';
 import Login from './pages/public/Login';
 import Register from './pages/public/Register';
+import CookieConsent from './components/CookieConsent';
+import PrivacyPolicy from './pages/public/PrivacyPolicy';
 
 // Import dealer pages
 import DealerDashboardPage from './pages/dealer/Dashboard';
@@ -798,6 +800,7 @@ function AppContent() {
           <Route path="/vehicles" element={<VehiclesPage />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPasswordForm />} />
@@ -967,6 +970,7 @@ function AppContent() {
         </Routes>
       </main>
       {showFooter && <Footer />}
+      <CookieConsent />
     </div>
   );
 }
@@ -974,7 +978,7 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <Router>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <NotificationProvider>
           <AppContent />
         </NotificationProvider>

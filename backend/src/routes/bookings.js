@@ -13,6 +13,7 @@ import {
   sendBookingStatusChangeEmail,
   sendBookingRescheduleEmail
 } from '../utils/email.js';
+import { sendNotification } from '../utils/pushNotifications.js';
 
 const router = express.Router();
 
@@ -417,8 +418,26 @@ router.post('/', [
       );
     } catch (emailError) {
       console.error('Failed to send booking confirmation email:', emailError);
-      // Don't fail the booking creation if email fails
     }
+
+    // Push notification to customer confirming their booking
+    sendNotification(
+      req.user.id,
+      'booking',
+      'Booking Confirmed',
+      `Your ${completeBooking.serviceType.replace(/_/g, ' ')} has been booked for ${new Date(completeBooking.scheduledDate).toLocaleDateString()}.`,
+      { linkType: 'booking', linkId: completeBooking.id, url: '/appointments' }
+    ).catch(() => {});
+
+    // Push notification to service provider about new booking
+    sendNotification(
+      serviceProvider.id,
+      'booking',
+      'New Booking Request',
+      `${req.user.firstName} ${req.user.lastName} booked ${completeBooking.serviceType.replace(/_/g, ' ')} for ${new Date(completeBooking.scheduledDate).toLocaleDateString()}.`,
+      { linkType: 'booking', linkId: completeBooking.id, url: '/service-provider/bookings' }
+    ).catch(() => {});
+
         // Send notification to service provider
     try {
       await sendServiceProviderBookingNotification(
@@ -440,7 +459,6 @@ router.post('/', [
       );
     } catch (emailError) {
       console.error('Failed to send service provider notification:', emailError);
-      // Don't fail the booking creation if email fails
     }
 
 
@@ -532,13 +550,28 @@ router.patch('/:id/status', [
             scheduledDate: booking.scheduledDate,
             scheduledTime: booking.scheduledTime,
           },
-          booking.status, // oldStatus (before update, but we use current as approximation)
-          req.body.status // newStatus
+          booking.status,
+          req.body.status
         );
+
+        // Push notification to customer about status change
+        const statusLabels = {
+          confirmed: 'Booking Confirmed',
+          in_progress: 'Service Started',
+          completed: 'Service Completed',
+          cancelled: 'Booking Cancelled',
+          no_show: 'Booking Marked No-Show',
+        };
+        sendNotification(
+          booking.userId,
+          'booking',
+          statusLabels[req.body.status] || 'Booking Updated',
+          `Your ${booking.serviceType.replace(/_/g, ' ')} booking has been ${req.body.status.replace(/_/g, ' ')}.`,
+          { linkType: 'booking', linkId: booking.id, url: '/appointments' }
+        ).catch(() => {});
       }
     } catch (emailError) {
       console.error('Failed to send status change email:', emailError);
-      // Don't fail the status update if email fails
     }
 
     res.json({

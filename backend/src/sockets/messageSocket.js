@@ -3,6 +3,7 @@ import { Op } from 'sequelize';
 import Message from '../models/Message.js';
 import Conversation from '../models/Conversation.js';
 import User from '../models/User.js';
+import { sendNotification } from '../utils/pushNotifications.js';
 
 // Store active users and their socket connections
 const activeUsers = new Map();
@@ -125,13 +126,33 @@ export const initializeMessageSocket = (io) => {
         // Emit to all users in the conversation
         io.to(`conversation:${conversationId}`).emit('message:new', completeMessage);
 
-        // Send notification to offline users
+        // Send notification to offline users (and persist for online users too)
         const recipientIds = participants.filter(id => id !== socket.userId);
-        recipientIds.forEach(recipientId => {
-          if (!activeUsers.has(recipientId)) {
-            // User is offline, could trigger push notification here
-            console.log(`User ${recipientId} is offline, should send push notification`);
-          }
+        const senderName = completeMessage.sender
+          ? `${completeMessage.sender.firstName} ${completeMessage.sender.lastName}`
+          : 'Someone';
+        const preview = content.length > 60 ? content.slice(0, 57) + '...' : content;
+
+        recipientIds.forEach((recipientId) => {
+          sendNotification(
+            recipientId,
+            'message',
+            `New message from ${senderName}`,
+            preview,
+            { linkType: 'conversation', linkId: conversationId, url: '/messages' }
+          ).catch(() => {});
+
+          // Also emit notification:new via socket so the bell updates in real time
+          io.to(`user:${recipientId}`).emit('notification:new', {
+            id: `msg-${message.id}`,
+            type: 'message',
+            title: `New message from ${senderName}`,
+            message: preview,
+            timestamp: new Date().toISOString(),
+            read: false,
+            linkType: 'conversation',
+            linkId: conversationId,
+          });
         });
 
       } catch (error) {

@@ -5,6 +5,7 @@ import { authenticateToken } from '../middleware/auth.js';
 import Message from '../models/Message.js';
 import Conversation from '../models/Conversation.js';
 import User from '../models/User.js';
+import { sendNotification } from '../utils/pushNotifications.js';
 
 const router = express.Router();
 
@@ -264,6 +265,21 @@ router.post('/conversations/:conversationId/messages', [
         attributes: ['id', 'firstName', 'lastName'],
       }],
     });
+
+    // Push notification to the other participant
+    if (otherParticipantId) {
+      const senderName = `${req.user.firstName} ${req.user.lastName}`;
+      const preview = req.body.content.length > 60
+        ? req.body.content.slice(0, 57) + '...'
+        : req.body.content;
+      sendNotification(
+        otherParticipantId,
+        'message',
+        `New message from ${senderName}`,
+        preview,
+        { linkType: 'conversation', linkId: conversation.id, url: '/messages' }
+      ).catch(() => {});
+    }
 
     res.status(201).json({
       success: true,

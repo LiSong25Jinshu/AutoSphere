@@ -4,11 +4,15 @@ frontend/node_modules/
 backend/node_modules/
 
 # Environment variables
-# .env
+.env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+# Keep .env.example and .env.production as templates (no real secrets)
+!.env.example
+!backend/.env.example
+!backend/.env.production
 
 # Build outputs
 frontend/dist/
@@ -115,3 +119,9 @@ Python files
 **/.ipynb_checkpoints
 **/__pycache__
 *.pyc
+
+# One-time migration scripts
+backend/fix-schema.js
+
+# Uploads directory (user-generated content)
+backend/uploads/

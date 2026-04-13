@@ -597,8 +597,8 @@ router.post('/:id/photos', authenticateToken, requireRole('dealer'), upload.arra
       return res.status(400).json({ success: false, message: 'No files uploaded' });
     }
 
-    const baseUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5001}`;
-    const newUrls = req.files.map((f) => `${baseUrl}/uploads/vehicles/${f.filename}`);
+    // Store as relative paths — works in both dev and production
+    const newUrls = req.files.map((f) => `/uploads/vehicles/${f.filename}`);
     const existing = Array.isArray(vehicle.images) ? vehicle.images : [];
     const images = [...existing, ...newUrls].slice(0, 20); // cap at 20 total
 

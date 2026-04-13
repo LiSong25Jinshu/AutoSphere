@@ -90,3 +90,13 @@ export const serviceAPI = {
   getSchedule: () => axios.get('/api/services/schedule'),
   saveSchedule: (schedule) => axios.put('/api/services/schedule', { schedule }),
 };
+
+// ─── GDPR / Privacy ───────────────────────────────────────────────────────────
+
+export const gdprAPI = {
+  exportData: () => axios.get('/api/gdpr/export', { responseType: 'blob' }),
+  deleteAccount: (confirmation) =>
+    axios.post('/api/gdpr/delete-account', { confirmation }),
+  getConsent: () => axios.get('/api/gdpr/consent'),
+  saveConsent: (preferences) => axios.post('/api/gdpr/consent', preferences),
+};

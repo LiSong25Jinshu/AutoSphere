@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuthOperations } from '../hooks/useAuthOperations';
 import '../pages/public/Auth.css';
@@ -33,6 +33,7 @@ const ResetPasswordForm = () => {
     setValidationErrors(e);
     return Object.keys(e).length === 0;
   };
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -82,11 +83,12 @@ const ResetPasswordForm = () => {
                 required
               />
               <button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)} aria-label="Toggle password visibility">
-                {showPassword ? 'Hide' : 'Show'}
+                {showPassword ? '👁️' : '👁️‍🗨️'}
               </button>
             </div>
             {validationErrors.password && <span className="error-message">{validationErrors.password}</span>}
           </div>
+
 
           <div className="form-group">
             <label htmlFor="confirmPassword">Confirm New Password</label>
@@ -102,7 +104,7 @@ const ResetPasswordForm = () => {
                 required
               />
               <button type="button" className="password-toggle" onClick={() => setShowConfirmPassword(!showConfirmPassword)} aria-label="Toggle confirm password visibility">
-                {showConfirmPassword ? 'Hide' : 'Show'}
+                {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
               </button>
             </div>
             {validationErrors.confirmPassword && <span className="error-message">{validationErrors.confirmPassword}</span>}
@@ -113,7 +115,7 @@ const ResetPasswordForm = () => {
           </button>
 
           <div className="auth-footer">
-            <p><Link to="/login" className="auth-link">Back to Sign In</Link></p>
+            <p><Link to="/login" className="auth-link">← Back to Sign In</Link></p>
           </div>
         </form>
       </div>

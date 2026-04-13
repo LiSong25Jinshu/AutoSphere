@@ -1,8 +1,8 @@
-import { createContext, useContext, useEffect, useReducer, useRef, useCallback } from 'react';
-import { io } from 'socket.io-client';
+import { createContext, useContext, useEffect, useReducer, useCallback } from 'react';
 import axios from 'axios';
 import { useAuth } from './AuthContext';
 import usePushNotifications from '../hooks/usePushNotifications';
+import useSocket from '../hooks/useSocket';
 
 const NotificationContext = createContext();
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
@@ -67,8 +67,8 @@ const reducer = (state, action) => {
 export const NotificationProvider = ({ children }) => {
   const { token, isAuthenticated } = useAuth();
   const [state, dispatch] = useReducer(reducer, initialState);
-  const socketRef = useRef(null);
-  const push_ = usePushNotifications(); // web push subscription management
+  const { socket: socketRef, connected } = useSocket(isAuthenticated);
+  const push_ = usePushNotifications();
 
   // ── Load persisted notifications from DB ──────────────────────────────────
   const loadFromDB = useCallback(async () => {
@@ -96,44 +96,33 @@ export const NotificationProvider = ({ children }) => {
     if (isAuthenticated) loadFromDB();
   }, [isAuthenticated, loadFromDB]);
 
-  // ── Socket connection ─────────────────────────────────────────────────────
+  // ── Socket event listeners ────────────────────────────────────────────────
   useEffect(() => {
-    if (!isAuthenticated || !token) return;
+    const socket = socketRef.current;
+    if (!socket) return;
 
-    const socket = io(API_URL, {
-      auth: { token },
-      transports: ['websocket', 'polling'],
-      reconnectionAttempts: 5,
-    });
-    socketRef.current = socket;
-
-    socket.on('connect', () => dispatch({ type: 'SET_CONNECTED', payload: true }));
-    socket.on('disconnect', () => dispatch({ type: 'SET_CONNECTED', payload: false }));
-
-    // Receive persisted notification pushed from server
-    socket.on('notification:new', (notif) => {
+    const onConnect = () => dispatch({ type: 'SET_CONNECTED', payload: true });
+    const onDisconnect = () => dispatch({ type: 'SET_CONNECTED', payload: false });
+    const onNotification = (notif) => {
       dispatch({
         type: 'ADD_NOTIFICATION',
         payload: { ...notif, timestamp: notif.timestamp || new Date().toISOString() },
       });
-    });
+    };
 
-    // Legacy socket events (keep for backward compat)
-    socket.on('message:new', (msg) => {
-      const senderName = msg.sender
-        ? `${msg.sender.firstName} ${msg.sender.lastName}`
-        : 'Someone';
-      // These are already persisted server-side; the notification:new event
-      // will arrive separately. This is a fallback for older server versions.
-    });
+    socket.on('connect', onConnect);
+    socket.on('disconnect', onDisconnect);
+    socket.on('notification:new', onNotification);
 
-    socket.on('connect_error', (err) => console.warn('Notification socket error:', err.message));
+    // Sync connected state immediately
+    dispatch({ type: 'SET_CONNECTED', payload: socket.connected });
 
     return () => {
-      socket.disconnect();
-      socketRef.current = null;
+      socket.off('connect', onConnect);
+      socket.off('disconnect', onDisconnect);
+      socket.off('notification:new', onNotification);
     };
-  }, [isAuthenticated, token]);
+  }, [socketRef, connected]); // re-attach after reconnect
 
   // ── Actions that call the API ─────────────────────────────────────────────
   const markRead = useCallback(async (id) => {

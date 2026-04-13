@@ -108,6 +108,18 @@ router.post('/login', [
 });
 
 // The rest of your routes (verify-email, resend-verification, forgot/reset password, logout, me, refresh, Google OAuth) stay unchanged
-// You can keep them exactly as in your original code
+// GET /api/auth/me — return the currently authenticated user
+router.get('/me', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    res.json({ success: true, user: user.toJSON() });
+  } catch (error) {
+    console.error('Get me error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
 
 export default router;

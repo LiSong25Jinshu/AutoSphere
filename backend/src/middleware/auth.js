@@ -8,8 +8,12 @@ import { verifyAccessToken, extractTokenFromHeader } from '../utils/jwt.js';
  */
 export const authenticateToken = async (req, res, next) => {
   try {
+    const authHeader = req.headers.authorization;
+    const token = extractTokenFromHeader(authHeader);
+
     // Development bypass for testing without database
-    if (process.env.NODE_ENV === 'development' && req.headers['x-test-mode'] === 'true') {
+    // Only use bypass if no real token is provided
+    if (process.env.NODE_ENV === 'development' && req.headers['x-test-mode'] === 'true' && !token) {
       req.user = {
         id: 4,
         email: 'test@autosphere.com',
@@ -18,9 +22,6 @@ export const authenticateToken = async (req, res, next) => {
       };
       return next();
     }
-
-    const authHeader = req.headers.authorization;
-    const token = extractTokenFromHeader(authHeader);
 
     if (!token) {
       return res.status(401).json({

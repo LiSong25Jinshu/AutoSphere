@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { gdprAPI } from '../../services/api';
 import './Settings.css';
 
 const UserSettings = () => {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('general');
+  const [gdprStatus, setGdprStatus] = useState({ exporting: false, deleting: false, deleteConfirm: '' });
   const [settings, setSettings] = useState({
     notifications: {
       email: true,
@@ -113,6 +115,41 @@ const UserSettings = () => {
         // Mock delete - replace with real API call
         alert('Account deletion initiated. You will receive a confirmation email.');
       }
+    }
+  };
+
+  // ─── GDPR handlers ────────────────────────────────────────────────────────
+  const handleExportData = async () => {
+    setGdprStatus(s => ({ ...s, exporting: true }));
+    try {
+      const response = await gdprAPI.exportData();
+      const url = URL.createObjectURL(new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `autosphere-data-export-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert('Failed to export data. Please try again.');
+    } finally {
+      setGdprStatus(s => ({ ...s, exporting: false }));
+    }
+  };
+
+  const handleDeleteAccountGdpr = async () => {
+    if (gdprStatus.deleteConfirm !== 'DELETE MY ACCOUNT') {
+      alert('Please type DELETE MY ACCOUNT exactly to confirm.');
+      return;
+    }
+    setGdprStatus(s => ({ ...s, deleting: true }));
+    try {
+      await gdprAPI.deleteAccount('DELETE MY ACCOUNT');
+      alert('Your account has been deleted. You will be logged out.');
+      logout();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to delete account.');
+    } finally {
+      setGdprStatus(s => ({ ...s, deleting: false }));
     }
   };
 
@@ -385,6 +422,49 @@ const UserSettings = () => {
                     <span className="toggle-label">Allow Data Collection</span>
                   </label>
                   <p className="setting-description">Allow us to collect usage data to improve your experience</p>
+                </div>
+
+                {/* GDPR Rights Section */}
+                <div className="gdpr-section">
+                  <h3>Your Data Rights (GDPR)</h3>
+                  <p className="gdpr-intro">
+                    Under GDPR you have the right to access, correct, and delete your personal data.
+                  </p>
+
+                  <div className="gdpr-action">
+                    <div>
+                      <strong>Download Your Data</strong>
+                      <p>Export a copy of all personal data we hold about you.</p>
+                    </div>
+                    <button
+                      className="btn secondary"
+                      onClick={handleExportData}
+                      disabled={gdprStatus.exporting}
+                    >
+                      {gdprStatus.exporting ? 'Exporting…' : '⬇ Export Data'}
+                    </button>
+                  </div>
+
+                  <div className="gdpr-action gdpr-action--danger">
+                    <div>
+                      <strong>Delete Account</strong>
+                      <p>Permanently delete your account and all associated personal data. This cannot be undone.</p>
+                      <input
+                        type="text"
+                        className="form-input gdpr-confirm-input"
+                        placeholder="Type: DELETE MY ACCOUNT"
+                        value={gdprStatus.deleteConfirm}
+                        onChange={e => setGdprStatus(s => ({ ...s, deleteConfirm: e.target.value }))}
+                      />
+                    </div>
+                    <button
+                      className="btn danger"
+                      onClick={handleDeleteAccountGdpr}
+                      disabled={gdprStatus.deleting || gdprStatus.deleteConfirm !== 'DELETE MY ACCOUNT'}
+                    >
+                      {gdprStatus.deleting ? 'Deleting…' : '🗑 Delete Account'}
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
