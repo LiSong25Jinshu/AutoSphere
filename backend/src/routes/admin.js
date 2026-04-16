@@ -16,15 +16,18 @@ router.get('/stats', authenticateToken, requireAdmin, async (req, res) => {
       totalVehicles,
       totalBookings,
       activeBookings,
+      pendingBookings,
       totalConversations,
       newUsersThisMonth,
       newVehiclesThisMonth,
       newBookingsThisMonth,
+      unverifiedUsers,
     ] = await Promise.all([
       User.count(),
       Vehicle.count(),
       Booking.count(),
       Booking.count({ where: { status: { [Op.in]: ['pending', 'confirmed', 'in_progress'] } } }),
+      Booking.count({ where: { status: 'pending' } }),
       Conversation.count(),
       User.count({
         where: { createdAt: { [Op.gte]: new Date(new Date().setDate(1)) } },
@@ -35,6 +38,7 @@ router.get('/stats', authenticateToken, requireAdmin, async (req, res) => {
       Booking.count({
         where: { createdAt: { [Op.gte]: new Date(new Date().setDate(1)) } },
       }),
+      User.count({ where: { isVerified: false } }),
     ]);
 
     // Bookings by status breakdown
@@ -81,6 +85,8 @@ router.get('/stats', authenticateToken, requireAdmin, async (req, res) => {
           vehicles: totalVehicles,
           bookings: totalBookings,
           activeBookings,
+          pendingBookings,
+          unverifiedUsers,
           conversations: totalConversations,
         },
         thisMonth: {
@@ -233,6 +239,65 @@ router.post('/logs/purge', authenticateToken, requireAdmin, (req, res) => {
   const days = systemSettings.maintenance.logRetentionDays;
   console.log(`Log purge requested by admin: ${req.user.email} — retaining ${days} days`);
   res.json({ success: true, message: `Logs older than ${days} days purged` });
+});
+
+// GET /api/admin/moderation — flagged vehicles and reported content
+router.get('/moderation', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    // Flagged vehicles (status = 'flagged' or 'pending' review)
+    const flaggedVehicles = await Vehicle.findAll({
+      where: { status: { [Op.in]: ['flagged', 'pending'] } },
+      include: [{ model: User, as: 'dealer', attributes: ['id', 'firstName', 'lastName', 'email'] }],
+      order: [['createdAt', 'DESC']],
+      limit: 50,
+    });
+
+    const items = flaggedVehicles.map((v) => ({
+      id: `vehicle-${v.id}`,
+      type: 'Vehicle Listing',
+      title: `${v.year} ${v.make} ${v.model}`,
+      author: v.dealer ? `${v.dealer.firstName} ${v.dealer.lastName} (${v.dealer.email})` : 'Unknown',
+      status: v.status === 'pending' ? 'pending' : 'flagged',
+      reportCount: 0,
+      createdAt: v.createdAt,
+      content: v.description || 'No description provided',
+      refId: v.id,
+      refType: 'vehicle',
+    }));
+
+    res.json({ success: true, data: items });
+  } catch (err) {
+    console.error('Moderation list error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// POST /api/admin/moderation/:id — take action on a content item
+router.post('/moderation/:id', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { action, reason } = req.body;
+    const [refType, refId] = req.params.id.split('-');
+
+    if (refType === 'vehicle') {
+      const vehicle = await Vehicle.findByPk(parseInt(refId));
+      if (!vehicle) return res.status(404).json({ success: false, message: 'Vehicle not found' });
+
+      if (action === 'approve') {
+        vehicle.status = 'available';
+        await vehicle.save();
+      } else if (action === 'block') {
+        vehicle.status = 'flagged';
+        await vehicle.save();
+      } else if (action === 'delete') {
+        await vehicle.destroy();
+      }
+    }
+
+    res.json({ success: true, message: `Content ${action}d successfully` });
+  } catch (err) {
+    console.error('Moderation action error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
 });
 
 export default router;

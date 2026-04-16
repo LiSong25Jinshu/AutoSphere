@@ -77,6 +77,9 @@ export const adminAPI = {
   saveSettings: (settings) => axios.put('/api/admin/settings', settings),
   clearCache: () => axios.post('/api/admin/cache/clear'),
   purgeLogs: () => axios.post('/api/admin/logs/purge'),
+  getModerationItems: (params = {}) => axios.get('/api/admin/moderation', { params }),
+  moderateContent: (id, action, reason = '') =>
+    axios.post(`/api/admin/moderation/${id}`, { action, reason }),
 };
 
 // ─── Services (Service Provider) ─────────────────────────────────────────────

@@ -2093,3 +2093,358 @@ body {
     padding-top: 120px; /* Account for stacked mobile nav */
   }
 }
+
+/* ── Enhanced UserDropdown ── */
+.user-avatar-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.user-name {
+  font-size: var(--autosphere-text-sm);
+  font-weight: var(--autosphere-weight-medium);
+  color: var(--autosphere-charcoal);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown-menu {
+  min-width: 220px;
+}
+
+.dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--autosphere-platinum);
+}
+
+.dropdown-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--autosphere-dark-grey), var(--autosphere-charcoal));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.dropdown-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--autosphere-charcoal);
+}
+
+.dropdown-email {
+  font-size: 0.75rem;
+  color: var(--autosphere-medium-grey);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 150px;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--autosphere-platinum);
+  margin: 4px 0;
+}
+
+.dropdown-logout {
+  color: #d32f2f !important;
+}
+
+.dropdown-logout:hover {
+  background: #ffebee !important;
+  color: #c62828 !important;
+}
+
+/* ── Header icon button (dark mode toggle etc.) ── */
+.header-icon-btn {
+  background: none;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  color: var(--autosphere-medium-grey);
+}
+
+.header-icon-btn:hover {
+  background: var(--autosphere-platinum);
+}
+
+.header-role-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: var(--autosphere-platinum);
+  color: var(--autosphere-charcoal);
+  white-space: nowrap;
+}
+
+/* ── Dark mode ── */
+[data-theme="dark"] {
+  --autosphere-white: #1e1e2e;
+  --autosphere-platinum: #2a2a3e;
+  --autosphere-charcoal: #e0e0f0;
+  --autosphere-black: #ffffff;
+  --autosphere-medium-grey: #9090b0;
+  --autosphere-dark-grey: #c0c0d8;
+}
+
+[data-theme="dark"] body {
+  background: #13131f;
+  color: #e0e0f0;
+}
+
+[data-theme="dark"] .dashboard-sidebar,
+[data-theme="dark"] .dashboard-header,
+[data-theme="dark"] .dropdown-menu {
+  background: #1e1e2e;
+  border-color: #2a2a3e;
+}
+
+[data-theme="dark"] .sidebar-item:hover,
+[data-theme="dark"] .sidebar-item.active {
+  background: #2a2a3e;
+}
+
+[data-theme="dark"] .dropdown-header {
+  background: #2a2a3e;
+}
+
+[data-theme="dark"] .dropdown-item:hover {
+  background: #2a2a3e;
+}
+
+/* ── Admin Dashboard page styles ── */
+.admin-dashboard {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.admin-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.admin-page-header h1 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--autosphere-charcoal);
+}
+
+.admin-subtitle {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--autosphere-medium-grey);
+}
+
+.admin-refresh-btn {
+  padding: 0.5rem 1rem;
+  background: var(--autosphere-white);
+  border: 1px solid var(--autosphere-platinum);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--autosphere-charcoal);
+  transition: all 0.2s;
+}
+
+.admin-refresh-btn:hover {
+  background: var(--autosphere-platinum);
+}
+
+.admin-alerts {
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.admin-alert {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.admin-alert-warning {
+  background: #fff3e0;
+  color: #e65100;
+  border: 1px solid #ffcc02;
+}
+
+.admin-alert-info {
+  background: #e3f2fd;
+  color: #1565c0;
+  border: 1px solid #90caf9;
+}
+
+.admin-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid var(--autosphere-platinum);
+  padding-bottom: 0;
+}
+
+.admin-tab {
+  padding: 0.75rem 1.5rem;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--autosphere-medium-grey);
+  transition: all 0.2s;
+  margin-bottom: -2px;
+}
+
+.admin-tab:hover {
+  color: var(--autosphere-charcoal);
+}
+
+.admin-tab.active {
+  color: #1976d2;
+  border-bottom-color: #1976d2;
+  font-weight: 600;
+}
+
+.admin-tab-content {
+  background: var(--autosphere-white);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* ── DashboardHeader missing classes ── */
+.header-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: none;
+  border: 1px solid var(--autosphere-platinum);
+  border-radius: var(--autosphere-radius-md);
+  cursor: pointer;
+  font-size: var(--autosphere-text-base);
+  color: var(--autosphere-medium-grey);
+  transition: var(--autosphere-transition-fast);
+  flex-shrink: 0;
+}
+
+.header-icon-btn:hover {
+  background-color: var(--autosphere-platinum);
+  color: var(--autosphere-charcoal);
+  transform: scale(1.05);
+}
+
+.header-role-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--autosphere-space-1) var(--autosphere-space-3);
+  background: var(--autosphere-platinum);
+  color: var(--autosphere-medium-grey);
+  font-size: var(--autosphere-text-xs);
+  font-weight: var(--autosphere-weight-medium);
+  border-radius: var(--autosphere-radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+/* ── UserDropdown missing classes ── */
+.user-avatar-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+}
+
+.user-name {
+  font-size: var(--autosphere-text-sm);
+  font-weight: var(--autosphere-weight-medium);
+  color: var(--autosphere-charcoal);
+  line-height: 1.2;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: var(--autosphere-space-3);
+  padding: var(--autosphere-space-3) var(--autosphere-space-4);
+  background: var(--autosphere-platinum);
+}
+
+.dropdown-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--autosphere-dark-grey), var(--autosphere-charcoal));
+  color: var(--autosphere-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--autosphere-text-sm);
+  font-weight: var(--autosphere-weight-semibold);
+  flex-shrink: 0;
+}
+
+.dropdown-name {
+  font-size: var(--autosphere-text-sm);
+  font-weight: var(--autosphere-weight-semibold);
+  color: var(--autosphere-charcoal);
+  line-height: 1.2;
+}
+
+.dropdown-email {
+  font-size: var(--autosphere-text-xs);
+  color: var(--autosphere-medium-grey);
+  line-height: 1.2;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--autosphere-platinum);
+  margin: var(--autosphere-space-1) 0;
+}
+
+.dropdown-logout {
+  color: var(--autosphere-accent-red) !important;
+}
+
+.dropdown-logout:hover {
+  background-color: var(--autosphere-accent-red) !important;
+  color: var(--autosphere-white) !important;
+}
