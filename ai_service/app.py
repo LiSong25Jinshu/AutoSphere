@@ -51,7 +51,7 @@ def health():
     return jsonify({'status': 'ok', 'message':'AI service is running'})
 
 
-@app.route('/recommendations<user_id>', methods=['GET'])
+@app.route('/recommendations/<user_id>', methods=['GET'])
 def get_recommendations(user_id):
     """
     Get recommendations for a user.
@@ -59,12 +59,18 @@ def get_recommendations(user_id):
     """
     try:
         n = int(request.args.get('n', 10))   # How many recommendations?
-        preferences = fetch_user_preferences(user_id)
+
+        # Safely fetch preferences - return empty dict if table doesn't exist
+        try:
+            preferences = fetch_user_preferences(user_id)
+        except:
+            preferences = {}
+            
         recs = engine.get_recommendations(user_id, preferences, n)
 
         # Add explanations to each recommendations
         for rec in recs:
-            recs['reasons'] = engine.explain(user_id, rec['vehicle_id'])
+            rec['reasons'] = engine.explain(user_id, rec['vehicle_id'])
 
         return jsonify({'user_id':user_id, 'recommendations':recs})
     except Exception as e:
