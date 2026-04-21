@@ -60,11 +60,32 @@ const VehiclesPage = () => {
         apiFilters.color = searchFilters.color;
       }
 
+      // Lowercase enum fields to match backend validation
+      if (apiFilters.fuelType) {
+        apiFilters.fuelType = apiFilters.fuelType.toLowerCase().replace(/-/g, '_').replace(/ /g, '_');
+      }
+      if (apiFilters.bodyType) {
+        apiFilters.bodyType = apiFilters.bodyType.toLowerCase();
+      }
+      if (apiFilters.condition) {
+        apiFilters.condition = apiFilters.condition.toLowerCase();
+      }
+
       // Map frontend availability type to backend format
-      if (searchFilters.availabilityType) {
-        // For now, we'll just pass it through - backend can be enhanced to support this
+      if (apiFilters.availabilityType) {
         delete apiFilters.availabilityType;
       }
+
+      // Strip any unknown keys that would cause backend validation to fail
+      const ALLOWED_PARAMS = new Set([
+        'page', 'limit', 'make', 'model', 'minYear', 'maxYear',
+        'minPrice', 'maxPrice', 'minMileage', 'maxMileage',
+        'condition', 'fuelType', 'transmission', 'bodyType',
+        'color', 'featured', 'search', 'sortBy', 'sortOrder',
+      ]);
+      Object.keys(apiFilters).forEach((key) => {
+        if (!ALLOWED_PARAMS.has(key)) delete apiFilters[key];
+      });
 
       const result = await vehicleService.getVehicles(apiFilters);
       

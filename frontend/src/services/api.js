@@ -77,6 +77,9 @@ export const adminAPI = {
   saveSettings: (settings) => axios.put('/api/admin/settings', settings),
   clearCache: () => axios.post('/api/admin/cache/clear'),
   purgeLogs: () => axios.post('/api/admin/logs/purge'),
+  getModerationItems: (params = {}) => axios.get('/api/admin/moderation', { params }),
+  moderateContent: (id, action, reason = '') =>
+    axios.post(`/api/admin/moderation/${id}`, { action, reason }),
 };
 
 // ─── Services (Service Provider) ─────────────────────────────────────────────
@@ -89,4 +92,14 @@ export const serviceAPI = {
   delete: (id) => axios.delete(`/api/services/${id}`),
   getSchedule: () => axios.get('/api/services/schedule'),
   saveSchedule: (schedule) => axios.put('/api/services/schedule', { schedule }),
+};
+
+// ─── GDPR / Privacy ───────────────────────────────────────────────────────────
+
+export const gdprAPI = {
+  exportData: () => axios.get('/api/gdpr/export', { responseType: 'blob' }),
+  deleteAccount: (confirmation) =>
+    axios.post('/api/gdpr/delete-account', { confirmation }),
+  getConsent: () => axios.get('/api/gdpr/consent'),
+  saveConsent: (preferences) => axios.post('/api/gdpr/consent', preferences),
 };

@@ -1,4 +1,4 @@
-import express from 'express';
+﻿import express from 'express';
 import { body, query, validationResult } from 'express-validator';
 import { Op } from 'sequelize';
 import multer from 'multer';
@@ -12,7 +12,7 @@ import { mockVehicleService } from '../utils/mockData.js';
 
 const router = express.Router();
 
-// ─── Multer setup for vehicle photo uploads ───────────────────────────────────
+// â”€â”€â”€ Multer setup for vehicle photo uploads â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const UPLOAD_DIR = process.env.UPLOAD_PATH || 'uploads/vehicles';
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
@@ -41,23 +41,26 @@ router.get('/', [
   query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
   query('make').optional().isString().trim(),
   query('model').optional().isString().trim(),
-  query('minYear').optional().isInt({ min: 1900 }),
-  query('maxYear').optional().isInt({ max: new Date().getFullYear() + 2 }),
+  query('minYear').optional().isInt({ min: 1900, max: 2100 }),
+  query('maxYear').optional().isInt({ min: 1900, max: 2100 }),
   query('minPrice').optional().isFloat({ min: 0 }),
   query('maxPrice').optional().isFloat({ min: 0 }),
   query('minMileage').optional().isInt({ min: 0 }),
   query('maxMileage').optional().isInt({ min: 0 }),
-  query('condition').optional().isIn(['new', 'used', 'certified_pre_owned']),
-  query('fuelType').optional().isIn(['gasoline', 'diesel', 'hybrid', 'electric', 'plug_in_hybrid']),
-  query('transmission').optional().isIn(['manual', 'automatic', 'cvt']),
-  query('bodyType').optional().isIn(['sedan', 'suv', 'hatchback', 'coupe', 'convertible', 'truck', 'van', 'wagon']),
+  query('condition').optional().toLowerCase().isIn(['new', 'used', 'certified_pre_owned']),
+  query('fuelType').optional().toLowerCase().isIn(['gasoline', 'diesel', 'hybrid', 'electric', 'plug_in_hybrid']),
+  query('transmission').optional().toLowerCase().isIn(['manual', 'automatic', 'cvt']),
+  query('bodyType').optional().toLowerCase().isIn(['sedan', 'suv', 'hatchback', 'coupe', 'convertible', 'truck', 'van', 'wagon']),
   query('color').optional().isString().trim(),
-  query('featured').optional().isBoolean(),
+  query('featured').optional().isIn(['true', 'false', true, false]),
   query('search').optional().isString().trim(),
+  query('sortBy').optional().isString().trim(),
+  query('sortOrder').optional().isIn(['asc', 'desc', 'ASC', 'DESC']),
 ], optionalAuth, async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.error('Vehicle query validation errors:', errors.array());
       return res.status(400).json({
         success: false,
         message: 'Validation failed',
@@ -227,15 +230,99 @@ router.get('/suggestions', [
   }
 });
 
+// GET /api/vehicles/my â€” fetch only the authenticated dealer's vehicles
+router.get('/my', authenticateToken, requireRole('dealer'), async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 100;
+    const offset = (page - 1) * limit;
+
+    const [vehicles, total] = await Promise.all([
+      Vehicle.findAll({
+        where: { dealerId: req.user.id },
+        order: [['createdAt', 'DESC']],
+        limit,
+        offset,
+      }),
+      Vehicle.count({ where: { dealerId: req.user.id } }),
+    ]);
+
+    res.json({
+      success: true,
+      data: vehicles,
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+    });
+  } catch (err) {
+    console.error('Get my vehicles error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// GET /api/vehicles/dealer/stats â€” real stats for the authenticated dealer
+router.get('/dealer/stats', authenticateToken, requireRole('dealer'), async (req, res) => {
+  try {
+    const dealerId = req.user.id;
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+
+    const [
+      totalInventory,
+      availableVehicles,
+      soldThisMonth,
+      totalViews,
+    ] = await Promise.all([
+      Vehicle.count({ where: { dealerId } }),
+      Vehicle.count({ where: { dealerId, status: 'available' } }),
+      Vehicle.count({ where: { dealerId, status: 'sold', updatedAt: { [Op.gte]: startOfMonth } } }),
+      Vehicle.sum('viewCount', { where: { dealerId } }),
+    ]);
+
+    // Top performing vehicles by views
+    const topVehicles = await Vehicle.findAll({
+      where: { dealerId },
+      attributes: ['id', 'make', 'model', 'year', 'price', 'viewCount', 'status'],
+      order: [['viewCount', 'DESC']],
+      limit: 5,
+    });
+
+    // New vehicles added this month
+    const newThisMonth = await Vehicle.count({
+      where: { dealerId, createdAt: { [Op.gte]: startOfMonth } },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        totalInventory,
+        availableVehicles,
+        soldThisMonth,
+        totalViews: totalViews || 0,
+        newThisMonth,
+        topVehicles: topVehicles.map(v => ({
+          id: v.id,
+          model: `${v.year} ${v.make} ${v.model}`,
+          views: v.viewCount || 0,
+          price: `${Number(v.price).toLocaleString()}`,
+          status: v.status,
+        })),
+      },
+    });
+  } catch (err) {
+    console.error('Dealer stats error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
 // Get vehicle by ID
 router.get('/:id', async (req, res) => {
   try {
     const vehicleId = parseInt(req.params.id);
     
+    // Named sub-routes like /my, /suggestions, /dealer/stats must be defined
+    // before /:id â€” if a non-numeric id slips through, return 404 not 400
     if (isNaN(vehicleId)) {
-      return res.status(400).json({
+      return res.status(404).json({
         success: false,
-        message: 'Invalid vehicle ID'
+        message: 'Route not found'
       });
     }
 
@@ -460,89 +547,6 @@ router.delete('/:id', authenticateToken, requireRole('dealer'), async (req, res)
     });
   }
 });
-
-// GET /api/vehicles/my — fetch only the authenticated dealer's vehicles
-router.get('/my', authenticateToken, requireRole('dealer'), async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 100;
-    const offset = (page - 1) * limit;
-
-    const [vehicles, total] = await Promise.all([
-      Vehicle.findAll({
-        where: { dealerId: req.user.id },
-        order: [['createdAt', 'DESC']],
-        limit,
-        offset,
-      }),
-      Vehicle.count({ where: { dealerId: req.user.id } }),
-    ]);
-
-    res.json({
-      success: true,
-      data: vehicles,
-      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
-    });
-  } catch (err) {
-    console.error('Get my vehicles error:', err);
-    res.status(500).json({ success: false, message: 'Internal server error' });
-  }
-});
-
-// GET /api/vehicles/dealer/stats — real stats for the authenticated dealer
-router.get('/dealer/stats', authenticateToken, requireRole('dealer'), async (req, res) => {
-  try {
-    const dealerId = req.user.id;
-    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-
-    const [
-      totalInventory,
-      availableVehicles,
-      soldThisMonth,
-      totalViews,
-    ] = await Promise.all([
-      Vehicle.count({ where: { dealerId } }),
-      Vehicle.count({ where: { dealerId, status: 'available' } }),
-      Vehicle.count({ where: { dealerId, status: 'sold', updatedAt: { [Op.gte]: startOfMonth } } }),
-      Vehicle.sum('viewCount', { where: { dealerId } }),
-    ]);
-
-    // Top performing vehicles by views
-    const topVehicles = await Vehicle.findAll({
-      where: { dealerId },
-      attributes: ['id', 'make', 'model', 'year', 'price', 'viewCount', 'status'],
-      order: [['viewCount', 'DESC']],
-      limit: 5,
-    });
-
-    // New vehicles added this month
-    const newThisMonth = await Vehicle.count({
-      where: { dealerId, createdAt: { [Op.gte]: startOfMonth } },
-    });
-
-    res.json({
-      success: true,
-      data: {
-        totalInventory,
-        availableVehicles,
-        soldThisMonth,
-        totalViews: totalViews || 0,
-        newThisMonth,
-        topVehicles: topVehicles.map(v => ({
-          id: v.id,
-          model: `${v.year} ${v.make} ${v.model}`,
-          views: v.viewCount || 0,
-          price: `$${Number(v.price).toLocaleString()}`,
-          status: v.status,
-        })),
-      },
-    });
-  } catch (err) {
-    console.error('Dealer stats error:', err);
-    res.status(500).json({ success: false, message: 'Internal server error' });
-  }
-});
-
 // Get vehicles by dealer
 router.get('/dealer/:dealerId', async (req, res) => {
   try {
@@ -577,7 +581,7 @@ router.get('/dealer/:dealerId', async (req, res) => {
   }
 });
 
-// POST /api/vehicles/:id/photos — upload up to 10 photos for a vehicle
+// POST /api/vehicles/:id/photos â€” upload up to 10 photos for a vehicle
 router.post('/:id/photos', authenticateToken, requireRole('dealer'), upload.array('photos', 10), async (req, res) => {
   try {
     const vehicleId = parseInt(req.params.id);
@@ -597,8 +601,8 @@ router.post('/:id/photos', authenticateToken, requireRole('dealer'), upload.arra
       return res.status(400).json({ success: false, message: 'No files uploaded' });
     }
 
-    const baseUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5001}`;
-    const newUrls = req.files.map((f) => `${baseUrl}/uploads/vehicles/${f.filename}`);
+    // Store as relative paths â€” works in both dev and production
+    const newUrls = req.files.map((f) => `/uploads/vehicles/${f.filename}`);
     const existing = Array.isArray(vehicle.images) ? vehicle.images : [];
     const images = [...existing, ...newUrls].slice(0, 20); // cap at 20 total
 
@@ -614,7 +618,7 @@ router.post('/:id/photos', authenticateToken, requireRole('dealer'), upload.arra
   }
 });
 
-// DELETE /api/vehicles/:id/photos — remove a photo by URL
+// DELETE /api/vehicles/:id/photos â€” remove a photo by URL
 router.delete('/:id/photos', authenticateToken, requireRole('dealer'), async (req, res) => {
   try {
     const vehicleId = parseInt(req.params.id);

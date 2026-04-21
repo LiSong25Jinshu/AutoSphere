@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500">
+  <rect width="800" height="500" fill="#f0f0f0"/>
+  <rect x="150" y="180" width="500" height="180" rx="20" fill="#cccccc"/>
+  <rect x="200" y="130" width="350" height="120" rx="15" fill="#bbbbbb"/>
+  <circle cx="230" cy="370" r="55" fill="#999999"/>
+  <circle cx="230" cy="370" r="35" fill="#cccccc"/>
+  <circle cx="570" cy="370" r="55" fill="#999999"/>
+  <circle cx="570" cy="370" r="35" fill="#cccccc"/>
+  <rect x="155" y="240" width="80" height="50" rx="5" fill="#aaaaaa"/>
+  <rect x="565" y="240" width="80" height="50" rx="5" fill="#aaaaaa"/>
+  <text x="400" y="460" font-family="Arial, sans-serif" font-size="22" fill="#888888" text-anchor="middle">No Image Available</text>
+</svg>

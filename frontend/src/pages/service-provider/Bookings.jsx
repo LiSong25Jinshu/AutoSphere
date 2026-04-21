@@ -1,107 +1,210 @@
-﻿import { useState, useEffect } from "react";
-import { appointmentService } from "../../services/appointmentService";
-import "./Bookings.css";
+import { useState, useEffect, useCallback } from 'react';
+import { bookingAPI } from '../../services/api';
+import './Bookings.css';
 
-const STATUS_COLORS = { pending: "status-pending", confirmed: "status-confirmed", in_progress: "status-inprogress", completed: "status-completed", cancelled: "status-cancelled" };
+const STATUS_COLORS = {
+  pending: 'status-pending',
+  confirmed: 'status-confirmed',
+  in_progress: 'status-inprogress',
+  completed: 'status-completed',
+  cancelled: 'status-cancelled',
+  no_show: 'status-cancelled',
+};
+
+const label = (s) => s.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
+const fmtDate = (d) => {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+const fmtTime = (t) => {
+  if (!t) return '';
+  const [h, m] = t.split(':');
+  const hour = parseInt(h);
+  return `${hour > 12 ? hour - 12 : hour || 12}:${m} ${hour >= 12 ? 'PM' : 'AM'}`;
+};
 
 const ServiceProviderBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("all");
+  const [error, setError] = useState('');
+  const [filter, setFilter] = useState('all');
   const [actionLoading, setActionLoading] = useState(null);
+  const [toast, setToast] = useState('');
 
-  useEffect(() => { fetchBookings(); }, []);
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(''), 3000);
+  };
 
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     setLoading(true);
+    setError('');
     try {
-      const res = await appointmentService.getUserAppointments();
-      if (res.success && res.data?.length) {
-        setBookings(res.data);
-      } else {
-        setBookings([
-          { id: 1, title: "Oil Change", serviceType: "oil_change", scheduledDate: "2024-01-25", scheduledTime: "10:00", status: "confirmed", customerNotes: "Please use synthetic oil", user: { firstName: "John", lastName: "Smith", phone: "+1 555-0101" } },
-          { id: 2, title: "Brake Service", serviceType: "brake_service", scheduledDate: "2024-01-25", scheduledTime: "14:00", status: "pending", customerNotes: "", user: { firstName: "Sarah", lastName: "Johnson", phone: "+1 555-0102" } },
-          { id: 3, title: "Premium Car Wash", serviceType: "general_maintenance", scheduledDate: "2024-01-26", scheduledTime: "11:00", status: "in_progress", customerNotes: "Full detail please", user: { firstName: "Mike", lastName: "Chen", phone: "+1 555-0103" } },
-          { id: 4, title: "Tire Rotation", serviceType: "tire_service", scheduledDate: "2024-01-24", scheduledTime: "09:00", status: "completed", customerNotes: "", user: { firstName: "Lisa", lastName: "Davis", phone: "+1 555-0104" } },
-        ]);
-      }
-    } catch {
-      setBookings([]);
+      const res = await bookingAPI.getAll({ limit: 100 });
+      setBookings(res.data?.data || []);
+    } catch (e) {
+      setError(e.response?.data?.message || 'Failed to load bookings');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const updateStatus = async (id, status) => {
-    setActionLoading(id + status);
-    const res = await appointmentService.updateAppointmentStatus(id, status);
-    if (res.success) {
-      setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, status } : b)));
+  useEffect(() => { fetchBookings(); }, [fetchBookings]);
+
+  const updateStatus = async (id, status, extra = {}) => {
+    const key = `${id}-${status}`;
+    setActionLoading(key);
+    try {
+      await bookingAPI.updateStatus(id, status, extra);
+      setBookings((prev) => prev.map((b) => b.id === id ? { ...b, status } : b));
+      showToast(`Booking ${label(status).toLowerCase()}`);
+    } catch (e) {
+      showToast(e.response?.data?.message || 'Failed to update booking');
+    } finally {
+      setActionLoading(null);
     }
-    setActionLoading(null);
   };
 
-  const filtered = filter === "all" ? bookings : bookings.filter((b) => b.status === filter);
-  const counts = bookings.reduce((acc, b) => { acc[b.status] = (acc[b.status] || 0) + 1; return acc; }, {});
+  const filtered = filter === 'all' ? bookings : bookings.filter((b) => b.status === filter);
+  const counts = bookings.reduce((acc, b) => {
+    acc[b.status] = (acc[b.status] || 0) + 1;
+    return acc;
+  }, {});
 
   return (
     <div className="sp-bookings-page">
+      {toast && <div className="spb-toast">{toast}</div>}
+
       <div className="spb-header">
-        <div><h1>Appointments</h1><p>Manage your service bookings</p></div>
+        <div>
+          <h1>Appointments</h1>
+          <p>Manage your service bookings</p>
+        </div>
+        <button className="spb-refresh-btn" onClick={fetchBookings} disabled={loading}>
+          {loading ? 'Loading...' : 'Refresh'}
+        </button>
       </div>
 
+      {/* Status summary cards */}
       <div className="spb-stats">
-        {[["pending","Pending","#ff9800"],["confirmed","Confirmed","#2196f3"],["in_progress","In Progress","#9c27b0"],["completed","Completed","#4caf50"]].map(([s, label, color]) => (
-          <div key={s} className="spb-stat-card" style={{ borderTop: "4px solid " + color }}>
+        {[
+          ['pending', 'Pending', '#ff9800'],
+          ['confirmed', 'Confirmed', '#2196f3'],
+          ['in_progress', 'In Progress', '#9c27b0'],
+          ['completed', 'Completed', '#4caf50'],
+        ].map(([s, lbl, color]) => (
+          <div key={s} className="spb-stat-card" style={{ borderTop: `4px solid ${color}` }}>
             <div className="spb-stat-num" style={{ color }}>{counts[s] || 0}</div>
-            <div className="spb-stat-label">{label}</div>
+            <div className="spb-stat-label">{lbl}</div>
           </div>
         ))}
       </div>
 
+      {/* Filters */}
       <div className="spb-filters">
-        {["all","pending","confirmed","in_progress","completed","cancelled"].map((s) => (
-          <button key={s} className={"spb-filter-btn" + (filter === s ? " active" : "")} onClick={() => setFilter(s)}>
-            {s === "all" ? "All" : s.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase())}
-            {s !== "all" && counts[s] ? " (" + counts[s] + ")" : ""}
+        {['all', 'pending', 'confirmed', 'in_progress', 'completed', 'cancelled'].map((s) => (
+          <button
+            key={s}
+            className={`spb-filter-btn${filter === s ? ' active' : ''}`}
+            onClick={() => setFilter(s)}
+          >
+            {s === 'all' ? 'All' : label(s)}
+            {s !== 'all' && counts[s] ? ` (${counts[s]})` : ''}
           </button>
         ))}
       </div>
 
+      {error && (
+        <div className="spb-error">
+          {error} <button onClick={fetchBookings}>Retry</button>
+        </div>
+      )}
+
       {loading ? (
-        <div className="spb-loading"><div className="spb-spinner"></div><p>Loading appointments...</p></div>
+        <div className="spb-loading">
+          <div className="spb-spinner" />
+          <p>Loading appointments...</p>
+        </div>
       ) : filtered.length === 0 ? (
-        <div className="spb-empty"><div>📅</div><h3>No appointments found</h3></div>
+        <div className="spb-empty">
+          <div>📅</div>
+          <h3>No appointments found</h3>
+          <p>{filter !== 'all' ? `No ${label(filter).toLowerCase()} bookings` : 'No bookings yet'}</p>
+        </div>
       ) : (
         <div className="spb-list">
-          {filtered.map((b) => (
-            <div key={b.id} className="spb-card">
-              <div className="spb-card-top">
-                <div className="spb-card-info">
-                  <h3>{b.title}</h3>
-                  <p className="spb-customer">{b.user ? b.user.firstName + " " + b.user.lastName : "Customer"} {b.user?.phone ? "• " + b.user.phone : ""}</p>
-                  <p className="spb-datetime">📅 {new Date(b.scheduledDate).toLocaleDateString()} at {b.scheduledTime}</p>
-                  {b.customerNotes && <p className="spb-notes">📝 {b.customerNotes}</p>}
+          {filtered.map((b) => {
+            const customer = b.user
+              ? `${b.user.firstName} ${b.user.lastName}`
+              : 'Customer';
+            return (
+              <div key={b.id} className="spb-card">
+                <div className="spb-card-top">
+                  <div className="spb-card-info">
+                    <h3>{b.title || label(b.serviceType)}</h3>
+                    <p className="spb-customer">
+                      👤 {customer}
+                      {b.user?.phone ? ` • ${b.user.phone}` : ''}
+                      {b.user?.email ? ` • ${b.user.email}` : ''}
+                    </p>
+                    <p className="spb-datetime">
+                      📅 {fmtDate(b.scheduledDate)} at {fmtTime(b.scheduledTime)}
+                    </p>
+                    {b.customerNotes && (
+                      <p className="spb-notes">📝 {b.customerNotes}</p>
+                    )}
+                    {b.estimatedCost && (
+                      <p className="spb-cost">💰 Est. ${b.estimatedCost}</p>
+                    )}
+                  </div>
+                  <span className={`spb-status ${STATUS_COLORS[b.status] || ''}`}>
+                    {label(b.status)}
+                  </span>
                 </div>
-                <span className={"spb-status " + (STATUS_COLORS[b.status] || "")}>{b.status.replace("_", " ")}</span>
+
+                <div className="spb-card-actions">
+                  {b.status === 'pending' && (
+                    <>
+                      <button
+                        className="spb-btn confirm"
+                        disabled={actionLoading === `${b.id}-confirmed`}
+                        onClick={() => updateStatus(b.id, 'confirmed')}
+                      >
+                        {actionLoading === `${b.id}-confirmed` ? '...' : 'Confirm'}
+                      </button>
+                      <button
+                        className="spb-btn cancel"
+                        disabled={actionLoading === `${b.id}-cancelled`}
+                        onClick={() => updateStatus(b.id, 'cancelled')}
+                      >
+                        {actionLoading === `${b.id}-cancelled` ? '...' : 'Decline'}
+                      </button>
+                    </>
+                  )}
+                  {b.status === 'confirmed' && (
+                    <button
+                      className="spb-btn inprogress"
+                      disabled={actionLoading === `${b.id}-in_progress`}
+                      onClick={() => updateStatus(b.id, 'in_progress')}
+                    >
+                      {actionLoading === `${b.id}-in_progress` ? '...' : 'Start Service'}
+                    </button>
+                  )}
+                  {b.status === 'in_progress' && (
+                    <button
+                      className="spb-btn complete"
+                      disabled={actionLoading === `${b.id}-completed`}
+                      onClick={() => updateStatus(b.id, 'completed')}
+                    >
+                      {actionLoading === `${b.id}-completed` ? '...' : 'Mark Complete'}
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="spb-card-actions">
-                {b.status === "pending" && (
-                  <>
-                    <button className="spb-btn confirm" disabled={actionLoading === b.id + "confirmed"} onClick={() => updateStatus(b.id, "confirmed")}>Confirm</button>
-                    <button className="spb-btn cancel" disabled={actionLoading === b.id + "cancelled"} onClick={() => updateStatus(b.id, "cancelled")}>Cancel</button>
-                  </>
-                )}
-                {b.status === "confirmed" && (
-                  <button className="spb-btn inprogress" disabled={actionLoading === b.id + "in_progress"} onClick={() => updateStatus(b.id, "in_progress")}>Start Service</button>
-                )}
-                {b.status === "in_progress" && (
-                  <button className="spb-btn complete" disabled={actionLoading === b.id + "completed"} onClick={() => updateStatus(b.id, "completed")}>Mark Complete</button>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

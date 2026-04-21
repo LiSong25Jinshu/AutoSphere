@@ -47,6 +47,7 @@ import {
   CheckCircle,
   NavigateNext,
 } from '@mui/icons-material';
+import { getVehicleImages } from '../utils/imageUtils';
 
 const VehicleDetails = ({ vehicleId, onFavorite, onShare, isFavorited = false }) => {
   const { id } = useParams();
@@ -58,6 +59,9 @@ const VehicleDetails = ({ vehicleId, onFavorite, onShare, isFavorited = false })
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
 
   const currentVehicleId = vehicleId || id;
+
+  // Normalize image URLs (handles localhost refs in production)
+  const vehicleImages = vehicle ? getVehicleImages(vehicle) : [];
 
   useEffect(() => {
     if (currentVehicleId) {
@@ -246,7 +250,7 @@ const VehicleDetails = ({ vehicleId, onFavorite, onShare, isFavorited = false })
           {/* Main Image */}
           <Box sx={{ mb: 2 }}>
             <img
-              src={vehicle.images[selectedImageIndex]}
+              src={vehicleImages[selectedImageIndex]}
               alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
               style={{
                 width: '100%',
@@ -261,7 +265,7 @@ const VehicleDetails = ({ vehicleId, onFavorite, onShare, isFavorited = false })
 
           {/* Thumbnail Images */}
           <ImageList cols={4} gap={8} sx={{ height: 100 }}>
-            {vehicle.images.map((image, index) => (
+            {vehicleImages.map((image, index) => (
               <ImageListItem key={index}>
                 <img
                   src={image}
@@ -497,7 +501,7 @@ const VehicleDetails = ({ vehicleId, onFavorite, onShare, isFavorited = false })
             <Close />
           </IconButton>
           <img
-            src={vehicle.images[selectedImageIndex]}
+            src={vehicleImages[selectedImageIndex]}
             alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
             style={{
               width: '100%',

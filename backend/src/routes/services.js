@@ -1,6 +1,6 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
-import { authenticateToken } from '../middleware/auth.js';
+import { authenticateToken, requireRole } from '../middleware/auth.js';
 import ServiceOffering from '../models/ServiceOffering.js';
 import ProviderSchedule from '../models/ProviderSchedule.js';
 

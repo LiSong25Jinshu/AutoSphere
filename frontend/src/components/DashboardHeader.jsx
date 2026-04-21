@@ -1,80 +1,66 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import UserDropdown from './UserDropdown';
 import NotificationBell from './NotificationBell';
+import UserDropdown from './UserDropdown';
 
-const DashboardHeader = () => {
-  const location = useLocation();
+const DARK_KEY = 'autosphere-dark-mode';
+
+const DashboardHeader = ({ onSidebarToggle, sidebarCollapsed }) => {
   const { user } = useAuth();
 
-  const isActive = (path) => location.pathname === path;
+  // Dark mode state — persisted in localStorage
+  const [dark, setDark] = useState(() => localStorage.getItem(DARK_KEY) === 'true');
 
-  const getNavLinks = () => {
-    const role = user?.role;
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    localStorage.setItem(DARK_KEY, String(dark));
+  }, [dark]);
 
-    if (role === 'dealer') {
-      return [
-        { to: '/dealer-dashboard', label: 'Dashboard' },
-        { to: '/dealer/inventory', label: 'Inventory' },
-        { to: '/dealer/manage-listings', label: 'Listings' },
-        { to: '/dealer/sales', label: 'Sales' },
-        { to: '/dealer/messages', label: 'Messages' },
-      ];
-    }
-
-    if (role === 'service_provider') {
-      return [
-        { to: '/service-provider-dashboard', label: 'Dashboard' },
-        { to: '/service-provider/appointments', label: 'Appointments' },
-        { to: '/service-provider/services', label: 'Services' },
-        { to: '/service-provider/availability', label: 'Availability' },
-        { to: '/service-provider/messages', label: 'Messages' },
-      ];
-    }
-
-    if (role === 'admin') {
-      return [
-        { to: '/admin-dashboard', label: 'Dashboard' },
-        { to: '/admin/users', label: 'Users' },
-        { to: '/admin/dealers', label: 'Dealers' },
-        { to: '/admin/services', label: 'Services' },
-        { to: '/admin/reports', label: 'Reports' },
-        { to: '/admin/logs', label: 'Logs' },
-        { to: '/admin/system-settings', label: 'Settings' },
-      ];
-    }
-
-    // Default: user (buyer/car owner)
-    return [
-      { to: '/dashboard', label: 'Dashboard' },
-      { to: '/vehicles', label: 'Vehicles' },
-      { to: '/appointments', label: 'Appointments' },
-      { to: '/user-messages', label: 'Messages' },
-    ];
-  };
+  const roleLabel = {
+    user: 'Customer',
+    dealer: 'Dealer',
+    service_provider: 'Service Provider',
+    admin: 'Administrator',
+  }[user?.role] || 'User';
 
   return (
-    <header className="auto-nav">
-      <div className="auto-nav-content">
-        <div className="auto-nav-brand">
-          <Link to="/" className="auto-logo">AutoSphere</Link>
+    <header className="dashboard-header">
+      <div className="dashboard-header-content">
+        {/* Left: sidebar toggle + brand */}
+        <div className="dashboard-header-left">
+          <button
+            className="sidebar-toggle-btn"
+            onClick={onSidebarToggle}
+            aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {sidebarCollapsed ? '▶' : '◀'}
+          </button>
+          <Link to="/" className="auto-logo" style={{ marginLeft: '0.75rem' }}>
+            AutoSphere
+          </Link>
         </div>
 
-        <div className="auto-nav-links">
-          {getNavLinks().map(({ to, label }) => (
-            <Link
-              key={to}
-              to={to}
-              className={`auto-nav-link ${isActive(to) ? 'active' : ''}`}
-            >
-              {label}
-            </Link>
-          ))}
-        </div>
+        {/* Right: dark mode + notifications + profile */}
+        <div className="dashboard-header-actions">
+          {/* Dark mode toggle */}
+          <button
+            className="header-icon-btn"
+            onClick={() => setDark((d) => !d)}
+            title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+            aria-label="Toggle dark mode"
+          >
+            {dark ? '☀️' : '🌙'}
+          </button>
 
-        <div className="auto-nav-utils">
+          {/* Notification bell */}
           <NotificationBell />
+
+          {/* Role badge */}
+          <span className="header-role-badge">{roleLabel}</span>
+
+          {/* Profile dropdown */}
           <UserDropdown />
         </div>
       </div>

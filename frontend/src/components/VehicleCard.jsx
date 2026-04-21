@@ -22,6 +22,7 @@ import {
   LocationOn,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { getVehiclePrimaryImage } from '../utils/imageUtils';
 
 const VehicleCard = ({ 
   vehicle, 
@@ -82,9 +83,7 @@ const VehicleCard = ({
     }
   };
 
-  const primaryImage = vehicle.images && vehicle.images.length > 0 
-    ? vehicle.images[0] 
-    : '/placeholder-car.jpg';
+  const primaryImage = getVehiclePrimaryImage(vehicle);
 
   return (
     <Card 

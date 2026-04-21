@@ -4,7 +4,7 @@ import Vehicle from './Vehicle.js';
 import Booking from './Booking.js';
 import Conversation from './Conversation.js';
 import Message from './Message.js';
-import UserVehicleInteraction from '.../UserVehicleInteraction.js';
+import UserVehicleInteraction from './UserVehicleInteraction.js';
 import SavedSearch from './SavedSearch.js';
 import Notification from './Notification.js';
 import PushSubscription from './PushSubscription.js';

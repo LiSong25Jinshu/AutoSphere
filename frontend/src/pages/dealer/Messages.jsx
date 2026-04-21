@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { io } from 'socket.io-client';
 import { messageAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
+import useSocket from '../../hooks/useSocket';
 import './Messages.css';
 
 const SOCKET_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
@@ -17,8 +17,8 @@ const DealerMessages = () => {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const messagesEndRef = useRef(null);
-  const socketRef = useRef(null);
   const activeConvRef = useRef(null);
+  const { socket: socketRef, connected } = useSocket(true);
 
   // keep ref in sync so socket handler always has current conversation id
   useEffect(() => { activeConvRef.current = activeConv; }, [activeConv]);
@@ -35,21 +35,18 @@ const DealerMessages = () => {
     }
   }, []);
 
-  // Connect socket once on mount
+  // Attach socket event listeners
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const socket = io(SOCKET_URL, { auth: { token }, transports: ['websocket'] });
-    socketRef.current = socket;
+    const socket = socketRef.current;
+    if (!socket) return;
 
-    socket.on('new_message', (msg) => {
-      // Append to open conversation
+    const handleNewMessage = (msg) => {
       if (msg.conversationId === activeConvRef.current?.id) {
         setMessages((prev) => {
           if (prev.some((m) => m.id === msg.id)) return prev;
           return [...prev, msg];
         });
       }
-      // Bump conversation preview + unread count
       setConversations((prev) =>
         prev.map((c) =>
           c.id === msg.conversationId
@@ -61,10 +58,11 @@ const DealerMessages = () => {
             : c
         )
       );
-    });
+    };
 
-    return () => socket.disconnect();
-  }, []);
+    socket.on('new_message', handleNewMessage);
+    return () => socket.off('new_message', handleNewMessage);
+  }, [socketRef, connected]); // re-attach after reconnect
 
   useEffect(() => { fetchConversations(); }, [fetchConversations]);
 

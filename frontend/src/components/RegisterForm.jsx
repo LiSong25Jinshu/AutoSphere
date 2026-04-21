@@ -5,24 +5,27 @@ import { useAuthOperations } from '../hooks/useAuthOperations';
 import '../pages/public/Auth.css';
 
 
-const SocialButtons = () => {
+const GoogleSignInButton = ({ label = 'Continue with Google' }) => {
+  const handleGoogleAuth = () => {
+    // Redirect to backend Google OAuth — works when credentials are configured
+    window.location.href = '/api/auth/google';
+  };
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-      <button
-        type="button"
-        className="btn social google full-width"
-        onClick={() => { window.location.href = '/api/auth/google'; }}
-        aria-label="Continue with Google"
-      >
-        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true" style={{ marginRight: '8px' }}>
-          <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/>
-          <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/>
-          <path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/>
-          <path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z"/>
-        </svg>
-        Continue with Google
-      </button>
-    </div>
+    <button
+      type="button"
+      className="btn social google full-width"
+      onClick={handleGoogleAuth}
+      aria-label={label}
+    >
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true" style={{ marginRight: '8px', flexShrink: 0 }}>
+        <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/>
+        <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/>
+        <path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/>
+        <path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z"/>
+      </svg>
+      {label}
+    </button>
   );
 };
 
@@ -39,6 +42,7 @@ const RegisterForm = () => {
     password: '',
     confirmPassword: '',
     role: 'user',
+    adminInviteCode: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -107,6 +111,11 @@ const RegisterForm = () => {
     // Role validation
     if (!formData.role) {
       errors.role = 'Please select a role';
+    }
+
+    // Admin invite code validation
+    if (formData.role === 'admin' && !formData.adminInviteCode.trim()) {
+      errors.adminInviteCode = 'Admin invite code is required for administrator registration';
     }
 
     setValidationErrors(errors);
@@ -273,12 +282,39 @@ const RegisterForm = () => {
                 <option value="user">Customer</option>
                 <option value="dealer">Dealer</option>
                 <option value="service_provider">Service Provider</option>
+                <option value="admin">Administrator</option>
               </select>
               {validationErrors.role && (
                 <span className="error-message">{validationErrors.role}</span>
               )}
             </div>
           </div>
+
+          {/* Admin invite code — only shown when admin role is selected */}
+          {formData.role === 'admin' && (
+            <div className="form-group admin-invite-group">
+              <label htmlFor="adminInviteCode">
+                🔐 Admin Invite Code <span className="required">*</span>
+              </label>
+              <input
+                type="password"
+                id="adminInviteCode"
+                name="adminInviteCode"
+                className={`form-input ${validationErrors.adminInviteCode ? 'error' : ''}`}
+                placeholder="Enter the admin invite code"
+                value={formData.adminInviteCode}
+                onChange={handleInputChange}
+                autoComplete="off"
+                required
+              />
+              {validationErrors.adminInviteCode && (
+                <span className="error-message">{validationErrors.adminInviteCode}</span>
+              )}
+              <small className="field-hint">
+                Admin access is restricted. You need a valid invite code to register as an administrator.
+              </small>
+            </div>
+          )}
 
           <div className="form-row">
             <div className="form-group">
@@ -348,7 +384,7 @@ const RegisterForm = () => {
 
           <div className="auth-divider"><span>OR</span></div>
 
-          <SocialButtons />
+          <GoogleSignInButton label="Sign up with Google" />
 
           <div className="auth-footer">
             <p>

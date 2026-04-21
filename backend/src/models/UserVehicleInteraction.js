@@ -8,12 +8,12 @@ const UserVehicleInteraction = sequelize.define('UserVehicleInteraction', {
         autoIncrement: true
     },
     userId: {
-        type: DataTypes.STRING,
+        type: DataTypes.INTEGER,
         allowNull: false,
         field: 'user_id'
     },
     vehicleId: {
-        type: DataTypes.STRING,
+        type: DataTypes.INTEGER,
         allowNull: false,
         field: 'vehicle_id'
     },

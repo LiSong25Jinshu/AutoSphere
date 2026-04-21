@@ -1,58 +1,75 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
-import AdminSystemSettings from './pages/admin/SystemSettings';
-import ServiceProviderAvailability from './pages/service-provider/Availability';
-import ServiceProviderProfilePage from './pages/service-provider/ProfilePage';
 import './styles/auto-theme.css';
+
+// Always-loaded layout components (needed on every render)
 import Footer from './components/Footer';
 import UserDropdown from './components/UserDropdown';
 import DashboardLayout from './components/DashboardLayout';
+import CookieConsent from './components/CookieConsent';
 
-// Import user pages
-import UserDashboardPage from './pages/user/Dashboard';
-import UserProfile from './pages/user/Profile';
-import UserAppointments from './pages/user/Appointments';
-import UserMessages from './pages/user/Messages';
-import UserNotifications from './pages/user/Notifications';
-import UserInventory from './pages/user/Inventory';
-import VehicleInsights from './pages/user/VehicleInsights';
-import UserSettings from './pages/user/Settings';
-import BookService from './pages/user/BookService';
-import AICarFinder from './pages/AICarFinder';
+// Page-level lazy imports — each becomes its own JS chunk
+// Public pages
+const LandingPage = lazy(() => import('./pages/public/LandingPage'));
+const About = lazy(() => import('./pages/public/About'));
+const Contact = lazy(() => import('./pages/public/Contact'));
+const Login = lazy(() => import('./pages/public/Login'));
+const Register = lazy(() => import('./pages/public/Register'));
+const PrivacyPolicy = lazy(() => import('./pages/public/PrivacyPolicy'));
 
-// Import admin pages
-import AdminJobs from './pages/admin/Jobs';
-import AdminUsers from './pages/admin/Users';
-import AdminDealers from './pages/admin/Dealers';
-import AdminServices from './pages/admin/Services';
-import AdminReports from './pages/admin/Reports';
-import AdminLogs from './pages/admin/Logs';
-import LandingPage from './pages/public/LandingPage';
-import About from './pages/public/About';
-import Contact from './pages/public/Contact';
-import Login from './pages/public/Login';
-import Register from './pages/public/Register';
+// Auth utility pages
+const GoogleAuthCallback = lazy(() => import('./components/GoogleAuthCallback'));
+const ForgotPasswordForm = lazy(() => import('./components/ForgotPasswordForm'));
+const ResetPasswordForm = lazy(() => import('./components/ResetPasswordForm'));
+const EmailVerificationForm = lazy(() => import('./components/EmailVerificationForm'));
 
-// Import dealer pages
-import DealerDashboardPage from './pages/dealer/Dashboard';
-import DealerInventory from './pages/dealer/Inventory';
-import DealerMessages from './pages/dealer/Messages';
-import DealerProfile from './pages/dealer/Profile';
-import DealerSales from './pages/dealer/Sales';
+// User pages
+const UserDashboardPage = lazy(() => import('./pages/user/Dashboard'));
+const UserProfile = lazy(() => import('./pages/user/Profile'));
+const UserAppointments = lazy(() => import('./pages/user/Appointments'));
+const UserMessages = lazy(() => import('./pages/user/Messages'));
+const UserNotifications = lazy(() => import('./pages/user/Notifications'));
+const UserInventory = lazy(() => import('./pages/user/Inventory'));
+const VehicleInsights = lazy(() => import('./pages/user/VehicleInsights'));
+const UserSettings = lazy(() => import('./pages/user/Settings'));
+const BookService = lazy(() => import('./pages/user/BookService'));
+const AICarFinder = lazy(() => import('./pages/AICarFinder'));
 
-// Import service provider pages
-import ServiceProviderDashboardPage from './pages/service-provider/Dashboard';
-import ServiceProviderBookings from './pages/service-provider/Bookings';
-import ServiceProviderServices from './pages/service-provider/Services';
-import ServiceProviderProfile from './pages/service-provider/Profile';
-import ServiceProviderMessages from './pages/service-provider/Messages';
+// Admin pages — grouped chunk via same dynamic import pattern
+const AdminJobs = lazy(() => import('./pages/admin/Jobs'));
+const AdminUsers = lazy(() => import('./pages/admin/Users'));
+const AdminDealers = lazy(() => import('./pages/admin/Dealers'));
+const AdminServices = lazy(() => import('./pages/admin/Services'));
+const AdminReports = lazy(() => import('./pages/admin/Reports'));
+const AdminLogs = lazy(() => import('./pages/admin/Logs'));
+const AdminSystemSettings = lazy(() => import('./pages/admin/SystemSettings'));
 
-// Import Google Auth components
-import GoogleAuthCallback from './components/GoogleAuthCallback';
-import ForgotPasswordForm from './components/ForgotPasswordForm';
-import ResetPasswordForm from './components/ResetPasswordForm';
-import EmailVerificationForm from './components/EmailVerificationForm';
+// Dealer pages
+const DealerDashboardPage = lazy(() => import('./pages/dealer/Dashboard'));
+const DealerInventory = lazy(() => import('./pages/dealer/Inventory'));
+const DealerMessages = lazy(() => import('./pages/dealer/Messages'));
+const DealerProfile = lazy(() => import('./pages/dealer/Profile'));
+const DealerSales = lazy(() => import('./pages/dealer/Sales'));
+
+// Service provider pages
+const ServiceProviderDashboardPage = lazy(() => import('./pages/service-provider/Dashboard'));
+const ServiceProviderBookings = lazy(() => import('./pages/service-provider/Bookings'));
+const ServiceProviderServices = lazy(() => import('./pages/service-provider/Services'));
+const ServiceProviderProfile = lazy(() => import('./pages/service-provider/Profile'));
+const ServiceProviderMessages = lazy(() => import('./pages/service-provider/Messages'));
+const ServiceProviderAvailability = lazy(() => import('./pages/service-provider/Availability'));
+const ServiceProviderProfilePage = lazy(() => import('./pages/service-provider/ProfilePage'));
+
+// Fallback shown while a lazy chunk is loading
+const PageLoader = () => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', flexDirection: 'column', gap: '1rem' }}>
+    <div style={{ width: 40, height: 40, border: '4px solid #e0e0e0', borderTop: '4px solid #1976d2', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+    <p style={{ color: '#666', margin: 0 }}>Loading...</p>
+    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+  </div>
+);
 
 // Simple test components
 // Simple placeholder components
@@ -793,11 +810,13 @@ function AppContent() {
     <div className={`App ${isDashboard ? 'dashboard-app' : ''}`} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Navigation />
       <main style={{ flex: 1 }}>
+        <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/vehicles" element={<VehiclesPage />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPasswordForm />} />
@@ -965,8 +984,10 @@ function AppContent() {
           <Route path="/service-provider/service-settings" element={<DashboardRoute requiredRole="service_provider"><ServiceProviderProfilePage /></DashboardRoute>} />
           <Route path="/service-provider/availability" element={<DashboardRoute requiredRole="service_provider"><ServiceProviderAvailability /></DashboardRoute>} />
         </Routes>
+        </Suspense>
       </main>
       {showFooter && <Footer />}
+      <CookieConsent />
     </div>
   );
 }
@@ -974,7 +995,7 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <Router>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <NotificationProvider>
           <AppContent />
         </NotificationProvider>

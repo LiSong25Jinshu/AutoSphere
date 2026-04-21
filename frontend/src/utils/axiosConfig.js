@@ -60,7 +60,7 @@ axios.interceptors.response.use(
 
     // Handle network errors
     if (!error.response) {
-      console.error('Network error:', error.message);
+      console.warn('Network error:', error.message);
       error.message = 'Network error. Please check your connection.';
     }
 
