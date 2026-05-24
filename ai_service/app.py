@@ -68,11 +68,34 @@ def get_recommendations(user_id):
             
         recs = engine.get_recommendations(user_id, preferences, n)
 
-        # Add explanations to each recommendations
+        # Enrich each recommendations with full vehicle details
+        enriched = []
         for rec in recs:
-            rec['reasons'] = engine.explain(user_id, rec['vehicle_id'])
+            vid = rec['vehicle_id']
 
-        return jsonify({'user_id':user_id, 'recommendations':recs})
+            vehicle_row = engine.vehicle_df[
+                engine.vehicle_df['vehicle_id'] == vid
+            ]
+
+            if not vehicle_row.empty:
+                v = vehicle_row.iloc[0]
+                enriched.append({
+                    'vehicle_id': vid,
+                    'score': rec['score'],
+                    'make': v.get('make', 'Unknown'),
+                    'model': v.get('model', 'Unknown'),
+                    'year': int(v['year']) if pd.notna(v.get('year')) else None,
+                    'price': float(v['price']) if pd.notna(v.get('price')) else None,
+                    'fuel_type': v.get('fuel_type', None),
+                    'transmission': v.get('transmission', None),
+                    'body_type': v.get('body_type', None),
+                    'mileage': float(v['mileage']) if pd.notna(v.get('mileage')) else None,
+                    'reasons': engine.explain(user_id, vid)
+                })
+            else:
+                enriched.append(rec)
+
+        return jsonify({'user_id':user_id, 'recommendations':enriched})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

@@ -83,33 +83,41 @@ const AICarFinder = () => {
     setIsLoading(true);
     try {
       const { default: axios } = await import('../utils/axiosConfig.js');
-      const res = await axios.get('/api/recommendations', {
-        params: { limit: 10 },
-      });
-      if (res.data.success) {
-        const recs = (res.data.recommendations || []).map((v) => ({
-          id: v.id,
-          make: v.make,
-          model: v.model,
-          year: v.year,
-          price: `$${Number(v.price).toLocaleString()}`,
-          mpg: v.fuelType === 'electric' ? 'Electric' : `${v.fuelType}`,
-          image: v.images?.[0] || '/placeholder-car.jpg',
-          aiScore: Math.floor(70 + Math.random() * 30),
-          reasons: [
-            `${v.condition?.replace(/_/g, ' ')} condition`,
-            `${v.bodyType} body style`,
-            v.transmission ? `${v.transmission} transmission` : null,
-            v.color ? `Available in ${v.color}` : null,
-          ].filter(Boolean),
-          pros: ['Available now', 'Verified listing'],
-          cons: [],
-        }));
-        setRecommendations(recs.length > 0 ? recs : []);
-        if (recs.length === 0) {
-          setRecommendations([{ id: 0, make: 'No', model: 'matches found', year: '', price: '', mpg: '', image: '', aiScore: 0, reasons: ['Try adjusting your preferences'], pros: [], cons: [] }]);
-        }
+
+      // Get current user from localStorage
+      const userStr = localStorage.getItem('user') ||localStorage.getItem('userData');
+      const user = userStr ? JSON.parse(userStr): null;
+      const userId = user?.id || user?._id;
+
+      console.log('User from localStorage:', user); // debug line
+      console.log('userId:', userId); // debug line
+      
+      if (!userId){
+        console.error('No user ID found');
+        setIsLoading(false);
+        return;
       }
+
+      const res = await axios.get(`/api/recommendations/${userId}`);
+      
+      const recs = (res.data.recommendations || []).map((rec) => ({
+        id: rec.vehicle_id,
+        make: rec.make || 'Unknown',
+        model: rec.model || '',
+        year: rec.year || '',
+        price: rec.price || '',
+        mpg: rec.fuel_type || 'N/A',
+        image: '/placeholder-car.jpg',
+        aiScore: Math.round(rec.score *100) || 75,
+        reasons: rec.reasons || ['Recommended based on your activity'],
+        pros: ['Available now', 'Verified listing'],
+        cons: [],
+      }));
+      setRecommendations(recs.length > 0 ? recs : []);
+      if (recs.length === 0) {
+        setRecommendations([{ id: 0, make: 'No', model: 'matches found', year: '', price: '', mpg: '', image: '', aiScore: 0, reasons: ['Try adjusting your preferences'], pros: [], cons: [] }]);
+      }
+      
     } catch (err) {
       console.error('AI recommendations error:', err);
       setRecommendations([]);
