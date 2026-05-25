@@ -45,11 +45,11 @@ const VehicleCard = ({
   };
 
   const formatPrice = (price) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    if (!price) return '—';
+    return `GH₵ ${new Intl.NumberFormat('en-GH', {
       minimumFractionDigits: 0,
-    }).format(price);
+      maximumFractionDigits: 0,
+    }).format(price)}`;
   };
 
   const formatMileage = (mileage) => {

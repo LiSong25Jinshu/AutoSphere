@@ -4,24 +4,31 @@ import { useAuth } from '../contexts/AuthContext';
 
 const MENU_BY_ROLE = {
   user: [
-    { to: '/profile',      label: '👤 My Profile' },
-    { to: '/settings',     label: '⚙️ Settings' },
-    { to: '/appointments', label: '📅 My Appointments' },
+    { to: '/profile',      label: 'My Profile' },
+    { to: '/settings',     label: 'Settings' },
+    { to: '/appointments', label: 'My Appointments' },
   ],
   dealer: [
-    { to: '/dealer/profile',          label: '👤 Dealer Profile' },
-    { to: '/dealer/manage-listings',  label: '📋 Manage Listings' },
-    { to: '/settings',                label: '⚙️ Settings' },
+    { to: '/dealer/profile',          label: 'Dealer Profile' },
+    { to: '/dealer/manage-listings',  label: 'Manage Listings' },
+    { to: '/settings',                label: 'Settings' },
   ],
   service_provider: [
-    { to: '/service-provider/profile',           label: '👤 My Profile' },
-    { to: '/service-provider/service-settings',  label: '🔧 Service Settings' },
-    { to: '/service-provider/availability',      label: '🗓️ Availability' },
+    { to: '/service-provider/profile',           label: 'My Profile' },
+    { to: '/service-provider/service-settings',  label: 'Service Settings' },
+    { to: '/service-provider/availability',      label: 'Availability' },
   ],
   admin: [
-    { to: '/admin/system-settings', label: '⚙️ System Settings' },
-    { to: '/admin/logs',            label: '📋 Logs' },
+    { to: '/admin/system-settings', label: 'System Settings' },
+    { to: '/admin/logs',            label: 'Logs' },
   ],
+};
+
+const DASHBOARD_BY_ROLE = {
+  user:             '/dashboard',
+  dealer:           '/dealer-dashboard',
+  service_provider: '/service-provider-dashboard',
+  admin:            '/admin-dashboard',
 };
 
 const UserDropdown = () => {
@@ -79,6 +86,16 @@ const UserDropdown = () => {
 
           <div className="dropdown-divider" />
 
+          {/* Quick link back to their dashboard */}
+          <Link
+            to={DASHBOARD_BY_ROLE[user?.role] || '/dashboard'}
+            className="dropdown-item dropdown-dashboard"
+            onClick={() => setOpen(false)}
+            role="menuitem"
+          >
+            Dashboard
+          </Link>
+
           {items.map(({ to, label }) => (
             <Link
               key={to}
@@ -98,7 +115,7 @@ const UserDropdown = () => {
             onClick={handleLogout}
             role="menuitem"
           >
-            🚪 Logout
+            Logout
           </button>
         </div>
       )}

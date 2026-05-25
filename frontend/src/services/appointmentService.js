@@ -6,12 +6,12 @@ export const appointmentService = {
     try {
       // Map appointment data to booking format
       const bookingData = {
-        serviceProviderId: appointmentData.serviceProviderId || 3, // Default service provider from mock data
+        serviceProviderId: appointmentData.serviceProviderId,
         serviceType: appointmentData.serviceType,
         title: appointmentData.title || appointmentData.serviceType,
         description: appointmentData.description || appointmentData.notes || '',
-        scheduledDate: appointmentData.date, // Should be YYYY-MM-DD format
-        scheduledTime: appointmentData.time, // Should be HH:MM format
+        scheduledDate: appointmentData.date,
+        scheduledTime: appointmentData.time,
         customerNotes: appointmentData.notes || '',
         priority: appointmentData.priority || 'normal',
       };

@@ -106,7 +106,7 @@ const VehicleSearch = ({
       active.push({ key: 'yearRange', label: `Year: ${filters.yearRange[0]}-${filters.yearRange[1]}`, value: filters.yearRange });
     }
     if (filters.priceRange[0] > 0 || filters.priceRange[1] < 100000) {
-      active.push({ key: 'priceRange', label: `Price: $${filters.priceRange[0].toLocaleString()}-$${filters.priceRange[1].toLocaleString()}`, value: filters.priceRange });
+      active.push({ key: 'priceRange', label: `Price: GH₵ ${filters.priceRange[0].toLocaleString()}-GH₵ ${filters.priceRange[1].toLocaleString()}`, value: filters.priceRange });
     }
     if (filters.mileageRange[0] > 0 || filters.mileageRange[1] < 200000) {
       active.push({ key: 'mileageRange', label: `Mileage: ${filters.mileageRange[0].toLocaleString()}-${filters.mileageRange[1].toLocaleString()} miles`, value: filters.mileageRange });
@@ -413,10 +413,10 @@ const VehicleSearch = ({
                 max={150000}
                 step={1000}
                 marks={[
-                  { value: 0, label: '$0' },
-                  { value: 25000, label: '$25K' },
-                  { value: 50000, label: '$50K' },
-                  { value: 100000, label: '$100K' },
+                  { value: 0, label: 'GH₵ 0' },
+                  { value: 25000, label: 'GH₵ 25K' },
+                  { value: 50000, label: 'GH₵ 50K' },
+                  { value: 100000, label: 'GH₵ 100K' },
                 ]}
               />
             </Grid>
@@ -542,7 +542,7 @@ const VehicleSearch = ({
             fullWidth
             value={searchName}
             onChange={(e) => setSearchName(e.target.value)}
-            placeholder="e.g., Red SUVs under $30k"
+            placeholder="e.g., Red SUVs under GH₵ 150k"
           />
         </DialogContent>
         <DialogActions>

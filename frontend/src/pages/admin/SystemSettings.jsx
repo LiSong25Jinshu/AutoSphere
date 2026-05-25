@@ -14,7 +14,7 @@ const AdminSystemSettings = () => {
 
   const [general, setGeneral] = useState({
     siteName: 'AutoSphere', siteUrl: '', supportEmail: '',
-    maxUploadSizeMB: 10, defaultCurrency: 'USD', timezone: 'America/New_York',
+    maxUploadSizeMB: 10, defaultCurrency: 'GHS', timezone: 'Africa/Accra',
   });
   const [email, setEmail] = useState({
     smtpHost: '', smtpPort: 587, smtpUser: '', fromName: 'AutoSphere', fromEmail: '',
@@ -152,9 +152,7 @@ const AdminSystemSettings = () => {
               <div className="ss-row">
                 <Field label="Default Currency">
                   <select value={general.defaultCurrency} onChange={(e) => setGeneral((g) => ({ ...g, defaultCurrency: e.target.value }))}>
-                    <option value="USD">USD ($)</option>
-                    <option value="EUR">EUR (€)</option>
-                    <option value="GBP">GBP (£)</option>
+                    <option value="GHS">GHS (GH₵)</option>
                   </select>
                 </Field>
                 <Field label="Max Upload Size (MB)">
@@ -164,10 +162,8 @@ const AdminSystemSettings = () => {
               </div>
               <Field label="Timezone">
                 <select value={general.timezone} onChange={(e) => setGeneral((g) => ({ ...g, timezone: e.target.value }))}>
-                  <option value="America/New_York">Eastern (UTC-5)</option>
-                  <option value="America/Chicago">Central (UTC-6)</option>
-                  <option value="America/Denver">Mountain (UTC-7)</option>
-                  <option value="America/Los_Angeles">Pacific (UTC-8)</option>
+                  <option value="Africa/Accra">Ghana (UTC+0)</option>
+                  <option value="Africa/Lagos">West Africa (UTC+1)</option>
                   <option value="UTC">UTC</option>
                 </select>
               </Field>

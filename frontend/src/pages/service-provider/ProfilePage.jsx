@@ -49,11 +49,10 @@ const ServiceProviderProfilePage = () => {
       const res = await userAPI.updateProfile({
         firstName: form.firstName,
         lastName: form.lastName,
-        phone: form.phone,
+        phone: form.phone || null,
         email: form.email,
       });
       const updated = res.data?.data || res.data;
-      // Update local auth state
       const token = localStorage.getItem('token');
       if (updated && token) {
         localStorage.setItem('user', JSON.stringify({ ...user, ...updated }));
@@ -63,6 +62,33 @@ const ServiceProviderProfilePage = () => {
       setTimeout(() => setSaved(false), 3000);
     } catch (e) {
       setError(e.response?.data?.message || 'Failed to save profile');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleBusinessSave = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setError('');
+    try {
+      const res = await userAPI.updateProfile({
+        businessName: form.businessName || null,
+        businessType: form.businessType || null,
+        businessDescription: form.description || null,
+        address: form.address || null,
+        city: form.city || null,
+        state: form.state || null,
+      });
+      const updated = res.data?.data || res.data;
+      const token = localStorage.getItem('token');
+      if (updated && token) {
+        localStorage.setItem('user', JSON.stringify({ ...user, ...updated }));
+      }
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (e) {
+      setError(e.response?.data?.message || 'Failed to save business info');
     } finally {
       setSaving(false);
     }

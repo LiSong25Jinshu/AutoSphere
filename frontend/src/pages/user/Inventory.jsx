@@ -68,7 +68,7 @@ const UserInventory = () => {
       <div className="inventory-container">
         <div className="inventory-header">
           <div className="header-info">
-            <h1>My Inventory</h1>
+            <h1>My Vehicles</h1>
             <p>Manage your vehicles and saved listings</p>
           </div>
           <div className="header-actions">
@@ -192,7 +192,7 @@ const UserInventory = () => {
                       </div>
                       <div className="vehicle-info">
                         <h3>{vehicle.year} {vehicle.make} {vehicle.model}</h3>
-                        <div className="vehicle-price">${Number(vehicle.price).toLocaleString()}</div>
+                        <div className="vehicle-price">GH₵ {Number(vehicle.price).toLocaleString()}</div>
                         <div className="vehicle-details">
                           <div className="detail-item">
                             <span className="detail-label">Mileage:</span>

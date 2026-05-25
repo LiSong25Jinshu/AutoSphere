@@ -112,11 +112,23 @@
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 2rem;
+  align-items: start;
+}
+
+/* Left column — allow it to grow without pushing the sidebar */
+.dashboard-main > div:first-child {
+  min-width: 0;
 }
 
 @media (max-width: 968px) {
   .dashboard-main {
     grid-template-columns: 1fr;
+  }
+
+  .user-dashboard-sidebar {
+    position: static;
+    max-height: none;
+    overflow-y: visible;
   }
 }
 
@@ -308,11 +320,23 @@
   background: #666666;
 }
 
-/* Sidebar */
-.dashboard-sidebar {
+/* Sidebar — right panel (profile + service history) */
+.user-dashboard-sidebar {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  position: sticky;
+  /* 64px = dashboard header height; 1.5rem = breathing room */
+  top: calc(64px + 1.5rem);
+  max-height: calc(100vh - 64px - 3rem);
+  overflow-y: auto;
+  /* hide scrollbar visually but keep it functional */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.user-dashboard-sidebar::-webkit-scrollbar {
+  display: none;
 }
 
 .profile-summary {

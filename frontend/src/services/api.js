@@ -87,6 +87,7 @@ export const adminAPI = {
 export const serviceAPI = {
   getMyServices: () => axios.get('/api/services'),
   getByProvider: (providerId) => axios.get(`/api/services/provider/${providerId}`),
+  getProvidersByType: (serviceType) => axios.get('/api/services/by-type', { params: { serviceType } }),
   create: (data) => axios.post('/api/services', data),
   update: (id, data) => axios.put(`/api/services/${id}`, data),
   delete: (id) => axios.delete(`/api/services/${id}`),

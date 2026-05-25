@@ -273,7 +273,7 @@ const AppointmentDetails = () => {
                 {appointment.price > 0 && (
                   <div className="detail-row">
                     <span className="detail-label">Price:</span>
-                    <span className="detail-value">${appointment.price.toFixed(2)}</span>
+                    <span className="detail-value">GH₵ {appointment.price.toFixed(2)}</span>
                   </div>
                 )}
                 

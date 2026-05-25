@@ -218,7 +218,7 @@ const DealerInventory = () => {
                     {v.vin && <div className="inv-vin">VIN: {v.vin}</div>}
                   </td>
                   <td>{v.year}</td>
-                  <td className="inv-price">${Number(v.price).toLocaleString()}</td>
+                  <td className="inv-price">GH₵ {Number(v.price).toLocaleString()}</td>
                   <td>{v.mileage ? `${Number(v.mileage).toLocaleString()} mi` : '—'}</td>
                   <td>{label(v.condition || '')}</td>
                   <td>
@@ -265,7 +265,7 @@ const DealerInventory = () => {
                   <input name="year" type="number" value={form.year} onChange={handleChange} required min="1900" max={new Date().getFullYear() + 2} />
                 </div>
                 <div className="inv-form-group">
-                  <label>Price ($) *</label>
+                  <label>Price (GH₵) *</label>
                   <input name="price" type="number" value={form.price} onChange={handleChange} required min="0" step="0.01" />
                 </div>
               </div>

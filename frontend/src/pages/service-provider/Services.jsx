@@ -199,7 +199,7 @@ const ServiceProviderServices = () => {
                 </div>
                 <div className="service-detail-item">
                   <span className="detail-label">Price</span>
-                  <span className="detail-value price">${Number(service.price).toFixed(2)}</span>
+                  <span className="detail-value price">GH₵ {Number(service.price).toFixed(2)}</span>
                 </div>
                 <div className="service-detail-item">
                   <span className="detail-label">Duration</span>
@@ -265,7 +265,7 @@ const ServiceProviderServices = () => {
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>Price ($) *</label>
+                  <label>Price (GH₵) *</label>
                   <input
                     type="number" name="price" value={formData.price}
                     onChange={handleInputChange} required min="0" step="0.01" placeholder="0.00"

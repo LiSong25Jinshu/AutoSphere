@@ -141,7 +141,7 @@ const VehiclesPage = () => {
     if (navigator.share) {
       navigator.share({
         title: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
-        text: `Check out this ${vehicle.year} ${vehicle.make} ${vehicle.model} for $${vehicle.price.toLocaleString()}`,
+        text: `Check out this ${vehicle.year} ${vehicle.make} ${vehicle.model} for GH₵ ${vehicle.price.toLocaleString()}`,
         url: `${window.location.origin}/vehicles/${vehicle.id}`,
       });
     } else {

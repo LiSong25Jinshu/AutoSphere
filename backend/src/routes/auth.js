@@ -27,6 +27,9 @@ router.post('/register', [
 
     const { email, password, firstName, lastName, phone, role = 'user', adminInviteCode } = req.body;
 
+    // Treat empty string phone as null so the model validator doesn't reject it
+    const cleanPhone = phone && phone.trim() !== '' ? phone.trim() : null;
+
     // Admin registration requires a valid invite code
     if (role === 'admin') {
       const validCode = process.env.ADMIN_INVITE_CODE;
@@ -49,9 +52,9 @@ router.post('/register', [
       passwordHash: await hashPassword(password),
       firstName,
       lastName,
-      phone,
+      phone: cleanPhone,
       role,
-      isVerified: isDev, // true in dev, false in production
+      isVerified: isDev,
     });
 
     // Only generate verification token if in production
@@ -75,6 +78,33 @@ router.post('/register', [
     });
   } catch (error) {
     console.error('Registration error:', error);
+
+    // Sequelize unique constraint (duplicate email race condition)
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(409).json({ success: false, message: 'User with this email already exists' });
+    }
+
+    // Sequelize validation error (model-level)
+    if (error.name === 'SequelizeValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: error.errors?.[0]?.message || 'Validation failed',
+      });
+    }
+
+    // Database not connected
+    if (
+      error.name === 'SequelizeConnectionError' ||
+      error.name === 'SequelizeConnectionRefusedError' ||
+      error.name === 'SequelizeHostNotFoundError' ||
+      error.original?.code === 'ECONNREFUSED'
+    ) {
+      return res.status(503).json({
+        success: false,
+        message: 'Database is not available. Please try again later.',
+      });
+    }
+
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
@@ -117,6 +147,13 @@ router.post('/login', [
     res.json({ success: true, message: 'Login successful', user: user.toJSON(), token });
   } catch (error) {
     console.error('Login error:', error);
+    if (
+      error.name === 'SequelizeConnectionError' ||
+      error.name === 'SequelizeConnectionRefusedError' ||
+      error.original?.code === 'ECONNREFUSED'
+    ) {
+      return res.status(503).json({ success: false, message: 'Database is not available. Please try again later.' });
+    }
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
@@ -253,22 +290,45 @@ router.post('/reset-password', [
   }
 });
 
+// Helper — check if Google OAuth is actually configured
+const isGoogleConfigured = () => {
+  const id = process.env.GOOGLE_CLIENT_ID;
+  const secret = process.env.GOOGLE_CLIENT_SECRET;
+  return (
+    id && secret &&
+    !id.startsWith('your-') &&
+    !secret.startsWith('your-') &&
+    !secret.startsWith('GOCSPX-Kzte')
+  );
+};
+
 // GET /api/auth/google — initiate Google OAuth
-router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/google', (req, res, next) => {
+  if (!isGoogleConfigured()) {
+    return res.status(503).json({
+      success: false,
+      message: 'Google sign-in is not configured on this server.',
+    });
+  }
+  passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
+});
 
 // GET /api/auth/google/callback
-router.get('/google/callback',
-  passport.authenticate('google', { session: false, failureRedirect: '/login?error=oauth_failed' }),
-  (req, res) => {
-    const token = generateAccessToken({
-      id: req.user.id,
-      email: req.user.email,
-      role: req.user.role,
-      isVerified: req.user.isVerified,
-    });
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
-    res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
+router.get('/google/callback', (req, res, next) => {
+  if (!isGoogleConfigured()) {
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    return res.redirect(`${frontendUrl}/login?error=oauth_not_configured`);
   }
-);
+  passport.authenticate('google', { session: false, failureRedirect: '/login?error=oauth_failed' })(req, res, next);
+}, (req, res) => {
+  const token = generateAccessToken({
+    id: req.user.id,
+    email: req.user.email,
+    role: req.user.role,
+    isVerified: req.user.isVerified,
+  });
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
+});
 
 export default router;

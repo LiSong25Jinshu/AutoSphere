@@ -83,7 +83,7 @@ const VehiclesPage = () => (
         <img src="/placeholder-car.jpg" alt="Vehicle" style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px', backgroundColor: '#f0f0f0' }} />
         <h3 style={{ margin: '15px 0 10px 0' }}>2022 Honda Civic</h3>
         <p style={{ color: '#666', margin: '0 0 10px 0' }}>25,000 miles • Automatic • Gasoline</p>
-        <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#2c2c2c', margin: '0 0 15px 0' }}>$24,500</p>
+        <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#2c2c2c', margin: '0 0 15px 0' }}>GH₵ 124,500</p>
         <button style={{ width: '100%', padding: '10px', backgroundColor: '#2c2c2c', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
           View Details
         </button>
@@ -93,7 +93,7 @@ const VehiclesPage = () => (
         <img src="/placeholder-car.jpg" alt="Vehicle" style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px', backgroundColor: '#f0f0f0' }} />
         <h3 style={{ margin: '15px 0 10px 0' }}>2021 Toyota Camry</h3>
         <p style={{ color: '#666', margin: '0 0 10px 0' }}>18,500 miles • Automatic • Hybrid</p>
-        <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#2c2c2c', margin: '0 0 15px 0' }}>$28,900</p>
+        <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#2c2c2c', margin: '0 0 15px 0' }}>GH₵ 145,900</p>
         <button style={{ width: '100%', padding: '10px', backgroundColor: '#2c2c2c', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
           View Details
         </button>
@@ -103,7 +103,7 @@ const VehiclesPage = () => (
         <img src="/placeholder-car.jpg" alt="Vehicle" style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px', backgroundColor: '#f0f0f0' }} />
         <h3 style={{ margin: '15px 0 10px 0' }}>2020 BMW X5</h3>
         <p style={{ color: '#666', margin: '0 0 10px 0' }}>32,000 miles • Automatic • Gasoline</p>
-        <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#2c2c2c', margin: '0 0 15px 0' }}>$45,200</p>
+        <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#2c2c2c', margin: '0 0 15px 0' }}>GH₵ 228,000</p>
         <button style={{ width: '100%', padding: '10px', backgroundColor: '#2c2c2c', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
           View Details
         </button>
@@ -247,10 +247,10 @@ const MessagesPage = () => {
 
 const BookingsPage = () => {
   const bookings = [
-    { id: 1, customer: 'John Smith', service: 'Oil Change', vehicle: '2020 Honda Civic', date: '2024-01-25', time: '10:00 AM', status: 'confirmed', price: '$45', type: 'maintenance' },
-    { id: 2, customer: 'Sarah Johnson', service: 'Premium Car Wash', vehicle: '2019 BMW X5', date: '2024-01-26', time: '2:00 PM', status: 'pending', price: '$35', type: 'wash' },
-    { id: 3, customer: 'Mike Chen', service: 'Brake Inspection', vehicle: '2021 Toyota Camry', date: '2024-01-24', time: '9:00 AM', status: 'completed', price: '$80', type: 'maintenance' },
-    { id: 4, customer: 'Lisa Davis', service: 'Full Detail', vehicle: '2022 Mercedes C-Class', date: '2024-01-23', time: '11:00 AM', status: 'cancelled', price: '$120', type: 'wash' },
+    { id: 1, customer: 'John Smith', service: 'Oil Change', vehicle: '2020 Honda Civic', date: '2024-01-25', time: '10:00 AM', status: 'confirmed', price: 'GH₵ 225', type: 'maintenance' },
+    { id: 2, customer: 'Sarah Johnson', service: 'Premium Car Wash', vehicle: '2019 BMW X5', date: '2024-01-26', time: '2:00 PM', status: 'pending', price: 'GH₵ 175', type: 'wash' },
+    { id: 3, customer: 'Mike Chen', service: 'Brake Inspection', vehicle: '2021 Toyota Camry', date: '2024-01-24', time: '9:00 AM', status: 'completed', price: 'GH₵ 400', type: 'maintenance' },
+    { id: 4, customer: 'Lisa Davis', service: 'Full Detail', vehicle: '2022 Mercedes C-Class', date: '2024-01-23', time: '11:00 AM', status: 'cancelled', price: 'GH₵ 600', type: 'wash' },
   ];
 
   const getStatusColor = (status) => {
@@ -268,7 +268,7 @@ const BookingsPage = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
         <h1>Service Bookings</h1>
         <button style={{ padding: '12px 24px', backgroundColor: '#2c2c2c', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-          ➕ New Booking
+          New Booking
         </button>
       </div>
 
@@ -303,7 +303,7 @@ const BookingsPage = () => {
                   borderRadius: '50%', 
                   marginRight: '15px' 
                 }}>
-                  {booking.type === 'wash' ? '🚿' : '🔧'}
+                  {booking.type === 'wash' ? 'W' : 'M'}
                 </span>
                 <div>
                   <h3 style={{ margin: '0', fontSize: '1.2rem' }}>{booking.service}</h3>
@@ -336,21 +336,21 @@ const BookingsPage = () => {
 
             <div style={{ display: 'flex', gap: '10px' }}>
               <button style={{ padding: '8px 16px', backgroundColor: 'transparent', color: '#2196f3', border: '1px solid #2196f3', borderRadius: '4px', cursor: 'pointer' }}>
-                👁️ View Details
+                View Details
               </button>
               {booking.status === 'pending' && (
                 <>
                   <button style={{ padding: '8px 16px', backgroundColor: '#4caf50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                    ✅ Confirm
+                    Confirm
                   </button>
                   <button style={{ padding: '8px 16px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                    ❌ Cancel
+                    Cancel
                   </button>
                 </>
               )}
               {booking.status === 'confirmed' && (
                 <button style={{ padding: '8px 16px', backgroundColor: '#ff9800', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                  ✏️ Reschedule
+                  Reschedule
                 </button>
               )}
             </div>
@@ -378,22 +378,22 @@ const AdminDashboard = () => {
       
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginTop: '30px' }}>
         <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-          <h3>👥 Total Users</h3>
+          <h3>Total Users</h3>
           <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#2c2c2c' }}>1,247</p>
           <p style={{ color: '#4caf50' }}>+12% this month</p>
         </div>
         <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-          <h3>🚗 Vehicle Listings</h3>
+          <h3>Vehicle Listings</h3>
           <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#2c2c2c' }}>856</p>
           <p style={{ color: '#4caf50' }}>+8% this month</p>
         </div>
         <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-          <h3>📅 Active Bookings</h3>
+          <h3>Active Bookings</h3>
           <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#2c2c2c' }}>342</p>
           <p style={{ color: '#ff5722' }}>-3% this month</p>
         </div>
         <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-          <h3>💬 Live Conversations</h3>
+          <h3>Live Conversations</h3>
           <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#2c2c2c' }}>23</p>
           <p style={{ color: '#4caf50' }}>+15% this month</p>
         </div>
@@ -456,23 +456,23 @@ const DealerDashboard = () => {
       
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginTop: '30px' }}>
         <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-          <h3>📦 Total Inventory</h3>
+          <h3>Total Inventory</h3>
           <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#2c2c2c' }}>127</p>
           <p style={{ color: '#4caf50' }}>+5 this week</p>
         </div>
         <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-          <h3>🚗 Monthly Sales</h3>
+          <h3>Monthly Sales</h3>
           <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#2c2c2c' }}>23</p>
           <p style={{ color: '#4caf50' }}>+12% vs last month</p>
         </div>
         <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-          <h3>👥 Active Leads</h3>
+          <h3>Active Leads</h3>
           <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#2c2c2c' }}>45</p>
           <p style={{ color: '#4caf50' }}>8 new today</p>
         </div>
         <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-          <h3>💰 Revenue (MTD)</h3>
-          <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#2c2c2c' }}>$485K</p>
+          <h3>Revenue (MTD)</h3>
+          <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#2c2c2c' }}>GH₵ 2.4M</p>
           <p style={{ color: '#4caf50' }}>+18% vs last month</p>
         </div>
       </div>
@@ -510,16 +510,16 @@ const DealerDashboard = () => {
           <h3>Quick Actions</h3>
           <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <button style={{ padding: '12px', backgroundColor: '#2c2c2c', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-              ➕ Add New Vehicle
+              Add New Vehicle
             </button>
             <button style={{ padding: '12px', backgroundColor: '#2196f3', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-              ✏️ Update Inventory
+              Update Inventory
             </button>
             <button style={{ padding: '12px', backgroundColor: '#ff9800', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-              📊 View Analytics
+              View Analytics
             </button>
             <button style={{ padding: '12px', backgroundColor: 'transparent', color: '#2c2c2c', border: '1px solid #2c2c2c', borderRadius: '4px', cursor: 'pointer' }}>
-              👁️ Manage Leads
+              Manage Leads
             </button>
           </div>
           
@@ -570,7 +570,7 @@ const ServiceProviderDashboard = () => {
         </div>
         <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
           <h3>💰 This Week Revenue</h3>
-          <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#2c2c2c' }}>$2,850</p>
+          <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#2c2c2c' }}>GH₵ 14,250</p>
           <p style={{ color: '#4caf50' }}>+15% vs last week</p>
         </div>
         <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
@@ -596,7 +596,7 @@ const ServiceProviderDashboard = () => {
                   <h4 style={{ margin: '0' }}>Car Wash Services</h4>
                   <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
                     <span style={{ backgroundColor: '#2196f3', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>15 bookings</span>
-                    <span style={{ backgroundColor: '#4caf50', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>$450</span>
+                    <span style={{ backgroundColor: '#4caf50', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>GH₵ 2,250</span>
                   </div>
                 </div>
               </div>
@@ -614,7 +614,7 @@ const ServiceProviderDashboard = () => {
                   <h4 style={{ margin: '0' }}>Maintenance Services</h4>
                   <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
                     <span style={{ backgroundColor: '#2196f3', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>8 bookings</span>
-                    <span style={{ backgroundColor: '#4caf50', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>$1,200</span>
+                    <span style={{ backgroundColor: '#4caf50', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>GH₵ 6,000</span>
                   </div>
                 </div>
               </div>
@@ -791,7 +791,18 @@ function Navigation() {
             </>
           ) : (
             <>
-              <Link to="/notifications" className="auto-nav-util" title="Notifications">🔔</Link>
+              <Link
+                to={
+                  user.role === 'dealer' ? '/dealer-dashboard' :
+                  user.role === 'service_provider' ? '/service-provider-dashboard' :
+                  user.role === 'admin' ? '/admin-dashboard' :
+                  '/dashboard'
+                }
+                className="auto-nav-util auto-nav-util-primary"
+              >
+                Dashboard
+              </Link>
+              <Link to="/notifications" className="auto-nav-util" title="Notifications">Notifications</Link>
               <UserDropdown />
             </>
           )}

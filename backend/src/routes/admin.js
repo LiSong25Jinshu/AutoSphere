@@ -174,8 +174,8 @@ let systemSettings = {
     siteUrl: process.env.FRONTEND_URL || 'http://localhost:3001',
     supportEmail: process.env.SUPPORT_EMAIL || 'support@autosphere.com',
     maxUploadSizeMB: parseInt(process.env.MAX_FILE_SIZE) / (1024 * 1024) || 10,
-    defaultCurrency: 'USD',
-    timezone: 'America/New_York',
+    defaultCurrency: 'GHS',
+    timezone: 'Africa/Accra',
   },
   email: {
     smtpHost: process.env.SMTP_HOST || 'smtp.gmail.com',

@@ -51,7 +51,13 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING(20),
     allowNull: true,
     validate: {
-      len: [10, 20],
+      // Only validate length when a value is actually provided
+      validPhone(value) {
+        if (value === null || value === undefined || value === '') return;
+        if (value.length < 10 || value.length > 20) {
+          throw new Error('Phone number must be between 10 and 20 characters');
+        }
+      },
     },
   },
   role: {
@@ -89,6 +95,61 @@ const User = sequelize.define('User', {
     type: DataTypes.DATE,
     allowNull: true,
     field: 'last_login_at',
+  },
+  // ── Profile fields (shared by all roles) ──────────────────────────────────
+  address: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+  },
+  city: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+  },
+  state: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+  },
+  zipCode: {
+    type: DataTypes.STRING(20),
+    allowNull: true,
+    field: 'zip_code',
+  },
+  bio: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  dateOfBirth: {
+    type: DataTypes.DATEONLY,
+    allowNull: true,
+    field: 'date_of_birth',
+  },
+  // ── Service-provider / dealer business fields ─────────────────────────────
+  businessName: {
+    type: DataTypes.STRING(200),
+    allowNull: true,
+    field: 'business_name',
+  },
+  businessType: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    field: 'business_type',
+  },
+  businessDescription: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'business_description',
+  },
+  // ── GDPR consent ──────────────────────────────────────────────────────────
+  isActive: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true,
+    field: 'is_active',
+  },
+  consentData: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    field: 'consent_data',
   },
   createdAt: {
     type: DataTypes.DATE,

@@ -65,7 +65,7 @@ function AICarFinder() {
               <div className="car-info">
                 <h3>{car.name}</h3>
                 <p>Year: {car.year}</p>
-                <p>Price: ${car.price.toLocaleString()}</p>
+                <p>Price: GH₵ {car.price.toLocaleString()}</p>
               </div>
               <button className="btn primary">View Details</button>
             </div>

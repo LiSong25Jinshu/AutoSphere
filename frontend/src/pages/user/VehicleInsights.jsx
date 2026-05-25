@@ -102,7 +102,7 @@ const VehicleInsights = () => {
                   <span className="alert-icon">🔧</span>
                   <span className="alert-text">
                     {b.serviceType?.replace(/_/g, ' ')} — {new Date(b.scheduledDate).toLocaleDateString()}
-                    {b.actualCost ? ` · $${b.actualCost}` : ''}
+                    {b.actualCost ? ` · GH₵ ${b.actualCost}` : ''}
                     {b.rating ? ` · ⭐ ${b.rating}/5` : ''}
                   </span>
                 </div>

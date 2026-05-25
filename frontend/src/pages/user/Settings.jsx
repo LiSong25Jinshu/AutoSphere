@@ -27,19 +27,7 @@ const UserSettings = () => {
     preferences: {
       language: 'en',
       timezone: 'America/New_York',
-      currency: 'USD',
-      theme: 'light',
-      autoSave: true,
-      compactView: false
-    },
-    account: {
-      twoFactorEnabled: false,
-      loginNotifications: true,
-      sessionTimeout: 30
-    }
-  });
-
-  const [isLoading, setIsLoading] = useState(false);
+      currency: 'GHS',
   const [saveMessage, setSaveMessage] = useState('');
 
   const handleSettingChange = (category, setting, value) => {
@@ -93,18 +81,7 @@ const UserSettings = () => {
         preferences: {
           language: 'en',
           timezone: 'America/New_York',
-          currency: 'USD',
-          theme: 'light',
-          autoSave: true,
-          compactView: false
-        },
-        account: {
-          twoFactorEnabled: false,
-          loginNotifications: true,
-          sessionTimeout: 30
-        }
-      });
-      setSaveMessage('Settings reset to defaults');
+          currency: 'GHS',
       setTimeout(() => setSaveMessage(''), 3000);
     }
   };
@@ -226,9 +203,7 @@ const UserSettings = () => {
                     onChange={(e) => handleSettingChange('preferences', 'currency', e.target.value)}
                     className="setting-select"
                   >
-                    <option value="USD">USD ($)</option>
-                    <option value="EUR">EUR (€)</option>
-                    <option value="GBP">GBP (£)</option>
+                    <option value="GHS">GHS (GH₵)</option>
                   </select>
                 </div>
                 <div className="setting-group">

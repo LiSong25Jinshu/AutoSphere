@@ -76,6 +76,7 @@ const UserDashboard = () => {
   const quickActions = [
     { title: 'Book Service', description: 'Schedule maintenance or repairs', icon: '🔧', className: 'primary', action: () => navigate('/book-service') },
     { title: 'Browse Vehicles', description: 'Find your next car', icon: '🚗', className: 'secondary', action: () => navigate('/vehicles') },
+    { title: 'Rent Vehicles', description: 'Rent your next car', icon: '🚘', className: 'secondary', action: () => navigate('/vehicles')},
     { title: 'Messages', description: 'Chat with dealers & providers', icon: '💬', className: 'success', action: () => navigate('/user-messages') },
     { title: 'Vehicle Insights', description: 'Track your vehicle data', icon: '📊', className: 'info', action: () => navigate('/vehicle-insights') },
   ];
@@ -213,7 +214,7 @@ const UserDashboard = () => {
         </div>
 
         {/* Sidebar */}
-        <div className="dashboard-sidebar">
+        <div className="user-dashboard-sidebar">
           {/* Profile Summary */}
           <div className="profile-summary">
             <h2>Profile Summary</h2>

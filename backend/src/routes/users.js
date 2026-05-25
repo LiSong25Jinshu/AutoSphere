@@ -71,7 +71,7 @@ router.get('/profile', authenticateToken, async (req, res) => {
 router.put('/profile', [
   body('firstName').optional().trim().isLength({ min: 2, max: 100 }),
   body('lastName').optional().trim().isLength({ min: 2, max: 100 }),
-  body('phone').optional().trim().isLength({ min: 7, max: 20 }),
+  body('phone').optional({ checkFalsy: true }).trim().isLength({ min: 7, max: 20 }),
   body('email').optional().isEmail().normalizeEmail(),
   body('address').optional().trim().isLength({ max: 255 }),
   body('city').optional().trim().isLength({ max: 100 }),
@@ -79,13 +79,17 @@ router.put('/profile', [
   body('zipCode').optional().trim().isLength({ max: 20 }),
   body('bio').optional().trim().isLength({ max: 1000 }),
   body('dateOfBirth').optional().isISO8601().withMessage('Invalid date format'),
+  // Business fields (service providers & dealers)
+  body('businessName').optional().trim().isLength({ max: 200 }),
+  body('businessType').optional().trim().isLength({ max: 100 }),
+  body('businessDescription').optional().trim().isLength({ max: 2000 }),
 ], authenticateToken, async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
-        message: 'Validation failed',
+        message: errors.array()[0].msg || 'Validation failed',
         errors: errors.array()
       });
     }
@@ -110,13 +114,18 @@ router.put('/profile', [
       }
     }
 
-    // Update allowed fields
-    const allowedFields = ['firstName', 'lastName', 'phone', 'email', 'address', 'city', 'state', 'zipCode', 'bio', 'dateOfBirth'];
+    // Update allowed fields — includes business fields for service providers & dealers
+    const allowedFields = [
+      'firstName', 'lastName', 'phone', 'email',
+      'address', 'city', 'state', 'zipCode', 'bio', 'dateOfBirth',
+      'businessName', 'businessType', 'businessDescription',
+    ];
     const updateData = {};
     
     allowedFields.forEach(field => {
       if (req.body[field] !== undefined) {
-        updateData[field] = req.body[field];
+        // Treat empty string as null for optional fields
+        updateData[field] = req.body[field] === '' ? null : req.body[field];
       }
     });
 

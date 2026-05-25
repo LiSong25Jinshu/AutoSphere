@@ -301,7 +301,7 @@ router.get('/dealer/stats', authenticateToken, requireRole('dealer'), async (req
           id: v.id,
           model: `${v.year} ${v.make} ${v.model}`,
           views: v.viewCount || 0,
-          price: `${Number(v.price).toLocaleString()}`,
+          price: `GH₵ ${Number(v.price).toLocaleString()}`,
           status: v.status,
         })),
       },

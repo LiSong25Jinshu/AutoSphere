@@ -47,7 +47,7 @@ describe('VehicleCard', () => {
 
   it('renders formatted price', () => {
     renderCard();
-    expect(screen.getByText('$28,500')).toBeInTheDocument();
+    expect(screen.getByText('GH₵ 28,500')).toBeInTheDocument();
   });
 
   it('renders mileage', () => {

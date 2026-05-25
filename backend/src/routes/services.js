@@ -1,8 +1,10 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
+import { Op } from 'sequelize';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
 import ServiceOffering from '../models/ServiceOffering.js';
 import ProviderSchedule from '../models/ProviderSchedule.js';
+import User from '../models/User.js';
 
 const router = express.Router();
 
@@ -18,6 +20,82 @@ router.get('/', authenticateToken, async (req, res) => {
     res.json({ success: true, data: services });
   } catch (error) {
     console.error('Get services error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// GET /api/services/by-type?serviceType=oil_change
+// Public: returns all active service providers that offer a given booking service type.
+// Maps booking serviceType values to ServiceOffering categories so the customer
+// sees real providers after selecting a service.
+router.get('/by-type', async (req, res) => {
+  try {
+    const { serviceType } = req.query;
+    if (!serviceType) {
+      return res.status(400).json({ success: false, message: 'serviceType query param is required' });
+    }
+
+    // Map booking service types → ServiceOffering categories
+    const categoryMap = {
+      car_wash:             ['car_wash'],
+      oil_change:           ['maintenance'],
+      brake_service:        ['repair', 'maintenance'],
+      tire_service:         ['maintenance', 'repair'],
+      engine_diagnostic:    ['repair', 'maintenance'],
+      transmission_service: ['repair'],
+      air_conditioning:     ['repair', 'maintenance'],
+      battery_service:      ['maintenance', 'repair'],
+      general_maintenance:  ['maintenance'],
+      inspection:           ['maintenance', 'repair'],
+      repair:               ['repair'],
+      other:                ['maintenance', 'repair', 'car_wash', 'other'],
+    };
+
+    const categories = categoryMap[serviceType] || ['maintenance', 'repair', 'other'];
+
+    // Find all active service offerings in matching categories, with their provider
+    const offerings = await ServiceOffering.findAll({
+      where: {
+        category: { [Op.in]: categories },
+        isActive: true,
+      },
+      include: [{
+        model: User,
+        as: 'provider',
+        attributes: ['id', 'firstName', 'lastName', 'email', 'phone'],
+        where: { role: 'service_provider', isVerified: true },
+      }],
+      order: [['bookingCount', 'DESC']],
+    });
+
+    // Group by provider — one entry per provider with their relevant services listed
+    const providerMap = new Map();
+    for (const offering of offerings) {
+      const pid = offering.provider.id;
+      if (!providerMap.has(pid)) {
+        providerMap.set(pid, {
+          id: pid,
+          firstName: offering.provider.firstName,
+          lastName: offering.provider.lastName,
+          email: offering.provider.email,
+          phone: offering.provider.phone,
+          services: [],
+        });
+      }
+      providerMap.get(pid).services.push({
+        id: offering.id,
+        name: offering.name,
+        category: offering.category,
+        price: parseFloat(offering.price),
+        duration: offering.duration,
+        description: offering.description,
+      });
+    }
+
+    const providers = Array.from(providerMap.values());
+    res.json({ success: true, data: providers });
+  } catch (error) {
+    console.error('Get providers by service type error:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });

@@ -52,7 +52,7 @@ const DealerSales = () => {
 
       <div className="ds-stats-grid">
         <div className="ds-stat-card">
-          <div className="ds-stat-value" style={{ color: '#4caf50' }}>${totalRevenue.toLocaleString()}</div>
+          <div className="ds-stat-value" style={{ color: '#4caf50' }}>GH₵ {totalRevenue.toLocaleString()}</div>
           <div className="ds-stat-label">Total Sales Revenue</div>
           <div className="ds-stat-sub">From sold vehicles</div>
         </div>
@@ -71,7 +71,7 @@ const DealerSales = () => {
         <div className="ds-stat-card">
           <div className="ds-stat-value" style={{ color: '#9c27b0' }}>
             {soldVehicles.length > 0
-              ? `$${Math.round(totalRevenue / soldVehicles.length).toLocaleString()}`
+              ? `GH₵ ${Math.round(totalRevenue / soldVehicles.length).toLocaleString()}`
               : '—'}
           </div>
           <div className="ds-stat-label">Avg. Sale Price</div>
@@ -107,7 +107,7 @@ const DealerSales = () => {
             ) : filtered.map((v) => (
               <tr key={v.id}>
                 <td className="ds-vehicle-cell">{v.year} {v.make} {v.model}</td>
-                <td className="ds-price-cell">${parseFloat(v.price || 0).toLocaleString()}</td>
+                <td className="ds-price-cell">GH₵ {parseFloat(v.price || 0).toLocaleString()}</td>
                 <td>{v.mileage ? `${parseInt(v.mileage).toLocaleString()} mi` : '—'}</td>
                 <td>
                   <span className="ds-status-badge"

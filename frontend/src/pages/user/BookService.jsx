@@ -1,250 +1,503 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { appointmentService } from "../../services/appointmentService";
+import { serviceAPI } from "../../services/api";
+import { CURRENCY_SYMBOL, formatCost } from "../../utils/currency";
 import "./BookService.css";
 
+// ─── Service catalogue ────────────────────────────────────────────────────────
+const SERVICE_OPTIONS = [
+  {
+    value: "car_wash",
+    label: "Car Wash",
+    icon: "🚿",
+    category: "Cleaning",
+    description: "Exterior & interior wash, wax, detailing, and protective coating",
+    duration: "30–90 min",
+    priceHint: `From GHc{CURRENCY_SYMBOL}80`,
+    label: "Oil Change",
+    icon: "🛢️",
+    category: "Maintenance",
+    description: "Engine oil & filter replacement using manufacturer-recommended grade",
+    duration: "30–45 min",
+    priceHint: `From Ghc{CURRENCY_SYMBOL}180`,
+  },
+  {
+    value: "brake_service",
+    label: "Brake Service",
+    icon: "🛑",
+    category: "Safety",
+    description: "Brake pad/rotor inspection, replacement, and hydraulic fluid top-up",
+    duration: "1–2 hrs",
+    priceHint: `From Ghc{CURRENCY_SYMBOL}400`,
+  },
+  {
+    value: "tire_service",
+    label: "Tire Service",
+    icon: "🛞",
+    category: "Maintenance",
+    description: "Rotation, balancing, alignment check, puncture repair, or full replacement",
+    duration: "45–90 min",
+    priceHint: `From Ghc{CURRENCY_SYMBOL}120`,
+  },
+  {
+    value: "engine_diagnostic",
+    label: "Engine Diagnostic",
+    icon: "🔍",
+    category: "Diagnostics",
+    description: "OBD-II scan, fault-code analysis, and written diagnostic report",
+    duration: "1–2 hrs",
+    priceHint: `From Ghc{CURRENCY_SYMBOL}300`,
+  },
+  {
+    value: "transmission_service",
+    label: "Transmission Service",
+    icon: "⚙️",
+    category: "Drivetrain",
+    description: "Fluid flush, filter change, and transmission health inspection",
+    duration: "1.5–3 hrs",
+    priceHint: `From Ghc{CURRENCY_SYMBOL}600`,
+  },
+  {
+    value: "air_conditioning",
+    label: "Air Conditioning",
+    icon: "❄️",
+    category: "Comfort",
+    description: "Refrigerant recharge, leak test, compressor & cabin filter service",
+    duration: "1–2 hrs",
+    priceHint: `From Ghc{CURRENCY_SYMBOL}350`,
+  },
+  {
+    value: "battery_service",
+    label: "Battery Service",
+    icon: "🔋",
+    category: "Electrical",
+    description: "Load test, terminal cleaning, battery replacement & charging system check",
+    duration: "30–60 min",
+    priceHint: `From Ghc{CURRENCY_SYMBOL}100`,
+  },
+  {
+    value: "general_maintenance",
+    label: "General Maintenance",
+    icon: "🔧",
+    category: "Maintenance",
+    description: "Scheduled service per manufacturer intervals — fluids, filters, belts & more",
+    duration: "1–3 hrs",
+    priceHint: `From Ghc{CURRENCY_SYMBOL}250`,
+  },
+  {
+    value: "inspection",
+    label: "Vehicle Inspection",
+    icon: "📋",
+    category: "Inspection",
+    description: "Comprehensive 50-point safety & roadworthiness inspection with written report",
+    duration: "1–1.5 hrs",
+    priceHint: `From Ghc{CURRENCY_SYMBOL}220`,
+  },
+  {
+    value: "repair",
+    label: "General Repair",
+    icon: "🛠️",
+    category: "Repair",
+    description: "Mechanical or electrical fault diagnosis and repair — quote provided upfront",
+    duration: "Varies",
+    priceHint: "Quote on inspection",
+  },
+  {
+    value: "Washing",
+    label: "Washing service",
+    icon: "🧼",
+    category: "Cleaning",
+    description: "Professional car washing and detailing services including exterior cleaning, interior vacuuming, polishing, and vehicle care packages",
+    duration: "Varies",
+    priceHint: "Quote on request",
+  },
+];
+
+const TIME_SLOTS = [
+  "08:00", "09:00", "10:00", "11:00",
+  "13:00", "14:00", "15:00", "16:00", "17:00",
+];
+
+const STEPS = ["Service", "Provider", "Schedule", "Confirm"];
+
+// ─── Component ────────────────────────────────────────────────────────────────
 function BookService() {
   const navigate = useNavigate();
+
+  // Step 1 — service selection
   const [serviceType, setServiceType] = useState("");
+
+  // Step 2 — provider selection
+  const [providers, setProviders] = useState([]);
+  const [providersLoading, setProvidersLoading] = useState(false);
+  const [providersError, setProvidersError] = useState("");
+  const [selectedProvider, setSelectedProvider] = useState(null);
+
+  // Step 3 — schedule
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [notes, setNotes] = useState("");
-  const [priority, setPriority] = useState("normal");
+
+  // Submission
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const serviceOptions = [
-    { value: "oil_change", label: "Oil Change", icon: "🛢️", description: "Regular oil and filter change" },
-    { value: "brake_service", label: "Brake Service", icon: "🛑", description: "Brake inspection and repair" },
-    { value: "tire_service", label: "Tire Service", icon: "🛞", description: "Tire rotation, balancing, replacement" },
-    { value: "engine_diagnostic", label: "Engine Diagnostic", icon: "🔧", description: "Engine troubleshooting and diagnosis" },
-    { value: "transmission_service", label: "Transmission Service", icon: "⚙️", description: "Transmission maintenance and repair" },
-    { value: "air_conditioning", label: "Air Conditioning", icon: "❄️", description: "AC system service and repair" },
-    { value: "battery_service", label: "Battery Service", icon: "🔋", description: "Battery testing and replacement" },
-    { value: "general_maintenance", label: "General Maintenance", icon: "🔧", description: "Routine vehicle maintenance" },
-    { value: "inspection", label: "Vehicle Inspection", icon: "🔍", description: "Comprehensive vehicle inspection" },
-    { value: "repair", label: "Repair Service", icon: "🛠️", description: "General vehicle repairs" },
-    { value: "other", label: "Other", icon: "📝", description: "Custom service request" }
-  ];
+  // Active step (0-indexed)
+  const [step, setStep] = useState(0);
 
-  const timeSlots = [
-    "08:00", "09:00", "10:00", "11:00", 
-    "13:00", "14:00", "15:00", "16:00", "17:00"
-  ];
+  // ── Fetch providers whenever service type changes ──────────────────────────
+  useEffect(() => {
+    if (!serviceType) return;
+    setProvidersLoading(true);
+    setProvidersError("");
+    setProviders([]);
+    setSelectedProvider(null);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+    serviceAPI
+      .getProvidersByType(serviceType)
+      .then((res) => {
+        if (res.data.success) {
+          setProviders(res.data.data);
+          if (res.data.data.length === 0) {
+            setProvidersError("No service providers are currently available for this service. Please try another service or check back later.");
+          }
+        }
+      })
+      .catch(() => {
+        setProvidersError("Could not load service providers. Please try again.");
+      })
+      .finally(() => setProvidersLoading(false));
+  }, [serviceType]);
+
+  // ── Navigation helpers ─────────────────────────────────────────────────────
+  const goNext = () => setStep((s) => Math.min(s + 1, STEPS.length - 1));
+  const goBack = () => setStep((s) => Math.max(s - 1, 0));
+
+  const canProceedFromStep = (s) => {
+    if (s === 0) return !!serviceType;
+    if (s === 1) return !!selectedProvider;
+    if (s === 2) return !!date && !!time;
+    return true;
+  };
+
+  // ── Submit ─────────────────────────────────────────────────────────────────
+  const handleSubmit = async () => {
     setError("");
-    setSuccess("");
-
-    if (!serviceType || !date || !time) {
-      setError("Please fill in all required fields!");
-      return;
-    }
-
-    // Validate date is not in the past
     const selectedDate = new Date(`${date}T${time}`);
-    const now = new Date();
-    if (selectedDate <= now) {
-      setError("Please select a future date and time!");
+    if (selectedDate <= new Date()) {
+      setError("Please select a future date and time.");
       return;
     }
 
     setLoading(true);
-
     try {
-      const selectedService = serviceOptions.find(s => s.value === serviceType);
-      
-      // Create appointment data with detailed logging
+      const selectedService = SERVICE_OPTIONS.find((s) => s.value === serviceType);
       const appointmentData = {
-        serviceType: serviceType,
+        serviceType,
         title: selectedService?.label || serviceType,
         description: selectedService?.description || notes,
         date,
         time,
         notes,
-        priority,
-        serviceProviderId: 3, // Default service provider from mock data
+        serviceProviderId: selectedProvider.id,
       };
-
-      console.log('=== FRONTEND FORM DATA ===');
-      console.log('Service Type:', serviceType);
-      console.log('Date:', date);
-      console.log('Time:', time);
-      console.log('Selected Service:', selectedService);
-      console.log('Final appointment data:', appointmentData);
 
       const response = await appointmentService.requestAppointment(appointmentData);
 
-      console.log('=== SERVICE RESPONSE ===');
-      console.log('Response:', response);
-
       if (response.success) {
-        setSuccess("Appointment booked successfully! Redirecting to your appointments...");
-        // Reset form
-        setServiceType("");
-        setDate("");
-        setTime("");
-        setNotes("");
-        setPriority("normal");
-
-        // Redirect to appointments page after a short delay
-        setTimeout(() => {
-          navigate("/appointments");
-        }, 2000);
+        setSuccess("Appointment booked successfully! Redirecting to your appointments…");
+        setTimeout(() => navigate("/appointments"), 2000);
       } else {
-        console.error('=== BOOKING FAILED ===');
-        console.error('Full response:', response);
-        
-        let errorMessage = response.message || "Failed to book appointment. Please try again.";
-        
-        // If there are validation errors, show them
-        if (response.error && response.error.errors) {
-          console.error('Validation errors:', response.error.errors);
-          const validationErrors = response.error.errors.map(err => `${err.path}: ${err.msg}`).join(', ');
-          errorMessage = `Validation failed: ${validationErrors}`;
-        }
-        
-        setError(errorMessage);
+        setError(response.message || "Failed to book appointment. Please try again.");
       }
-    } catch (error) {
-      console.error("=== BOOKING EXCEPTION ===");
-      console.error("Error:", error);
+    } catch {
       setError("Failed to book appointment. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Get minimum date (today)
-  const getMinDate = () => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  };
+  const getMinDate = () => new Date().toISOString().split("T")[0];
+  const selectedServiceObj = SERVICE_OPTIONS.find((s) => s.value === serviceType);
 
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="book-service-page">
-      <div className="book-service-card">
-        <div className="service-header">
+    <div className="bs-page">
+      <div className="bs-card">
+        {/* Header */}
+        <div className="bs-header">
           <h1>Book a Service</h1>
-          <p className="subtitle">
-            Schedule your vehicle service appointment with our expert technicians.
-          </p>
+          <p>Schedule your vehicle service with a verified provider in a few steps.</p>
         </div>
 
-        {error && (
-          <div className="alert alert-error">
-            {error}
-          </div>
-        )}
+        {/* Step indicator */}
+        <div className="bs-steps">
+          {STEPS.map((label, i) => (
+            <div key={label} className={`bs-step ${i === step ? "active" : ""} ${i < step ? "done" : ""}`}>
+              <div className="bs-step-circle">{i < step ? "✓" : i + 1}</div>
+              <span className="bs-step-label">{label}</span>
+              {i < STEPS.length - 1 && <div className="bs-step-line" />}
+            </div>
+          ))}
+        </div>
 
-        {success && (
-          <div className="alert alert-success">
-            {success}
-          </div>
-        )}
-        
-        <form className="book-service-form" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>
-              Service Type <span className="required">*</span>
-            </label>
-            <div className="service-options">
-              {serviceOptions.map((service) => (
+        {/* Alerts */}
+        {error && <div className="bs-alert error">{error}</div>}
+        {success && <div className="bs-alert success">{success}</div>}
+
+        {/* ── STEP 0: Choose service ── */}
+        {step === 0 && (
+          <div className="bs-section">
+            <h2 className="bs-section-title">What service do you need?</h2>
+            <div className="bs-service-grid">
+              {SERVICE_OPTIONS.map((svc) => (
                 <div
-                  key={service.value}
-                  className={`service-card ${serviceType === service.value ? 'selected' : ''}`}
-                  onClick={() => setServiceType(service.value)}
+                  key={svc.value}
+                  className={`bs-service-card ${serviceType === svc.value ? "selected" : ""}`}
+                  onClick={() => setServiceType(svc.value)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === "Enter" && setServiceType(svc.value)}
                 >
-                  <div className="service-icon">{service.icon}</div>
-                  <div className="service-label">{service.label}</div>
-                  <div className="service-description">{service.description}</div>
+                  <div className="bs-svc-top">
+                    <span className="bs-svc-icon">{svc.icon}</span>
+                    <span className="bs-svc-category">{svc.category}</span>
+                  </div>
+                  <div className="bs-svc-name">{svc.label}</div>
+                  <div className="bs-svc-desc">{svc.description}</div>
+                  <div className="bs-svc-meta">
+                    <span>⏱ {svc.duration}</span>
+                    <span>{svc.priceHint}</span>
+                  </div>
+                  {serviceType === svc.value && (
+                    <div className="bs-svc-check">✓ Selected</div>
+                  )}
                 </div>
               ))}
             </div>
           </div>
+        )}
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>
-                Preferred Date <span className="required">*</span>
-              </label>
-              <input 
-                type="date" 
-                value={date} 
-                onChange={(e) => setDate(e.target.value)}
-                className="form-input"
-                min={getMinDate()}
-                disabled={loading}
-              />
-            </div>
+        {/* ── STEP 1: Choose provider ── */}
+        {step === 1 && (
+          <div className="bs-section">
+            <h2 className="bs-section-title">
+              Available providers for{" "}
+              <span className="bs-highlight">{selectedServiceObj?.label}</span>
+            </h2>
 
-            <div className="form-group">
-              <label>
-                Preferred Time <span className="required">*</span>
-              </label>
-              <div className="time-slots">
-                {timeSlots.map((slot) => (
-                  <button
-                    key={slot}
-                    type="button"
-                    className={`time-slot ${time === slot ? 'selected' : ''}`}
-                    onClick={() => setTime(slot)}
-                    disabled={loading}
+            {providersLoading && (
+              <div className="bs-loading">
+                <div className="bs-spinner" />
+                <p>Finding providers near you…</p>
+              </div>
+            )}
+
+            {!providersLoading && providersError && (
+              <div className="bs-provider-empty">
+                <span className="bs-empty-icon">🔍</span>
+                <p>{providersError}</p>
+                <button className="bs-btn secondary" onClick={goBack}>
+                  Choose a Different Service
+                </button>
+              </div>
+            )}
+
+            {!providersLoading && !providersError && providers.length > 0 && (
+              <div className="bs-provider-list">
+                {providers.map((prov) => (
+                  <div
+                    key={prov.id}
+                    className={`bs-provider-card ${selectedProvider?.id === prov.id ? "selected" : ""}`}
+                    onClick={() => setSelectedProvider(prov)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === "Enter" && setSelectedProvider(prov)}
                   >
-                    {slot}
-                  </button>
+                    <div className="bs-prov-avatar">
+                      {prov.firstName[0]}{prov.lastName[0]}
+                    </div>
+                    <div className="bs-prov-info">
+                      <div className="bs-prov-name">
+                        {prov.firstName} {prov.lastName}
+                        {selectedProvider?.id === prov.id && (
+                          <span className="bs-prov-selected-badge">✓ Selected</span>
+                        )}
+                      </div>
+                      {prov.phone && (
+                        <div className="bs-prov-contact">📞 {prov.phone}</div>
+                      )}
+                      <div className="bs-prov-services">
+                        {prov.services.map((s) => (
+                          <span key={s.id} className="bs-service-tag">
+                            {s.name}
+                            {s.price > 0 && (
+                              <span className="bs-service-tag-price"> · {CURRENCY_SYMBOL}{s.price}</span>
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="bs-prov-duration">
+                      {prov.services[0] && (
+                        <>
+                          <div className="bs-prov-price">
+                            {CURRENCY_SYMBOL}{Math.min(...prov.services.map((s) => s.price))}
+                            {prov.services.length > 1 && "+"}
+                          </div>
+                          <div className="bs-prov-dur-label">starting from</div>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 ))}
               </div>
+            )}
+          </div>
+        )}
+
+        {/* ── STEP 2: Schedule ── */}
+        {step === 2 && (
+          <div className="bs-section">
+            <h2 className="bs-section-title">Pick a date & time</h2>
+
+            {/* Summary bar */}
+            <div className="bs-summary-bar">
+              <div className="bs-summary-item">
+                <span className="bs-summary-label">Service</span>
+                <span className="bs-summary-value">
+                  {selectedServiceObj?.icon} {selectedServiceObj?.label}
+                </span>
+              </div>
+              <div className="bs-summary-divider" />
+              <div className="bs-summary-item">
+                <span className="bs-summary-label">Provider</span>
+                <span className="bs-summary-value">
+                  {selectedProvider?.firstName} {selectedProvider?.lastName}
+                </span>
+              </div>
+            </div>
+
+            <div className="bs-schedule-grid">
+              <div className="bs-form-group">
+                <label className="bs-label">
+                  Preferred Date <span className="bs-required">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="bs-input"
+                  min={getMinDate()}
+                />
+              </div>
+
+              <div className="bs-form-group">
+                <label className="bs-label">
+                  Preferred Time <span className="bs-required">*</span>
+                </label>
+                <div className="bs-time-grid">
+                  {TIME_SLOTS.map((slot) => (
+                    <button
+                      key={slot}
+                      type="button"
+                      className={`bs-time-btn ${time === slot ? "selected" : ""}`}
+                      onClick={() => setTime(slot)}
+                    >
+                      {slot}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="bs-form-group" style={{ marginTop: "1.5rem" }}>
+              <label className="bs-label">Additional Notes</label>
+              <textarea
+                className="bs-textarea"
+                rows={4}
+                placeholder="Describe any specific issues, symptoms, or special requests…"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
             </div>
           </div>
+        )}
 
-          <div className="form-group">
-            <label>Priority Level</label>
-            <select 
-              value={priority} 
-              onChange={(e) => setPriority(e.target.value)}
-              className="form-select"
-              disabled={loading}
-            >
-              <option value="low">Low Priority</option>
-              <option value="normal">Normal Priority</option>
-              <option value="high">High Priority</option>
-              <option value="urgent">Urgent</option>
-            </select>
+        {/* ── STEP 3: Confirm ── */}
+        {step === 3 && (
+          <div className="bs-section">
+            <h2 className="bs-section-title">Confirm your booking</h2>
+            <div className="bs-confirm-card">
+              <div className="bs-confirm-row">
+                <span className="bs-confirm-label">Service</span>
+                <span className="bs-confirm-value">
+                  {selectedServiceObj?.icon} {selectedServiceObj?.label}
+                </span>
+              </div>
+              <div className="bs-confirm-row">
+                <span className="bs-confirm-label">Provider</span>
+                <span className="bs-confirm-value">
+                  {selectedProvider?.firstName} {selectedProvider?.lastName}
+                </span>
+              </div>
+              {selectedProvider?.phone && (
+                <div className="bs-confirm-row">
+                  <span className="bs-confirm-label">Contact</span>
+                  <span className="bs-confirm-value">{selectedProvider.phone}</span>
+                </div>
+              )}
+              <div className="bs-confirm-row">
+                <span className="bs-confirm-label">Date</span>
+                <span className="bs-confirm-value">
+                  {date ? new Date(date).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) : "—"}
+                </span>
+              </div>
+              <div className="bs-confirm-row">
+                <span className="bs-confirm-label">Time</span>
+                <span className="bs-confirm-value">{time || "—"}</span>
+              </div>
+              {notes && (
+                <div className="bs-confirm-row">
+                  <span className="bs-confirm-label">Notes</span>
+                  <span className="bs-confirm-value">{notes}</span>
+                </div>
+              )}
+            </div>
+            <p className="bs-confirm-note">
+              By confirming, you agree to the appointment terms. The provider will contact you to confirm availability.
+            </p>
           </div>
+        )}
 
-          <div className="form-group">
-            <label>Additional Notes</label>
-            <textarea
-              placeholder="Describe any specific issues, symptoms, or special requests..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="form-textarea"
-              rows="4"
-              disabled={loading}
-            />
-          </div>
-
-          <div className="form-buttons">
-            <button 
-              type="submit" 
-              className="btn primary"
-              disabled={loading || !serviceType || !date || !time}
-            >
-              {loading ? "Booking Appointment..." : "Book Appointment"}
+        {/* Navigation buttons */}
+        <div className="bs-nav">
+          {step > 0 && (
+            <button className="bs-btn secondary" onClick={goBack} disabled={loading}>
+              ← Back
             </button>
-            <button 
-              type="button" 
-              className="btn secondary" 
-              onClick={() => navigate("/appointments")}
+          )}
+          <div style={{ flex: 1 }} />
+          {step < STEPS.length - 1 ? (
+            <button
+              className="bs-btn primary"
+              onClick={goNext}
+              disabled={!canProceedFromStep(step) || (step === 1 && providersLoading)}
+            >
+              Continue →
+            </button>
+          ) : (
+            <button
+              className="bs-btn primary"
+              onClick={handleSubmit}
               disabled={loading}
             >
-              Cancel
+              {loading ? "Booking…" : "Confirm Booking"}
             </button>
-          </div>
-        </form>
+          )}
+        </div>
       </div>
     </div>
   );

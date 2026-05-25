@@ -43,7 +43,7 @@ const ServiceProviderDashboard = () => {
   const statCards = stats
     ? [
         { label: "Today's Bookings", value: stats.todaysCount, icon: '📅', note: `${stats.pendingCount} pending` },
-        { label: 'Weekly Revenue', value: `$${stats.weeklyRevenue.toLocaleString()}`, icon: '💰', note: 'This week' },
+        { label: 'Weekly Revenue', value: `GH₵ ${stats.weeklyRevenue.toLocaleString()}`, icon: '💰', note: 'This week' },
         { label: 'Customer Rating', value: stats.avgRating ?? '—', icon: '⭐', note: stats.ratingCount ? `${stats.ratingCount} reviews` : 'No reviews yet' },
         { label: 'Completed', value: stats.completedTotal, icon: '✅', note: 'All time' },
       ]
@@ -126,7 +126,7 @@ const ServiceProviderDashboard = () => {
                     <div className="appointment-icon">🔧</div>
                     <div className="appointment-details">
                       <h4>{b.customerName} — {b.serviceType.replace(/_/g, ' ')}</h4>
-                      <p>{fmt(b.scheduledTime)}{b.estimatedCost ? ` • $${b.estimatedCost}` : ''}</p>
+                      <p>{fmt(b.scheduledTime)}{b.estimatedCost ? ` • GH₵ ${b.estimatedCost}` : ''}</p>
                     </div>
                     <span className={`appointment-status ${STATUS_CLASS[b.status] || 'pending'}`}>
                       {b.status.replace('_', ' ')}
@@ -163,7 +163,7 @@ const ServiceProviderDashboard = () => {
             <div className="summary-item">
               <span className="summary-label">Weekly Revenue</span>
               <span className="summary-value">
-                {loading ? '—' : `$${stats?.weeklyRevenue?.toLocaleString() ?? 0}`}
+                {loading ? '—' : `GH₵ ${stats?.weeklyRevenue?.toLocaleString() ?? 0}`}
               </span>
             </div>
           </div>

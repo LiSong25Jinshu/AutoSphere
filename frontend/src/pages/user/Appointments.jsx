@@ -280,7 +280,7 @@ const UserAppointments = () => {
                   {appointment.price > 0 && (
                     <div className="detail-item">
                       <span className="detail-icon">💰</span>
-                      <span className="detail-text">${appointment.price.toFixed(2)}</span>
+                      <span className="detail-text">GH₵ {appointment.price.toFixed(2)}</span>
                     </div>
                   )}
                   {appointment.notes && (

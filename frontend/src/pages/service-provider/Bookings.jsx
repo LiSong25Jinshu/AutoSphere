@@ -156,7 +156,7 @@ const ServiceProviderBookings = () => {
                       <p className="spb-notes">📝 {b.customerNotes}</p>
                     )}
                     {b.estimatedCost && (
-                      <p className="spb-cost">💰 Est. ${b.estimatedCost}</p>
+                      <p className="spb-cost">💰 Est. GH₵ {b.estimatedCost}</p>
                     )}
                   </div>
                   <span className={`spb-status ${STATUS_COLORS[b.status] || ''}`}>

@@ -64,20 +64,20 @@ const ServiceProviderDashboard = () => {
       icon: <CarWashIcon sx={{ fontSize: 40, color: '#2196f3' }} />,
       items: ['Basic Wash', 'Premium Wash', 'Full Detail', 'Interior Cleaning'],
       bookings: 15,
-      revenue: '$450'
+      revenue: 'GH₵ 2,250'
     },
     {
       name: 'Maintenance Services',
       icon: <BuildIcon sx={{ fontSize: 40, color: '#ff9800' }} />,
       items: ['Oil Change', 'Brake Service', 'Tire Rotation', 'Engine Diagnostics'],
       bookings: 8,
-      revenue: '$1,200'
+      revenue: 'GH₵ 6,000'
     }
   ];
 
   const stats = [
     { label: 'Today\'s Bookings', value: '12', icon: <ScheduleIcon />, color: '#4caf50' },
-    { label: 'This Week Revenue', value: '$2,850', icon: <MoneyIcon />, color: '#2196f3' },
+    { label: 'This Week Revenue', value: 'GH₵ 14,250', icon: <MoneyIcon />, color: '#2196f3' },
     { label: 'Customer Rating', value: '4.8', icon: <StarIcon />, color: '#ff9800' },
     { label: 'Active Services', value: '23', icon: <TrendingUpIcon />, color: '#9c27b0' },
   ];
@@ -284,19 +284,19 @@ const ServiceProviderDashboard = () => {
                   </Typography>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                     <Typography variant="body2">Basic Wash (8 bookings)</Typography>
-                    <Typography variant="body2" fontWeight="bold">$120</Typography>
+                    <Typography variant="body2" fontWeight="bold">GH₵ 600</Typography>
                   </Box>
                   <LinearProgress variant="determinate" value={40} sx={{ height: 8, borderRadius: 4, mb: 2 }} />
                   
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                     <Typography variant="body2">Premium Wash (5 bookings)</Typography>
-                    <Typography variant="body2" fontWeight="bold">$175</Typography>
+                    <Typography variant="body2" fontWeight="bold">GH₵ 875</Typography>
                   </Box>
                   <LinearProgress variant="determinate" value={60} sx={{ height: 8, borderRadius: 4, mb: 2 }} color="info" />
                   
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                     <Typography variant="body2">Full Detail (2 bookings)</Typography>
-                    <Typography variant="body2" fontWeight="bold">$240</Typography>
+                    <Typography variant="body2" fontWeight="bold">GH₵ 1,200</Typography>
                   </Box>
                   <LinearProgress variant="determinate" value={80} sx={{ height: 8, borderRadius: 4 }} color="success" />
                 </Box>
@@ -309,19 +309,19 @@ const ServiceProviderDashboard = () => {
                   </Typography>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                     <Typography variant="body2">Oil Change (4 bookings)</Typography>
-                    <Typography variant="body2" fontWeight="bold">$180</Typography>
+                    <Typography variant="body2" fontWeight="bold">GH₵ 900</Typography>
                   </Box>
                   <LinearProgress variant="determinate" value={50} sx={{ height: 8, borderRadius: 4, mb: 2 }} color="warning" />
                   
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                     <Typography variant="body2">Brake Service (2 bookings)</Typography>
-                    <Typography variant="body2" fontWeight="bold">$320</Typography>
+                    <Typography variant="body2" fontWeight="bold">GH₵ 1,600</Typography>
                   </Box>
                   <LinearProgress variant="determinate" value={70} sx={{ height: 8, borderRadius: 4, mb: 2 }} color="error" />
                   
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                     <Typography variant="body2">Engine Diagnostics (2 bookings)</Typography>
-                    <Typography variant="body2" fontWeight="bold">$200</Typography>
+                    <Typography variant="body2" fontWeight="bold">GH₵ 1,000</Typography>
                   </Box>
                   <LinearProgress variant="determinate" value={90} sx={{ height: 8, borderRadius: 4 }} color="secondary" />
                 </Box>
