@@ -835,6 +835,7 @@ function AppContent() {
               <Route path="/verify-email" element={<EmailVerificationForm />} />
           
           {/* Google OAuth callback routes */}
+          <Route path="/auth/callback" element={<GoogleAuthCallback />} />
           <Route path="/auth/google/success" element={<GoogleAuthCallback />} />
           <Route path="/auth/google/error" element={<GoogleAuthCallback />} />
           

@@ -28,6 +28,17 @@ const UserSettings = () => {
       language: 'en',
       timezone: 'America/New_York',
       currency: 'GHS',
+      theme: 'light',
+      autoSave: true,
+      compactView: false,
+    },
+    account: {
+      twoFactorEnabled: false,
+      loginNotifications: true,
+      sessionTimeout: 60,
+    },
+  });
+  const [isLoading, setIsLoading] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
 
   const handleSettingChange = (category, setting, value) => {
@@ -82,6 +93,17 @@ const UserSettings = () => {
           language: 'en',
           timezone: 'America/New_York',
           currency: 'GHS',
+          theme: 'light',
+          autoSave: true,
+          compactView: false,
+        },
+        account: {
+          twoFactorEnabled: false,
+          loginNotifications: true,
+          sessionTimeout: 60,
+        },
+      });
+      setSaveMessage('Settings reset to defaults.');
       setTimeout(() => setSaveMessage(''), 3000);
     }
   };

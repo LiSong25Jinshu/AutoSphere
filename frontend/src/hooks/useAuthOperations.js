@@ -20,6 +20,7 @@ export const useAuthOperations = () => {
     setIsSubmitting(true);
     try {
       const result = await register(userData);
+      // Pass through requiresVerification and email from the API response
       return result;
     } finally {
       setIsSubmitting(false);

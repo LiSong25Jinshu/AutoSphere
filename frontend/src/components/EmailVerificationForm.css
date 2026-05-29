@@ -1,0 +1,324 @@
+/* ── Email Verification / OTP Screen ─────────────────────────────────────── */
+.evf-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f2f5;
+  padding: 24px 16px;
+  font-family: var(--autosphere-font-primary, 'Inter', sans-serif);
+}
+
+.evf-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 40px 36px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0;
+}
+
+.evf-logo {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  letter-spacing: -0.02em;
+  margin-bottom: 24px;
+}
+
+/* Icon circle */
+.evf-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  margin-bottom: 20px;
+}
+
+.evf-icon.email {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.evf-icon.success {
+  background: #e8f5e9;
+  color: #2e7d32;
+  font-size: 2rem;
+}
+
+.evf-icon.error {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.evf-card h2 {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 10px;
+}
+
+.evf-sub {
+  font-size: 0.9375rem;
+  color: #54656f;
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+
+/* Email input (when not pre-filled) */
+.evf-field {
+  width: 100%;
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.evf-field label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #54656f;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.evf-email-input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid #e9edef;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+  color: #1a1a1a;
+  transition: border-color 0.15s;
+}
+
+.evf-email-input:focus {
+  border-color: #00a884;
+  box-shadow: 0 0 0 3px rgba(0, 168, 132, 0.12);
+}
+
+/* OTP digit inputs */
+.evf-otp-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  justify-content: center;
+}
+
+.evf-otp-input {
+  width: 48px;
+  height: 56px;
+  border: 2px solid #e9edef;
+  border-radius: 10px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  color: #1a1a1a;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: monospace;
+  background: #fff;
+  caret-color: transparent;
+}
+
+.evf-otp-input:focus {
+  border-color: #00a884;
+  box-shadow: 0 0 0 3px rgba(0, 168, 132, 0.15);
+}
+
+.evf-otp-input.error {
+  border-color: #e53935;
+  animation: evf-shake 0.35s ease;
+}
+
+.evf-otp-input:disabled {
+  background: #f5f6f6;
+  cursor: not-allowed;
+}
+
+@keyframes evf-shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-4px); }
+  40%       { transform: translateX(4px); }
+  60%       { transform: translateX(-4px); }
+  80%       { transform: translateX(4px); }
+}
+
+/* Error message */
+.evf-error-msg {
+  color: #e53935;
+  font-size: 0.875rem;
+  margin: 0 0 16px;
+}
+
+/* Primary button */
+.evf-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px 20px;
+  background: #1a1a1a;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+  text-decoration: none;
+  margin-bottom: 20px;
+}
+
+.evf-btn-primary:hover:not(:disabled) {
+  background: #2c2c2c;
+}
+
+.evf-btn-primary:disabled {
+  background: #8696a0;
+  cursor: not-allowed;
+}
+
+.evf-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 13px 20px;
+  background: transparent;
+  color: #1a1a1a;
+  border: 2px solid #e9edef;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: none;
+  transition: background 0.15s;
+  margin-bottom: 20px;
+}
+
+.evf-btn-secondary:hover {
+  background: #f0f2f5;
+}
+
+/* Spinner */
+.evf-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: evf-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+.evf-spinner.small {
+  width: 14px;
+  height: 14px;
+  border-width: 2px;
+}
+
+.evf-spinner-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 0;
+  color: #54656f;
+}
+
+@keyframes evf-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Resend section */
+.evf-resend {
+  font-size: 0.875rem;
+  color: #54656f;
+  margin-bottom: 16px;
+}
+
+.evf-resend p {
+  margin: 4px 0;
+}
+
+.evf-resend-msg {
+  margin-bottom: 6px;
+  font-size: 0.8125rem;
+}
+
+.evf-resend-msg.success { color: #2e7d32; }
+.evf-resend-msg.error   { color: #e53935; }
+
+.evf-resend-btn {
+  background: none;
+  border: none;
+  color: #00a884;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: inherit;
+  font-family: inherit;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.evf-resend-btn:hover {
+  color: #017561;
+}
+
+.evf-cooldown {
+  color: #8696a0;
+  font-weight: 500;
+}
+
+/* Back link */
+.evf-back {
+  font-size: 0.875rem;
+}
+
+.evf-back a {
+  color: #54656f;
+  text-decoration: none;
+}
+
+.evf-back a:hover {
+  color: #1a1a1a;
+  text-decoration: underline;
+}
+
+/* Error text */
+.evf-error {
+  color: #e53935;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .evf-card {
+    padding: 32px 20px;
+  }
+
+  .evf-otp-input {
+    width: 42px;
+    height: 50px;
+    font-size: 1.25rem;
+  }
+
+  .evf-otp-row {
+    gap: 8px;
+  }
+}

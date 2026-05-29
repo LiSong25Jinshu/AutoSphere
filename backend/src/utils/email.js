@@ -66,10 +66,47 @@ const sendMail = async (mailOptions) => {
 };
 
 /**
- * Send email verification email
- * @param {string} email - Recipient email address
- * @param {string} firstName - User's first name
- * @param {string} verificationToken - Email verification token
+ * Send a 6-digit OTP verification email
+ */
+export const sendOtpEmail = async (email, firstName, otp) => {
+  const mailOptions = {
+    from: process.env.EMAIL_FROM || 'noreply@autosphere.com',
+    to: email,
+    subject: `${otp} is your AutoSphere verification code`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 32px 24px; background: #fff; border-radius: 12px; border: 1px solid #e9edef;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h1 style="font-size: 1.5rem; font-weight: 700; color: #1a1a1a; margin: 0;">AutoSphere</h1>
+        </div>
+
+        <h2 style="font-size: 1.125rem; font-weight: 600; color: #1a1a1a; margin: 0 0 8px;">
+          Verify your email address
+        </h2>
+        <p style="color: #54656f; margin: 0 0 24px; font-size: 0.9375rem;">
+          Hi ${firstName}, enter this code in the AutoSphere app to verify your email address.
+          The code expires in <strong>10 minutes</strong>.
+        </p>
+
+        <div style="background: #f0f2f5; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
+          <span style="font-size: 2.5rem; font-weight: 700; letter-spacing: 0.5rem; color: #1a1a1a; font-family: monospace;">
+            ${otp}
+          </span>
+        </div>
+
+        <p style="color: #8696a0; font-size: 0.8125rem; margin: 0;">
+          If you didn't create an AutoSphere account, you can safely ignore this email.
+        </p>
+      </div>
+    `,
+  };
+
+  const info = await sendMail(mailOptions);
+  console.log('OTP email sent:', info.messageId);
+  return { success: true, messageId: info.messageId };
+};
+
+/**
+ * Send email verification email (link-based, kept for backward compat)
  */
 export const sendVerificationEmail = async (email, firstName, verificationToken) => {
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';

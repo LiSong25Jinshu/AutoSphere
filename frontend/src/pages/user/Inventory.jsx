@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { vehicleAPI } from '../../services/api';
+import StartChatButton from '../../components/StartChatButton';
 import './Inventory.css';
 
 const UserInventory = () => {
@@ -215,6 +216,15 @@ const UserInventory = () => {
                       <div className="vehicle-actions">
                         <button className="btn secondary small" onClick={() => navigate(`/vehicles/${vehicle.id}`)}>View Details</button>
                         <button className="btn primary small" onClick={() => navigate('/book-service')}>Book Service</button>
+                        {vehicle.dealerId && (
+                          <StartChatButton
+                            userId={vehicle.dealerId}
+                            userName={vehicle.dealer ? `${vehicle.dealer.firstName} ${vehicle.dealer.lastName}` : 'Dealer'}
+                            label="Message Dealer"
+                            variant="ghost"
+                            size="sm"
+                          />
+                        )}
                       </div>
                     </div>
                   ))}

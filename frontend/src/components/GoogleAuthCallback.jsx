@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 
 const GoogleAuthCallback = () => {
@@ -10,7 +11,6 @@ const GoogleAuthCallback = () => {
   useEffect(() => {
     const handleCallback = async () => {
       const token = searchParams.get('token');
-      const userParam = searchParams.get('user');
       const error = searchParams.get('error');
 
       if (error) {
@@ -21,23 +21,32 @@ const GoogleAuthCallback = () => {
         return;
       }
 
-      if (token && userParam) {
+      if (token) {
         try {
-          const user = JSON.parse(decodeURIComponent(userParam));
-          
-          // Use the googleLogin function from context
-          const result = await googleLogin(user, token);
-          
-          if (result.success) {
-            // Redirect to dashboard
-            navigate('/dashboard', { replace: true });
+          // Fetch the user profile using the token from the backend
+          const response = await axios.get('/api/auth/me', {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          if (response.data.success) {
+            const user = response.data.user;
+            const refreshToken = searchParams.get('refreshToken');
+            const result = await googleLogin(user, token, refreshToken ? decodeURIComponent(refreshToken) : null);
+
+            if (result.success) {
+              navigate('/dashboard', { replace: true });
+            } else {
+              navigate('/login', { 
+                state: { error: result.error || 'Authentication failed. Please try again.' }
+              });
+            }
           } else {
             navigate('/login', { 
-              state: { error: result.error || 'Authentication failed. Please try again.' }
+              state: { error: 'Authentication failed. Please try again.' }
             });
           }
-        } catch (error) {
-          console.error('Error processing Google OAuth callback:', error);
+        } catch (err) {
+          console.error('Error processing Google OAuth callback:', err);
           navigate('/login', { 
             state: { error: 'Authentication failed. Please try again.' }
           });

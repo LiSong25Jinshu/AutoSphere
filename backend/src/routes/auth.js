@@ -4,14 +4,48 @@ import { Op } from 'sequelize';
 import { body, validationResult } from 'express-validator';
 import User from '../models/User.js';
 import { hashPassword } from '../utils/password.js';
-import { generateAccessToken } from '../utils/jwt.js';
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt.js';
 import { authenticateToken } from '../middleware/auth.js';
 import passport from '../config/passport.js';
-import { sendVerificationEmail, sendPasswordResetEmail } from '../utils/email.js';
+import { sendVerificationEmail, sendPasswordResetEmail, sendOtpEmail } from '../utils/email.js';
+
+// In-memory OTP store: { email -> { otp, expiresAt, attempts } }
+// In production you'd use Redis; this is fine for a single-process server.
+const otpStore = new Map();
 
 const router = express.Router();
 
-// Register
+// ── OTP helpers ──────────────────────────────────────────────────────────────
+const generateOtp = () => String(Math.floor(100000 + Math.random() * 900000));
+
+const saveOtp = (email, otp) => {
+  otpStore.set(email.toLowerCase(), {
+    otp,
+    expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
+    attempts: 0,
+  });
+};
+
+const verifyOtp = (email, otp) => {
+  const record = otpStore.get(email.toLowerCase());
+  if (!record) return { valid: false, reason: 'No verification code found. Please request a new one.' };
+  if (Date.now() > record.expiresAt) {
+    otpStore.delete(email.toLowerCase());
+    return { valid: false, reason: 'Verification code has expired. Please request a new one.' };
+  }
+  record.attempts += 1;
+  if (record.attempts > 5) {
+    otpStore.delete(email.toLowerCase());
+    return { valid: false, reason: 'Too many attempts. Please request a new code.' };
+  }
+  if (record.otp !== String(otp).trim()) {
+    return { valid: false, reason: 'Incorrect code. Please try again.' };
+  }
+  otpStore.delete(email.toLowerCase());
+  return { valid: true };
+};
+
+// Register — always creates account as unverified and sends a 6-digit OTP
 router.post('/register', [
   body('email').isEmail().normalizeEmail(),
   body('password').isLength({ min: 6 }),
@@ -26,27 +60,35 @@ router.post('/register', [
       return res.status(400).json({ success: false, message: 'Validation failed', errors: errors.array() });
 
     const { email, password, firstName, lastName, phone, role = 'user', adminInviteCode } = req.body;
-
-    // Treat empty string phone as null so the model validator doesn't reject it
     const cleanPhone = phone && phone.trim() !== '' ? phone.trim() : null;
 
-    // Admin registration requires a valid invite code
     if (role === 'admin') {
       const validCode = process.env.ADMIN_INVITE_CODE;
       if (!adminInviteCode || adminInviteCode !== validCode) {
         return res.status(403).json({
           success: false,
-          message: 'Invalid or missing admin invite code. Admin registration is restricted.',
+          message: 'Invalid or missing admin invite code.',
         });
       }
     }
 
     const existingUser = await User.findByEmail(email);
-    if (existingUser)
-      return res.status(409).json({ success: false, message: 'User with this email already exists' });
+    if (existingUser) {
+      // If already registered but not verified, resend OTP
+      if (!existingUser.isVerified) {
+        const otp = generateOtp();
+        saveOtp(email, otp);
+        try { await sendOtpEmail(email, existingUser.firstName, otp); } catch (e) { console.error(e); }
+        return res.status(200).json({
+          success: true,
+          requiresVerification: true,
+          message: 'Account exists but is not verified. A new code has been sent to your email.',
+          email,
+        });
+      }
+      return res.status(409).json({ success: false, message: 'An account with this email already exists.' });
+    }
 
-    // Auto-verify users in development for convenience
-    const isDev = process.env.NODE_ENV === 'development';
     const user = await User.create({
       email,
       passwordHash: await hashPassword(password),
@@ -54,57 +96,100 @@ router.post('/register', [
       lastName,
       phone: cleanPhone,
       role,
-      isVerified: isDev,
+      isVerified: false, // always start unverified
     });
 
-    // Only generate verification token if in production
-    if (!isDev) {
-      const verificationToken = user.generateEmailVerificationToken();
-      await user.save();
-
-      try {
-        await sendVerificationEmail(user.email, user.firstName, verificationToken);
-      } catch (e) {
-        console.error('Failed to send verification email:', e);
-      }
+    // Generate and send OTP
+    const otp = generateOtp();
+    saveOtp(email, otp);
+    try {
+      await sendOtpEmail(email, firstName, otp);
+    } catch (e) {
+      console.error('Failed to send OTP email:', e);
     }
 
     res.status(201).json({
       success: true,
-      message: isDev
-        ? 'Registration successful. You can log in immediately.'
-        : 'Registration successful. Please check your email to verify your account.',
-      user: user.toJSON(),
+      requiresVerification: true,
+      message: 'Account created! Please check your email for a 6-digit verification code.',
+      email,
     });
   } catch (error) {
     console.error('Registration error:', error);
+    if (error.name === 'SequelizeUniqueConstraintError')
+      return res.status(409).json({ success: false, message: 'An account with this email already exists.' });
+    if (error.name === 'SequelizeValidationError')
+      return res.status(400).json({ success: false, message: error.errors?.[0]?.message || 'Validation failed' });
+    if (error.original?.code === 'ECONNREFUSED')
+      return res.status(503).json({ success: false, message: 'Database is not available. Please try again later.' });
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
 
-    // Sequelize unique constraint (duplicate email race condition)
-    if (error.name === 'SequelizeUniqueConstraintError') {
-      return res.status(409).json({ success: false, message: 'User with this email already exists' });
+// POST /api/auth/verify-otp — verify the 6-digit code sent after registration
+router.post('/verify-otp', [
+  body('email').isEmail().normalizeEmail(),
+  body('otp').notEmpty().isLength({ min: 6, max: 6 }),
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty())
+      return res.status(400).json({ success: false, message: 'Validation failed', errors: errors.array() });
+
+    const { email, otp } = req.body;
+    const result = verifyOtp(email, otp);
+    if (!result.valid)
+      return res.status(400).json({ success: false, message: result.reason });
+
+    const user = await User.findByEmail(email);
+    if (!user)
+      return res.status(404).json({ success: false, message: 'Account not found.' });
+
+    user.isVerified = true;
+    user.emailVerificationToken = null;
+    user.emailVerificationExpires = null;
+    await user.save();
+
+    // Issue a token so the user is logged in immediately after verification
+    const token = generateAccessToken({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      isVerified: true,
+    });
+
+    const refreshToken = generateRefreshToken({ id: user.id });
+
+    res.json({
+      success: true,
+      message: 'Email verified successfully! Welcome to AutoSphere.',
+      user: user.toJSON(),
+      token,
+      refreshToken,
+    });
+  } catch (error) {
+    console.error('OTP verification error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// POST /api/auth/resend-otp — resend a fresh OTP
+router.post('/resend-otp', [
+  body('email').isEmail().normalizeEmail(),
+], async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findByEmail(email);
+    if (!user || user.isVerified) {
+      // Don't reveal whether account exists
+      return res.json({ success: true, message: 'If that email is registered and unverified, a new code has been sent.' });
     }
-
-    // Sequelize validation error (model-level)
-    if (error.name === 'SequelizeValidationError') {
-      return res.status(400).json({
-        success: false,
-        message: error.errors?.[0]?.message || 'Validation failed',
-      });
-    }
-
-    // Database not connected
-    if (
-      error.name === 'SequelizeConnectionError' ||
-      error.name === 'SequelizeConnectionRefusedError' ||
-      error.name === 'SequelizeHostNotFoundError' ||
-      error.original?.code === 'ECONNREFUSED'
-    ) {
-      return res.status(503).json({
-        success: false,
-        message: 'Database is not available. Please try again later.',
-      });
-    }
-
+    const otp = generateOtp();
+    saveOtp(email, otp);
+    try { await sendOtpEmail(email, user.firstName, otp); } catch (e) { console.error(e); }
+    res.json({ success: true, message: 'A new verification code has been sent to your email.' });
+  } catch (error) {
+    console.error('Resend OTP error:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
@@ -126,12 +211,13 @@ router.post('/login', [
     const isValid = await user.validatePassword(password);
     if (!isValid) return res.status(401).json({ success: false, message: 'Invalid email or password' });
 
-    // In dev, skip email verification
-    if (!user.isVerified && process.env.NODE_ENV !== 'development')
+    // Block unverified users regardless of environment
+    if (!user.isVerified)
       return res.status(403).json({
         success: false,
         message: 'Please verify your email address before logging in.',
         requiresVerification: true,
+        email: user.email,
       });
 
     user.lastLoginAt = new Date();
@@ -144,7 +230,9 @@ router.post('/login', [
       isVerified: user.isVerified,
     });
 
-    res.json({ success: true, message: 'Login successful', user: user.toJSON(), token });
+    const refreshToken = generateRefreshToken({ id: user.id });
+
+    res.json({ success: true, message: 'Login successful', user: user.toJSON(), token, refreshToken });
   } catch (error) {
     console.error('Login error:', error);
     if (
@@ -297,8 +385,7 @@ const isGoogleConfigured = () => {
   return (
     id && secret &&
     !id.startsWith('your-') &&
-    !secret.startsWith('your-') &&
-    !secret.startsWith('GOCSPX-Kzte')
+    !secret.startsWith('your-')
   );
 };
 
@@ -327,8 +414,52 @@ router.get('/google/callback', (req, res, next) => {
     role: req.user.role,
     isVerified: req.user.isVerified,
   });
+  const refreshToken = generateRefreshToken({ id: req.user.id });
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-  res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
+  res.redirect(`${frontendUrl}/auth/callback?token=${token}&refreshToken=${encodeURIComponent(refreshToken)}`);
+});
+
+// POST /api/auth/refresh — issue a new access token using a valid refresh token
+router.post('/refresh', [
+  body('refreshToken').notEmpty(),
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, message: 'Refresh token is required' });
+    }
+
+    const { refreshToken } = req.body;
+    let decoded;
+    try {
+      decoded = verifyRefreshToken(refreshToken);
+    } catch {
+      return res.status(401).json({ success: false, message: 'Invalid or expired refresh token', error: 'REFRESH_TOKEN_INVALID' });
+    }
+
+    const user = await User.findByPk(decoded.id);
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'User not found', error: 'USER_NOT_FOUND' });
+    }
+
+    const newAccessToken = generateAccessToken({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      isVerified: user.isVerified,
+    });
+
+    const newRefreshToken = generateRefreshToken({ id: user.id });
+
+    res.json({
+      success: true,
+      token: newAccessToken,
+      refreshToken: newRefreshToken,
+    });
+  } catch (error) {
+    console.error('Token refresh error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
 });
 
 export default router;

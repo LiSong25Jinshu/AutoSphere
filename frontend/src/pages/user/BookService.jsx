@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { appointmentService } from "../../services/appointmentService";
 import { serviceAPI } from "../../services/api";
 import { CURRENCY_SYMBOL, formatCost } from "../../utils/currency";
+import StartChatButton from "../../components/StartChatButton";
 import "./BookService.css";
 
 // ─── Service catalogue ────────────────────────────────────────────────────────
@@ -14,13 +15,16 @@ const SERVICE_OPTIONS = [
     category: "Cleaning",
     description: "Exterior & interior wash, wax, detailing, and protective coating",
     duration: "30–90 min",
-    priceHint: `From GHc{CURRENCY_SYMBOL}80`,
+    priceHint: `From ${CURRENCY_SYMBOL}80`,
+  },
+  {
+    value: "oil_change",
     label: "Oil Change",
     icon: "🛢️",
     category: "Maintenance",
     description: "Engine oil & filter replacement using manufacturer-recommended grade",
     duration: "30–45 min",
-    priceHint: `From Ghc{CURRENCY_SYMBOL}180`,
+    priceHint: `From ${CURRENCY_SYMBOL}180`,
   },
   {
     value: "brake_service",
@@ -29,7 +33,7 @@ const SERVICE_OPTIONS = [
     category: "Safety",
     description: "Brake pad/rotor inspection, replacement, and hydraulic fluid top-up",
     duration: "1–2 hrs",
-    priceHint: `From Ghc{CURRENCY_SYMBOL}400`,
+    priceHint: `From ${CURRENCY_SYMBOL}400`,
   },
   {
     value: "tire_service",
@@ -38,7 +42,7 @@ const SERVICE_OPTIONS = [
     category: "Maintenance",
     description: "Rotation, balancing, alignment check, puncture repair, or full replacement",
     duration: "45–90 min",
-    priceHint: `From Ghc{CURRENCY_SYMBOL}120`,
+    priceHint: `From ${CURRENCY_SYMBOL}120`,
   },
   {
     value: "engine_diagnostic",
@@ -47,7 +51,7 @@ const SERVICE_OPTIONS = [
     category: "Diagnostics",
     description: "OBD-II scan, fault-code analysis, and written diagnostic report",
     duration: "1–2 hrs",
-    priceHint: `From Ghc{CURRENCY_SYMBOL}300`,
+    priceHint: `From ${CURRENCY_SYMBOL}300`,
   },
   {
     value: "transmission_service",
@@ -56,7 +60,7 @@ const SERVICE_OPTIONS = [
     category: "Drivetrain",
     description: "Fluid flush, filter change, and transmission health inspection",
     duration: "1.5–3 hrs",
-    priceHint: `From Ghc{CURRENCY_SYMBOL}600`,
+    priceHint: `From ${CURRENCY_SYMBOL}600`,
   },
   {
     value: "air_conditioning",
@@ -65,7 +69,7 @@ const SERVICE_OPTIONS = [
     category: "Comfort",
     description: "Refrigerant recharge, leak test, compressor & cabin filter service",
     duration: "1–2 hrs",
-    priceHint: `From Ghc{CURRENCY_SYMBOL}350`,
+    priceHint: `From ${CURRENCY_SYMBOL}350`,
   },
   {
     value: "battery_service",
@@ -74,7 +78,7 @@ const SERVICE_OPTIONS = [
     category: "Electrical",
     description: "Load test, terminal cleaning, battery replacement & charging system check",
     duration: "30–60 min",
-    priceHint: `From Ghc{CURRENCY_SYMBOL}100`,
+    priceHint: `From ${CURRENCY_SYMBOL}100`,
   },
   {
     value: "general_maintenance",
@@ -83,7 +87,7 @@ const SERVICE_OPTIONS = [
     category: "Maintenance",
     description: "Scheduled service per manufacturer intervals — fluids, filters, belts & more",
     duration: "1–3 hrs",
-    priceHint: `From Ghc{CURRENCY_SYMBOL}250`,
+    priceHint: `From ${CURRENCY_SYMBOL}250`,
   },
   {
     value: "inspection",
@@ -92,7 +96,7 @@ const SERVICE_OPTIONS = [
     category: "Inspection",
     description: "Comprehensive 50-point safety & roadworthiness inspection with written report",
     duration: "1–1.5 hrs",
-    priceHint: `From Ghc{CURRENCY_SYMBOL}220`,
+    priceHint: `From ${CURRENCY_SYMBOL}220`,
   },
   {
     value: "repair",
@@ -350,6 +354,15 @@ function BookService() {
                           <div className="bs-prov-dur-label">starting from</div>
                         </>
                       )}
+                      <StartChatButton
+                        userId={prov.id}
+                        userName={`${prov.firstName} ${prov.lastName}`}
+                        label="Message"
+                        variant="ghost"
+                        size="sm"
+                        className="bs-prov-msg-btn"
+                        onClick={(e) => e.stopPropagation()}
+                      />
                     </div>
                   </div>
                 ))}

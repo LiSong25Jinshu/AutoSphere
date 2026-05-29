@@ -71,7 +71,16 @@ const LoginForm = () => {
     e.preventDefault();
     if (!validateForm()) return;
     const result = await handleLogin(formData);
-    if (!result.success) setLoginError(result.error);
+    if (!result.success) {
+      // If unverified, send them to the OTP screen
+      if (result.requiresVerification) {
+        navigate('/verify-email', {
+          state: { email: result.email || formData.email, fromLogin: true },
+        });
+      } else {
+        setLoginError(result.error);
+      }
+    }
   };
 
   return (

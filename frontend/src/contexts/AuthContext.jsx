@@ -123,6 +123,7 @@ export const AuthProvider = ({ children }) => {
           console.error('Error parsing user data:', error);
           localStorage.removeItem('token');
           localStorage.removeItem('user');
+          localStorage.removeItem('refreshToken');
           dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: false });
         }
       } else {
@@ -132,8 +133,6 @@ export const AuthProvider = ({ children }) => {
 
     loadUser();
   }, []);
-
-  // Login function
   const login = async (emailOrUserData, password) => {
     // Handle both mock login (user object) and real login (email/password)
     if (typeof emailOrUserData === 'object') {
@@ -165,11 +164,12 @@ export const AuthProvider = ({ children }) => {
         password,
       });
       
-      const { user, token } = response.data;
+      const { user, token, refreshToken } = response.data;
       
       // Store in localStorage
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
+      if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
       
       // Set default authorization header
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -182,20 +182,23 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Login failed';
+      const requiresVerification = error.response?.data?.requiresVerification || false;
+      const email = error.response?.data?.email || null;
       dispatch({
         type: AUTH_ACTIONS.LOGIN_FAILURE,
         payload: errorMessage,
       });
-      return { success: false, error: errorMessage };
+      return { success: false, error: errorMessage, requiresVerification, email };
     }
   };
 
   // Google OAuth login function
-  const googleLogin = async (user, token) => {
+  const googleLogin = async (user, token, refreshToken) => {
     try {
       // Store in localStorage
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
+      if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
       
       // Set default authorization header
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -227,7 +230,9 @@ export const AuthProvider = ({ children }) => {
       
       return { 
         success: true, 
-        message: response.data.message || 'Registration successful!' 
+        message: response.data.message || 'Registration successful!',
+        requiresVerification: response.data.requiresVerification || false,
+        email: response.data.email || userData.email,
       };
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Registration failed';
@@ -244,6 +249,7 @@ export const AuthProvider = ({ children }) => {
     // Remove from localStorage
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('refreshToken');
     
     // Remove default authorization header
     delete axios.defaults.headers.common['Authorization'];

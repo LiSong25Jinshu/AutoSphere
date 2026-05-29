@@ -414,6 +414,47 @@ router.patch('/:id/status', [
   }
 });
 
+// Search users — any authenticated user can search to start a conversation
+router.get('/search', [
+  query('q').optional().trim(),
+  query('limit').optional().isInt({ min: 1, max: 20 }),
+], authenticateToken, async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, message: 'Validation failed', errors: errors.array() });
+    }
+
+    const q = req.query.q || '';
+    const limit = parseInt(req.query.limit) || 10;
+
+    if (q.trim().length < 2) {
+      return res.json({ success: true, data: [] });
+    }
+
+    const searchTerm = `%${q.trim()}%`;
+    const users = await User.findAll({
+      where: {
+        isActive: true,
+        id: { [Op.ne]: req.user.id }, // exclude self
+        [Op.or]: [
+          { firstName: { [Op.iLike]: searchTerm } },
+          { lastName: { [Op.iLike]: searchTerm } },
+          { email: { [Op.iLike]: searchTerm } },
+        ],
+      },
+      attributes: ['id', 'firstName', 'lastName', 'email', 'role'],
+      order: [['firstName', 'ASC']],
+      limit,
+    });
+
+    res.json({ success: true, data: users });
+  } catch (error) {
+    console.error('User search error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
 // Get service providers (public endpoint for booking)
 router.get('/service-providers/list', async (req, res) => {
   try {

@@ -151,14 +151,17 @@ const RegisterForm = () => {
     const result = await handleRegister(submitData);
     
     if (result.success) {
-      setRegistrationSuccess(result.message);
-      setRegistrationError('');
-      // Optionally redirect to login page after a delay
-      setTimeout(() => {
-        navigate('/login', { 
-          state: { message: 'Registration successful! Please check your email for verification.' }
+      if (result.requiresVerification) {
+        // Go to OTP verification screen
+        navigate('/verify-email', {
+          state: { email: result.email, fromRegistration: true },
         });
-      }, 2000);
+      } else {
+        setRegistrationSuccess(result.message);
+        setTimeout(() => navigate('/login', {
+          state: { message: 'Registration successful! Please sign in.' },
+        }), 2000);
+      }
     } else {
       setRegistrationError(result.error);
       setRegistrationSuccess('');

@@ -17,8 +17,7 @@ const googleCredentialsConfigured =
   googleClientId &&
   googleClientSecret &&
   !googleClientId.startsWith('your-') &&
-  !googleClientSecret.startsWith('your-') &&
-  !googleClientSecret.startsWith('GOCSPX-Kzte'); // rotated/placeholder secret
+  !googleClientSecret.startsWith('your-');
 
 if (googleCredentialsConfigured) {
   passport.use(

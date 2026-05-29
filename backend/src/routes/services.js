@@ -48,6 +48,7 @@ router.get('/by-type', async (req, res) => {
       general_maintenance:  ['maintenance'],
       inspection:           ['maintenance', 'repair'],
       repair:               ['repair'],
+      Washing:              ['car_wash'],
       other:                ['maintenance', 'repair', 'car_wash', 'other'],
     };
 
@@ -143,6 +144,47 @@ router.post('/', authenticateToken, [
   }
 });
 
+// ─── SCHEDULE (must be registered before /:id to avoid route shadowing) ──────
+
+// GET /api/services/schedule — get provider's schedule
+router.get('/schedule', authenticateToken, async (req, res) => {
+  try {
+    const record = await ProviderSchedule.findOne({ where: { providerId: req.user.id } });
+    res.json({ success: true, data: record ? record.schedule : null });
+  } catch (error) {
+    console.error('Get schedule error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// PUT /api/services/schedule — save provider's schedule
+router.put('/schedule', authenticateToken, [
+  body('schedule').isObject(),
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ success: false, message: 'Validation failed' });
+
+    if (req.user.role !== 'service_provider' && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Only service providers can update schedules' });
+    }
+
+    const [record, created] = await ProviderSchedule.findOrCreate({
+      where: { providerId: req.user.id },
+      defaults: { providerId: req.user.id, schedule: req.body.schedule },
+    });
+
+    if (!created) await record.update({ schedule: req.body.schedule });
+
+    res.json({ success: true, data: record.schedule });
+  } catch (error) {
+    console.error('Save schedule error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// ─── CRUD BY ID ───────────────────────────────────────────────────────────────
+
 // PUT /api/services/:id — update a service
 router.put('/:id', authenticateToken, [
   body('name').optional().trim().notEmpty().isLength({ max: 200 }),
@@ -183,45 +225,6 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     res.json({ success: true, message: 'Service deleted' });
   } catch (error) {
     console.error('Delete service error:', error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
-  }
-});
-
-// ─── SCHEDULE ────────────────────────────────────────────────────────────────
-
-// GET /api/services/schedule — get provider's schedule
-router.get('/schedule', authenticateToken, async (req, res) => {
-  try {
-    const record = await ProviderSchedule.findOne({ where: { providerId: req.user.id } });
-    res.json({ success: true, data: record ? record.schedule : null });
-  } catch (error) {
-    console.error('Get schedule error:', error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
-  }
-});
-
-// PUT /api/services/schedule — save provider's schedule
-router.put('/schedule', authenticateToken, [
-  body('schedule').isObject(),
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ success: false, message: 'Validation failed' });
-
-    if (req.user.role !== 'service_provider' && req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, message: 'Only service providers can update schedules' });
-    }
-
-    const [record, created] = await ProviderSchedule.findOrCreate({
-      where: { providerId: req.user.id },
-      defaults: { providerId: req.user.id, schedule: req.body.schedule },
-    });
-
-    if (!created) await record.update({ schedule: req.body.schedule });
-
-    res.json({ success: true, data: record.schedule });
-  } catch (error) {
-    console.error('Save schedule error:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });

@@ -1,254 +1,303 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import {
-  Box,
-  Paper,
-  Button,
-  Typography,
-  Alert,
-  Container,
-  CircularProgress,
-} from '@mui/material';
-import { CheckCircle, Error, ArrowBack } from '@mui/icons-material';
-import { useAuthOperations } from '../hooks/useAuthOperations';
+/**
+ * EmailVerificationForm — OTP verification screen shown after registration
+ * or when a user tries to log in with an unverified account.
+ *
+ * Accepts state: { email, fromRegistration, fromLogin }
+ * Also handles legacy ?token= links for backward compatibility.
+ */
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate, useSearchParams, useLocation, Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import axios from '../utils/axiosConfig.js';
+import './EmailVerificationForm.css';
+
+const RESEND_COOLDOWN = 60; // seconds
 
 const EmailVerificationForm = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { verifyEmail, isSubmitting } = useAuthOperations();
-  
-  const [verificationStatus, setVerificationStatus] = useState('pending'); // pending, success, error
+  const { login, googleLogin } = useAuth();
+
+  // Email comes from navigation state (post-register/login) or query param
+  const stateEmail = location.state?.email || '';
+  const [email, setEmail] = useState(stateEmail);
+  const [emailInput, setEmailInput] = useState(stateEmail); // editable if not pre-filled
+
+  // 6 individual digit inputs
+  const [digits, setDigits] = useState(['', '', '', '', '', '']);
+  const inputRefs = useRef([]);
+
+  const [status, setStatus] = useState('idle'); // idle | submitting | success | error
   const [message, setMessage] = useState('');
-  const [token, setToken] = useState('');
-  const [email, setEmail] = useState('');
-  const [resendStatus, setResendStatus] = useState(''); // success, error
-  const [resendMessage, setResendMessage] = useState('');
-  const [isResending, setIsResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendMsg, setResendMsg] = useState('');
+  const cooldownRef = useRef(null);
 
+  // Handle legacy ?token= link (old email-link flow)
   useEffect(() => {
-    const verificationToken = searchParams.get('token');
-    const userEmail = searchParams.get('email');
-    
-    if (userEmail) {
-      setEmail(userEmail);
+    const token = searchParams.get('token');
+    if (token) {
+      // Auto-verify via old token endpoint
+      axios.post('/api/auth/verify-email', { token })
+        .then(res => {
+          setStatus('success');
+          setMessage(res.data.message || 'Email verified! You can now sign in.');
+        })
+        .catch(err => {
+          setStatus('error');
+          setMessage(err.response?.data?.message || 'Verification link is invalid or expired.');
+        });
     }
-    
-    if (!verificationToken) {
-      setVerificationStatus('error');
-      setMessage('Invalid or missing verification token.');
-      return;
-    }
+  }, [searchParams]);
 
-    setToken(verificationToken);
-    
-    // Automatically attempt verification when component loads
-    const performVerification = async () => {
-      const result = await verifyEmail(verificationToken);
-      
-      if (result.success) {
-        setVerificationStatus('success');
-        setMessage(result.message);
-      } else {
-        setVerificationStatus('error');
-        setMessage(result.error);
-      }
-    };
-
-    performVerification();
-  }, [searchParams, verifyEmail]);
-
-  const handleRetryVerification = async () => {
-    if (!token) return;
-    
-    const result = await verifyEmail(token);
-    
-    if (result.success) {
-      setVerificationStatus('success');
-      setMessage(result.message);
-    } else {
-      setVerificationStatus('error');
-      setMessage(result.error);
-    }
-  };
-
-  const handleGoToLogin = () => {
-    navigate('/login', { 
-      state: { message: 'Email verified successfully! You can now sign in.' }
-    });
-  };
-
-  const handleResendVerification = async () => {
-    if (!email) {
-      setResendStatus('error');
-      setResendMessage('Email address is required to resend verification.');
-      return;
-    }
-
-    setIsResending(true);
-    setResendStatus('');
-    setResendMessage('');
-
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/resend-verification`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
+  // Start resend cooldown
+  const startCooldown = useCallback(() => {
+    setResendCooldown(RESEND_COOLDOWN);
+    clearInterval(cooldownRef.current);
+    cooldownRef.current = setInterval(() => {
+      setResendCooldown(prev => {
+        if (prev <= 1) { clearInterval(cooldownRef.current); return 0; }
+        return prev - 1;
       });
+    }, 1000);
+  }, []);
 
-      const data = await response.json();
+  // Auto-start cooldown on mount (code was just sent)
+  useEffect(() => {
+    if (stateEmail) startCooldown();
+    return () => clearInterval(cooldownRef.current);
+  }, []);
 
-      if (data.success) {
-        setResendStatus('success');
-        setResendMessage('Verification email sent! Please check your inbox.');
-      } else {
-        setResendStatus('error');
-        setResendMessage(data.message || 'Failed to resend verification email.');
+  // Focus first input on mount
+  useEffect(() => {
+    if (!searchParams.get('token')) {
+      setTimeout(() => inputRefs.current[0]?.focus(), 100);
+    }
+  }, []);
+
+  const handleDigitChange = (index, value) => {
+    // Allow only digits
+    const digit = value.replace(/\D/g, '').slice(-1);
+    const next = [...digits];
+    next[index] = digit;
+    setDigits(next);
+    // Auto-advance
+    if (digit && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+    // Auto-submit when all 6 filled
+    if (digit && index === 5) {
+      const code = [...next].join('');
+      if (code.length === 6) handleVerify(code);
+    }
+  };
+
+  const handleKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !digits[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+    if (e.key === 'ArrowLeft' && index > 0) inputRefs.current[index - 1]?.focus();
+    if (e.key === 'ArrowRight' && index < 5) inputRefs.current[index + 1]?.focus();
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (!pasted) return;
+    const next = ['', '', '', '', '', ''];
+    pasted.split('').forEach((d, i) => { next[i] = d; });
+    setDigits(next);
+    const lastFilled = Math.min(pasted.length, 5);
+    inputRefs.current[lastFilled]?.focus();
+    if (pasted.length === 6) handleVerify(pasted);
+  };
+
+  const handleVerify = async (codeOverride) => {
+    const targetEmail = email || emailInput;
+    const code = codeOverride || digits.join('');
+    if (!targetEmail || code.length < 6) return;
+
+    setStatus('submitting');
+    setMessage('');
+    try {
+      const res = await axios.post('/api/auth/verify-otp', { email: targetEmail, otp: code });
+      // Use googleLogin (same signature: user + token) to properly update AuthContext state
+      if (res.data.token && res.data.user) {
+        await googleLogin(res.data.user, res.data.token);
       }
-    } catch (error) {
-      setResendStatus('error');
-      setResendMessage('Network error. Please try again.');
-    } finally {
-      setIsResending(false);
+      setStatus('success');
+      setMessage(res.data.message || 'Email verified!');
+      // Redirect to the right dashboard after a short pause
+      setTimeout(() => {
+        const role = res.data.user?.role;
+        const dest = role === 'dealer' ? '/dealer-dashboard'
+          : role === 'service_provider' ? '/service-provider-dashboard'
+          : role === 'admin' ? '/admin-dashboard'
+          : '/dashboard';
+        navigate(dest, { replace: true });
+      }, 1500);
+    } catch (err) {
+      setStatus('error');
+      setMessage(err.response?.data?.message || 'Incorrect code. Please try again.');
+      // Clear digits on error
+      setDigits(['', '', '', '', '', '']);
+      setTimeout(() => inputRefs.current[0]?.focus(), 50);
     }
   };
 
-  const renderContent = () => {
-    switch (verificationStatus) {
-      case 'pending':
-        return (
-          <>
-            <CircularProgress size={60} sx={{ mb: 2 }} />
-            <Typography component="h1" variant="h5" gutterBottom>
-              Verifying Email...
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
-              Please wait while we verify your email address.
-            </Typography>
-          </>
-        );
-
-      case 'success':
-        return (
-          <>
-            <CheckCircle 
-              sx={{ 
-                fontSize: 60, 
-                color: 'success.main', 
-                mb: 2 
-              }} 
-            />
-            <Typography component="h1" variant="h5" gutterBottom color="success.main">
-              Email Verified!
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3, textAlign: 'center' }}>
-              {message}
-            </Typography>
-            <Button
-              variant="contained"
-              onClick={handleGoToLogin}
-              sx={{ mb: 2 }}
-            >
-              Continue to Sign In
-            </Button>
-          </>
-        );
-
-      case 'error':
-        return (
-          <>
-            <Error 
-              sx={{ 
-                fontSize: 60, 
-                color: 'error.main', 
-                mb: 2 
-              }} 
-            />
-            <Typography component="h1" variant="h5" gutterBottom color="error.main">
-              Verification Failed
-            </Typography>
-            <Alert severity="error" sx={{ width: '100%', mb: 3 }}>
-              {message}
-            </Alert>
-            
-            {resendStatus && (
-              <Alert 
-                severity={resendStatus === 'success' ? 'success' : 'error'} 
-                sx={{ width: '100%', mb: 2 }}
-              >
-                {resendMessage}
-              </Alert>
-            )}
-            
-            {token && (
-              <Button
-                variant="contained"
-                onClick={handleRetryVerification}
-                disabled={isSubmitting}
-                sx={{ mb: 2 }}
-              >
-                {isSubmitting ? 'Retrying...' : 'Retry Verification'}
-              </Button>
-            )}
-            
-            {email && (
-              <Button
-                variant="outlined"
-                onClick={handleResendVerification}
-                disabled={isResending}
-                sx={{ mb: 2 }}
-              >
-                {isResending ? 'Sending...' : 'Resend Verification Email'}
-              </Button>
-            )}
-          </>
-        );
-
-      default:
-        return null;
+  const handleResend = async () => {
+    const targetEmail = email || emailInput;
+    if (!targetEmail || resendCooldown > 0) return;
+    setResendMsg('');
+    try {
+      await axios.post('/api/auth/resend-otp', { email: targetEmail });
+      setResendMsg('A new code has been sent to your email.');
+      setDigits(['', '', '', '', '', '']);
+      setStatus('idle');
+      setMessage('');
+      startCooldown();
+      setTimeout(() => inputRefs.current[0]?.focus(), 50);
+    } catch (err) {
+      setResendMsg(err.response?.data?.message || 'Failed to resend. Please try again.');
     }
   };
 
+  const otp = digits.join('');
+  const isLegacyToken = Boolean(searchParams.get('token'));
+
+  // ── Legacy token view ──────────────────────────────────────────────────────
+  if (isLegacyToken) {
+    return (
+      <div className="evf-page">
+        <div className="evf-card">
+          <div className="evf-logo">AutoSphere</div>
+          {status === 'idle' && (
+            <div className="evf-spinner-wrap">
+              <span className="evf-spinner" />
+              <p>Verifying your email…</p>
+            </div>
+          )}
+          {status === 'success' && (
+            <>
+              <div className="evf-icon success">✓</div>
+              <h2>Email Verified!</h2>
+              <p className="evf-sub">{message}</p>
+              <Link to="/login" className="evf-btn-primary">Continue to Sign In</Link>
+            </>
+          )}
+          {status === 'error' && (
+            <>
+              <div className="evf-icon error">✕</div>
+              <h2>Verification Failed</h2>
+              <p className="evf-sub evf-error">{message}</p>
+              <Link to="/login" className="evf-btn-secondary">Back to Sign In</Link>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── OTP entry view ─────────────────────────────────────────────────────────
   return (
-    <Container component="main" maxWidth="sm">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Paper
-          elevation={3}
-          sx={{
-            padding: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            width: '100%',
-          }}
-        >
-          {renderContent()}
-          
-          <Box sx={{ textAlign: 'center', mt: 2 }}>
-            <Link
-              to="/login"
-              style={{ textDecoration: 'none', color: 'inherit' }}
+    <div className="evf-page">
+      <div className="evf-card">
+        <div className="evf-logo">AutoSphere</div>
+
+        {status === 'success' ? (
+          <>
+            <div className="evf-icon success">✓</div>
+            <h2>Email Verified!</h2>
+            <p className="evf-sub">{message}</p>
+            <p className="evf-sub" style={{ color: '#8696a0' }}>Redirecting you to your dashboard…</p>
+          </>
+        ) : (
+          <>
+            <div className="evf-icon email">✉</div>
+            <h2>Check your email</h2>
+            <p className="evf-sub">
+              We sent a 6-digit code to{' '}
+              <strong>{email || emailInput || 'your email'}</strong>.
+              Enter it below to verify your account.
+            </p>
+
+            {/* Email input — only shown if not pre-filled */}
+            {!email && (
+              <div className="evf-field">
+                <label>Email address</label>
+                <input
+                  type="email"
+                  className="evf-email-input"
+                  placeholder="your@email.com"
+                  value={emailInput}
+                  onChange={e => setEmailInput(e.target.value)}
+                />
+              </div>
+            )}
+
+            {/* 6-digit OTP inputs */}
+            <div className="evf-otp-row" onPaste={handlePaste}>
+              {digits.map((d, i) => (
+                <input
+                  key={i}
+                  ref={el => inputRefs.current[i] = el}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  className={`evf-otp-input ${status === 'error' ? 'error' : ''}`}
+                  value={d}
+                  onChange={e => handleDigitChange(i, e.target.value)}
+                  onKeyDown={e => handleKeyDown(i, e)}
+                  aria-label={`Digit ${i + 1}`}
+                  autoComplete="one-time-code"
+                  disabled={status === 'submitting'}
+                />
+              ))}
+            </div>
+
+            {/* Error message */}
+            {status === 'error' && message && (
+              <p className="evf-error-msg">{message}</p>
+            )}
+
+            {/* Verify button */}
+            <button
+              className="evf-btn-primary"
+              onClick={() => handleVerify()}
+              disabled={otp.length < 6 || status === 'submitting' || (!email && !emailInput)}
             >
-              <Button
-                startIcon={<ArrowBack />}
-                variant="text"
-                color="primary"
-              >
-                Back to Sign In
-              </Button>
-            </Link>
-          </Box>
-        </Paper>
-      </Box>
-    </Container>
+              {status === 'submitting' ? (
+                <><span className="evf-spinner small" /> Verifying…</>
+              ) : 'Verify Email'}
+            </button>
+
+            {/* Resend */}
+            <div className="evf-resend">
+              {resendMsg && (
+                <p className={`evf-resend-msg ${resendMsg.includes('sent') ? 'success' : 'error'}`}>
+                  {resendMsg}
+                </p>
+              )}
+              <p>
+                Didn't receive a code?{' '}
+                {resendCooldown > 0 ? (
+                  <span className="evf-cooldown">Resend in {resendCooldown}s</span>
+                ) : (
+                  <button className="evf-resend-btn" onClick={handleResend}>
+                    Resend code
+                  </button>
+                )}
+              </p>
+            </div>
+
+            <div className="evf-back">
+              <Link to="/login">← Back to Sign In</Link>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   );
 };
 
