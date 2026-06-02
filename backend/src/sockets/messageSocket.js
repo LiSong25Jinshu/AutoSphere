@@ -3,6 +3,7 @@ import { Op } from 'sequelize';
 import Message from '../models/Message.js';
 import Conversation from '../models/Conversation.js';
 import User from '../models/User.js';
+import { createNotification } from '../utils/notifications.js';
 
 const activeUsers = new Map(); // userId -> socketId
 const typingUsers = new Map(); // "convId:userId" -> timestamp
@@ -79,13 +80,21 @@ export const initializeMessageSocket = (io) => {
 
         io.to(`conversation:${conversationId}`).emit('message:new', full);
 
-        // Notify recipient
-        io.to(`user:${otherId}`).emit('notification:new', {
+        // Persist notification to DB + deliver via socket + web push
+        const sender = full.sender;
+        const senderName = sender ? `${sender.firstName} ${sender.lastName}` : 'Someone';
+        const preview = content.length > 60 ? content.slice(0, 57) + '…' : content;
+
+        createNotification({
+          userId: otherId,
           type: 'message',
-          conversationId,
-          message: content.length > 60 ? content.slice(0, 57) + '...' : content,
-          timestamp: new Date().toISOString(),
-        });
+          title: `New message from ${senderName}`,
+          message: preview,
+          linkType: 'conversation',
+          linkId: conversationId,
+          url: '/user-messages',
+          io,
+        }).catch(() => {});
       } catch (e) {
         console.error('message:send error', e);
         socket.emit('error', { message: 'Failed to send message' });

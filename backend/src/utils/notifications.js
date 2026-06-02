@@ -2,7 +2,9 @@ import Notification from '../models/Notification.js';
 import { sendPushToUser } from './webPush.js';
 
 /**
- * Persist a notification to the DB and optionally push via socket.
+ * Persist a notification to the DB, emit it via Socket.io, and send a
+ * web push if the user has browser subscriptions.
+ *
  * @param {object} opts
  * @param {number}  opts.userId
  * @param {'message'|'booking'|'system'|'alert'} opts.type
@@ -10,13 +12,15 @@ import { sendPushToUser } from './webPush.js';
  * @param {string}  opts.message
  * @param {string}  [opts.linkType]  - e.g. 'booking' | 'conversation'
  * @param {number}  [opts.linkId]
+ * @param {string}  [opts.url]       - deep-link URL for push payload
  * @param {object}  [opts.io]        - Socket.io server instance (optional)
  */
-export const createNotification = async ({ userId, type, title, message, linkType, linkId, io }) => {
+export const createNotification = async ({ userId, type, title, message, linkType, linkId, url, io }) => {
   try {
+    // 1. Persist to DB so the bell loads it on next page visit
     const notif = await Notification.create({ userId, type, title, message, linkType, linkId });
 
-    // Push real-time if socket server provided
+    // 2. Real-time socket delivery (only if io is provided)
     if (io) {
       io.to(`user:${userId}`).emit('notification:new', {
         id: notif.id,
@@ -30,11 +34,11 @@ export const createNotification = async ({ userId, type, title, message, linkTyp
       });
     }
 
-    // Web push (works even when browser tab is closed)
+    // 3. Web push (works even when the browser tab is closed)
     await sendPushToUser(userId, {
       title: notif.title,
       body: notif.message,
-      url: notif.linkType && notif.linkId ? `/${notif.linkType}s/${notif.linkId}` : '/',
+      url: url || (notif.linkType && notif.linkId ? `/${notif.linkType}s/${notif.linkId}` : '/'),
     });
 
     return notif;

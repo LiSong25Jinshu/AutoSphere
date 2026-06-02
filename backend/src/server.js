@@ -19,7 +19,7 @@ import { initializeMessageSocket } from './sockets/messageSocket.js';
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
 import vehicleRoutes from './routes/vehicles.js';
-import bookingRoutes from './routes/bookings.js';
+import bookingRoutes, { setIo as setBookingsIo } from './routes/bookings.js';
 import messageRoutes from './routes/messages.js';
 import recommendationsRoutes from './routes/recommendations.js';
 import servicesRoutes from './routes/services.js';
@@ -29,6 +29,7 @@ import notificationRoutes from './routes/notifications.js';
 import adminRoutes from './routes/admin.js';
 import pushRoutes from './routes/push.js';
 import gdprRoutes from './routes/gdpr.js';
+import rentalRoutes from './routes/rentals.js';
 
 const app = express();
 const server = createServer(app);
@@ -90,6 +91,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/push', pushRoutes);
 app.use('/api/gdpr', gdprRoutes);
+app.use('/api/rentals', rentalRoutes);
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({
@@ -100,6 +102,7 @@ app.get('/api/health', (req, res) => {
 });
 
 initializeMessageSocket(io);
+setBookingsIo(io);
 
 // Serve React frontend in production
 if (process.env.NODE_ENV === 'production') {

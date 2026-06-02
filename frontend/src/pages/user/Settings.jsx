@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { gdprAPI } from '../../services/api';
 import './Settings.css';
@@ -41,6 +41,24 @@ const UserSettings = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
 
+  // Load consent preferences from backend on mount
+  useEffect(() => {
+    gdprAPI.getConsent()
+      .then(res => {
+        if (res.data?.data) {
+          const c = res.data.data;
+          setSettings(prev => ({
+            ...prev,
+            privacy: {
+              ...prev.privacy,
+              allowDataCollection: c.analytics ?? prev.privacy.allowDataCollection,
+            },
+          }));
+        }
+      })
+      .catch(() => { /* silently ignore — defaults are fine */ });
+  }, []);
+
   const handleSettingChange = (category, setting, value) => {
     setSettings(prev => ({
       ...prev,
@@ -55,12 +73,22 @@ const UserSettings = () => {
     setIsLoading(true);
     setSaveMessage('');
     try {
-      // Save notification preferences to user profile
-      const { data } = await import('../../services/api').then(m => m.userAPI.updateProfile({
+      const { userAPI } = await import('../../services/api');
+      await userAPI.updateProfile({
         notificationPreferences: settings.notifications,
         privacySettings: settings.privacy,
         preferences: settings.preferences,
-      }));
+      });
+
+      // Persist consent preferences to GDPR endpoint
+      if (activeTab === 'privacy') {
+        await gdprAPI.saveConsent({
+          marketing: settings.notifications.marketing,
+          analytics: settings.privacy.allowDataCollection,
+          functional: true,
+        });
+      }
+
       setSaveMessage('Settings saved successfully!');
       setTimeout(() => setSaveMessage(''), 3000);
     } catch (error) {
@@ -71,62 +99,45 @@ const UserSettings = () => {
   };
 
   const handleResetSettings = () => {
-    if (window.confirm('Are you sure you want to reset all settings to default values?')) {
-      setSettings({
-        notifications: {
-          email: true,
-          sms: true,
-          push: false,
-          marketing: false,
-          dealerMessages: true,
-          serviceReminders: true,
-          priceAlerts: false
-        },
-        privacy: {
-          profileVisible: true,
-          showEmail: false,
-          showPhone: false,
-          showLocation: true,
-          allowDataCollection: false
-        },
-        preferences: {
-          language: 'en',
-          timezone: 'America/New_York',
-          currency: 'GHS',
-          theme: 'light',
-          autoSave: true,
-          compactView: false,
-        },
-        account: {
-          twoFactorEnabled: false,
-          loginNotifications: true,
-          sessionTimeout: 60,
-        },
-      });
-      setSaveMessage('Settings reset to defaults.');
-      setTimeout(() => setSaveMessage(''), 3000);
-    }
+    const confirmed = window.confirm('Reset all settings to default values?');
+    if (!confirmed) return;
+    setSettings({
+      notifications: {
+        email: true, sms: true, push: false, marketing: false,
+        dealerMessages: true, serviceReminders: true, priceAlerts: false,
+      },
+      privacy: {
+        profileVisible: true, showEmail: false, showPhone: false,
+        showLocation: true, allowDataCollection: false,
+      },
+      preferences: {
+        language: 'en', timezone: 'America/New_York', currency: 'GHS',
+        theme: 'light', autoSave: true, compactView: false,
+      },
+      account: {
+        twoFactorEnabled: false, loginNotifications: true, sessionTimeout: 60,
+      },
+    });
+    setSaveMessage('Settings reset to defaults.');
+    setTimeout(() => setSaveMessage(''), 3000);
   };
 
-  const handleDeleteAccount = () => {
-    if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-      if (window.confirm('This will permanently delete all your data. Type "DELETE" to confirm.')) {
-        // Mock delete - replace with real API call
-        alert('Account deletion initiated. You will receive a confirmation email.');
-      }
-    }
-  };
+  // Dead mock removed — account deletion is handled by the GDPR section in the Privacy tab
 
   // ─── GDPR handlers ────────────────────────────────────────────────────────
   const handleExportData = async () => {
     setGdprStatus(s => ({ ...s, exporting: true }));
     try {
       const response = await gdprAPI.exportData();
-      const url = URL.createObjectURL(new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' }));
+      // response.data is already a parsed JS object — stringify it for download
+      const json = JSON.stringify(response.data, null, 2);
+      const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
       const a = document.createElement('a');
       a.href = url;
       a.download = `autosphere-data-export-${Date.now()}.json`;
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch {
       alert('Failed to export data. Please try again.');
@@ -494,9 +505,11 @@ const UserSettings = () => {
                   <div className="security-item danger">
                     <div className="security-info">
                       <h3>Delete Account</h3>
-                      <p>Permanently delete your account and all data</p>
+                      <p>Permanently delete your account and all data. Go to the <strong>Privacy</strong> tab to use the GDPR-compliant account deletion.</p>
                     </div>
-                    <button className="btn danger" onClick={handleDeleteAccount}>Delete Account</button>
+                    <button className="btn secondary" onClick={() => setActiveTab('privacy')}>
+                      Go to Privacy Tab
+                    </button>
                   </div>
                 </div>
               </div>

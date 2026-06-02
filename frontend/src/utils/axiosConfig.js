@@ -70,7 +70,10 @@ axios.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const { data } = await axios.post('/api/auth/refresh', { refreshToken });
+        // Use a plain axios call (not the intercepted instance) to avoid loops
+        const { data } = await axios.post('/api/auth/refresh', { refreshToken }, {
+          _retry: true, // mark so the 401 handler won't re-intercept this
+        });
 
         const newToken = data.token;
         const newRefreshToken = data.refreshToken;

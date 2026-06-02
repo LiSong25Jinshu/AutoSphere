@@ -6,6 +6,7 @@ const NAV_BY_ROLE = {
   user: [
     { path: '/dashboard',       label: 'Dashboard',     icon: 'grid' },
     { path: '/vehicles',        label: 'Vehicles',      icon: 'car' },
+    { path: '/rent-vehicle',    label: 'Rent a Vehicle', icon: 'key' },
     { path: '/ai-car-finder',   label: 'AI Car Finder', icon: 'search' },
     { path: '/appointments',    label: 'Appointments',  icon: 'calendar' },
     { path: '/inventory',       label: 'My Vehicles',   icon: 'box' },
@@ -65,6 +66,7 @@ const Icon = ({ name }) => {
     briefcase: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>,
     home:      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
     logout:    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
+    key:       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>,
   };
   return icons[name] || null;
 };

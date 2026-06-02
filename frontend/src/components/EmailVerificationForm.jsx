@@ -122,9 +122,9 @@ const EmailVerificationForm = () => {
     setMessage('');
     try {
       const res = await axios.post('/api/auth/verify-otp', { email: targetEmail, otp: code });
-      // Use googleLogin (same signature: user + token) to properly update AuthContext state
+      // Use googleLogin (same signature: user + token + refreshToken) to properly update AuthContext state
       if (res.data.token && res.data.user) {
-        await googleLogin(res.data.user, res.data.token);
+        await googleLogin(res.data.user, res.data.token, res.data.refreshToken || null);
       }
       setStatus('success');
       setMessage(res.data.message || 'Email verified!');

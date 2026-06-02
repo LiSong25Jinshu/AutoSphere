@@ -35,6 +35,7 @@ const UserInventory = lazy(() => import('./pages/user/Inventory'));
 const VehicleInsights = lazy(() => import('./pages/user/VehicleInsights'));
 const UserSettings = lazy(() => import('./pages/user/Settings'));
 const BookService = lazy(() => import('./pages/user/BookService'));
+const VehicleRent = lazy(() => import('./pages/user/VehicleRent'));
 const AICarFinder = lazy(() => import('./pages/AICarFinder'));
 
 // Admin pages — grouped chunk via same dynamic import pattern
@@ -734,6 +735,7 @@ const isDashboardRoute = (path) => {
     '/jobs',
     '/vehicle-insights',
     '/book-service',
+    '/rent-vehicle',
     '/ai-car-finder',
     '/messages',
     '/bookings',
@@ -917,6 +919,14 @@ function AppContent() {
             element={
               <DashboardRoute>
                 <BookService />
+              </DashboardRoute>
+            } 
+          />
+          <Route 
+            path="/rent-vehicle" 
+            element={
+              <DashboardRoute>
+                <VehicleRent />
               </DashboardRoute>
             } 
           />

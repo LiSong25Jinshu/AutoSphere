@@ -98,9 +98,18 @@ export const serviceAPI = {
 // ─── GDPR / Privacy ───────────────────────────────────────────────────────────
 
 export const gdprAPI = {
-  exportData: () => axios.get('/api/gdpr/export', { responseType: 'blob' }),
+  // Export returns JSON — no responseType override so axios parses it correctly
+  exportData: () => axios.get('/api/gdpr/export'),
   deleteAccount: (confirmation) =>
     axios.post('/api/gdpr/delete-account', { confirmation }),
   getConsent: () => axios.get('/api/gdpr/consent'),
   saveConsent: (preferences) => axios.post('/api/gdpr/consent', preferences),
+};
+
+// ─── Rentals ──────────────────────────────────────────────────────────────────
+
+export const rentalAPI = {
+  getVehicles: (params = {}) => axios.get('/api/rentals/vehicles', { params }),
+  getVehicleById: (id) => axios.get(`/api/rentals/vehicles/${id}`),
+  submitRequest: (data) => axios.post('/api/rentals/request', data),
 };

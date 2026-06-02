@@ -15,6 +15,11 @@ import {
 } from '../utils/email.js';
 import { sendNotification } from '../utils/pushNotifications.js';
 
+// io is injected after server startup to avoid circular imports
+let _io = null;
+export const setIo = (ioInstance) => { _io = ioInstance; };
+const getIo = () => _io;
+
 const router = express.Router();
 
 // Helper function to check if database is available
@@ -426,7 +431,7 @@ router.post('/', [
       'booking',
       'Booking Confirmed',
       `Your ${completeBooking.serviceType.replace(/_/g, ' ')} has been booked for ${new Date(completeBooking.scheduledDate).toLocaleDateString()}.`,
-      { linkType: 'booking', linkId: completeBooking.id, url: '/appointments' }
+      { linkType: 'booking', linkId: completeBooking.id, url: '/appointments', io: getIo() }
     ).catch(() => {});
 
     // Push notification to service provider about new booking
@@ -435,7 +440,7 @@ router.post('/', [
       'booking',
       'New Booking Request',
       `${req.user.firstName} ${req.user.lastName} booked ${completeBooking.serviceType.replace(/_/g, ' ')} for ${new Date(completeBooking.scheduledDate).toLocaleDateString()}.`,
-      { linkType: 'booking', linkId: completeBooking.id, url: '/service-provider/bookings' }
+      { linkType: 'booking', linkId: completeBooking.id, url: '/service-provider/bookings', io: getIo() }
     ).catch(() => {});
 
         // Send notification to service provider
@@ -567,7 +572,7 @@ router.patch('/:id/status', [
           'booking',
           statusLabels[req.body.status] || 'Booking Updated',
           `Your ${booking.serviceType.replace(/_/g, ' ')} booking has been ${req.body.status.replace(/_/g, ' ')}.`,
-          { linkType: 'booking', linkId: booking.id, url: '/appointments' }
+          { linkType: 'booking', linkId: booking.id, url: '/appointments', io: getIo() }
         ).catch(() => {});
       }
     } catch (emailError) {

@@ -7,7 +7,7 @@ import { hashPassword } from '../utils/password.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt.js';
 import { authenticateToken } from '../middleware/auth.js';
 import passport from '../config/passport.js';
-import { sendVerificationEmail, sendPasswordResetEmail, sendOtpEmail } from '../utils/email.js';
+import { sendVerificationEmail, sendPasswordResetEmail, sendOtpEmail, sendWelcomeEmail } from '../utils/email.js';
 
 // In-memory OTP store: { email -> { otp, expiresAt, attempts } }
 // In production you'd use Redis; this is fine for a single-process server.
@@ -149,6 +149,11 @@ router.post('/verify-otp', [
     user.emailVerificationToken = null;
     user.emailVerificationExpires = null;
     await user.save();
+
+    // Send welcome email (fire-and-forget — never block the response)
+    sendWelcomeEmail(user.email, user.firstName).catch((e) =>
+      console.error('Failed to send welcome email:', e)
+    );
 
     // Issue a token so the user is logged in immediately after verification
     const token = generateAccessToken({
