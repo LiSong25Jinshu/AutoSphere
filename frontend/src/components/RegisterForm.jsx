@@ -396,6 +396,12 @@ const RegisterForm = () => {
                 Sign in here
               </Link>
             </p>
+            <p style={{ marginTop: '8px' }}>
+              Registering as a dealer or service provider?{' '}
+              <Link to="/register-provider" className="auth-link">
+                Use the business signup →
+              </Link>
+            </p>
           </div>
         </form>
       </div>

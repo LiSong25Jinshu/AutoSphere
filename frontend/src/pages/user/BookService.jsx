@@ -108,8 +108,8 @@ const SERVICE_OPTIONS = [
     priceHint: "Quote on inspection",
   },
   {
-    value: "Washing",
-    label: "Washing service",
+    value: "other",
+    label: "Washing Service",
     icon: "🧼",
     category: "Cleaning",
     description: "Professional car washing and detailing services including exterior cleaning, interior vacuuming, polishing, and vehicle care packages",

@@ -1,5 +1,9 @@
 import express from 'express';
 import crypto from 'crypto';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import multer from 'multer';
 import { Op } from 'sequelize';
 import { body, validationResult } from 'express-validator';
 import User from '../models/User.js';
@@ -8,6 +12,35 @@ import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '.
 import { authenticateToken } from '../middleware/auth.js';
 import passport from '../config/passport.js';
 import { sendVerificationEmail, sendPasswordResetEmail, sendOtpEmail, sendWelcomeEmail } from '../utils/email.js';
+
+// ── Multer — provider document uploads ───────────────────────────────────────
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const uploadsDir = path.resolve(__dirname, '../../../uploads/provider-docs');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+const providerStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, uploadsDir),
+  filename: (_req, file, cb) => {
+    const unique = `${Date.now()}-${crypto.randomBytes(6).toString('hex')}`;
+    cb(null, `${unique}${path.extname(file.originalname)}`);
+  },
+});
+
+const providerUpload = multer({
+  storage: providerStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+  fileFilter: (_req, file, cb) => {
+    const allowed = ['.jpg', '.jpeg', '.png', '.pdf'];
+    if (allowed.includes(path.extname(file.originalname).toLowerCase())) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only JPG, PNG and PDF files are allowed'));
+    }
+  },
+}).fields([
+  { name: 'idDocument', maxCount: 1 },
+  { name: 'selfie',     maxCount: 1 },
+]);
 
 // In-memory OTP store: { email -> { otp, expiresAt, attempts } }
 // In production you'd use Redis; this is fine for a single-process server.
@@ -99,14 +132,18 @@ router.post('/register', [
       isVerified: false, // always start unverified
     });
 
-    // Generate and send OTP
-    const otp = generateOtp();
-    saveOtp(email, otp);
-    try {
-      await sendOtpEmail(email, firstName, otp);
-    } catch (e) {
-      console.error('Failed to send OTP email:', e);
-    }
+  const otp = generateOtp();
+saveOtp(email, otp);
+
+console.log('OTP:', otp);
+console.log('Sending email to:', email);
+
+try {
+  const result = await sendOtpEmail(email, firstName, otp);
+  console.log('Email result:', result);
+} catch (e) {
+  console.error('Failed to send OTP email:', e);
+}
 
     res.status(201).json({
       success: true,
@@ -463,6 +500,149 @@ router.post('/refresh', [
     });
   } catch (error) {
     console.error('Token refresh error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// ── POST /api/auth/register-provider ─────────────────────────────────────────
+// Enhanced registration for service_provider and dealer roles.
+// Accepts multipart/form-data with optional idDocument and selfie file uploads.
+router.post('/register-provider', providerUpload, async (req, res) => {
+  try {
+    const {
+      // Personal
+      email, password, firstName, lastName, phone, address,
+      // Business
+      businessName, businessType, businessDescription,
+      location, country, yearsOfExperience,
+      // Identity
+      idType, idNumber,
+      // Payment
+      paymentMethod, mobileMoneyNumber, mobileMoneyNetwork,
+      bankName, bankAccount, bankBranch,
+      // Role
+      role,
+      // Legal
+      acceptTerms, acceptPrivacy, acceptVerification,
+    } = req.body;
+
+    // ── Basic field validation ─────────────────────────────────────────────
+    const missing = [];
+    if (!firstName?.trim())    missing.push('firstName');
+    if (!lastName?.trim())     missing.push('lastName');
+    if (!email?.trim())        missing.push('email');
+    if (!phone?.trim())        missing.push('phone');
+    if (!address?.trim())      missing.push('address');
+    if (!password)             missing.push('password');
+    if (!businessName?.trim()) missing.push('businessName');
+    if (!businessType)         missing.push('businessType');
+    if (!location?.trim())     missing.push('location');
+    if (!yearsOfExperience)    missing.push('yearsOfExperience');
+    if (!idNumber?.trim())     missing.push('idNumber');
+    if (!['service_provider', 'dealer'].includes(role))
+      return res.status(400).json({ success: false, message: 'Role must be service_provider or dealer.' });
+    if (acceptTerms !== 'true' && acceptTerms !== true)
+      return res.status(400).json({ success: false, message: 'You must accept the Terms & Conditions.' });
+    if (acceptPrivacy !== 'true' && acceptPrivacy !== true)
+      return res.status(400).json({ success: false, message: 'You must accept the Privacy Policy.' });
+    if (acceptVerification !== 'true' && acceptVerification !== true)
+      return res.status(400).json({ success: false, message: 'You must consent to identity verification.' });
+    if (missing.length)
+      return res.status(400).json({ success: false, message: `Missing required fields: ${missing.join(', ')}` });
+
+    // ── Password strength ──────────────────────────────────────────────────
+    if (password.length < 8)
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters.' });
+    if (!/(?=.*[A-Z])(?=.*[0-9])/.test(password))
+      return res.status(400).json({ success: false, message: 'Password must contain at least one uppercase letter and one number.' });
+
+    // ── ID document required ───────────────────────────────────────────────
+    if (!req.files?.idDocument?.[0])
+      return res.status(400).json({ success: false, message: 'ID document upload is required.' });
+
+    // ── Duplicate check ────────────────────────────────────────────────────
+    const existing = await User.findByEmail(email.trim().toLowerCase());
+    if (existing) {
+      if (!existing.isVerified) {
+        // Resend OTP if they started but didn't verify
+        const otp = generateOtp();
+        saveOtp(email, otp);
+        try { await sendOtpEmail(email, existing.firstName, otp); } catch (e) { console.error(e); }
+        return res.status(200).json({
+          success: true,
+          requiresVerification: true,
+          message: 'Account exists but is not verified. A new verification code has been sent.',
+          email: existing.email,
+        });
+      }
+      return res.status(409).json({ success: false, message: 'An account with this email already exists.' });
+    }
+
+    // ── Build consent record ───────────────────────────────────────────────
+    const consentData = {
+      acceptTerms: true,
+      acceptPrivacy: true,
+      acceptVerification: true,
+      acceptedAt: new Date().toISOString(),
+      paymentMethod: paymentMethod || 'mobile_money',
+      mobileMoneyNumber:  paymentMethod === 'mobile_money' ? mobileMoneyNumber : null,
+      mobileMoneyNetwork: paymentMethod === 'mobile_money' ? mobileMoneyNetwork : null,
+      bankName:    paymentMethod === 'bank' ? bankName    : null,
+      bankAccount: paymentMethod === 'bank' ? bankAccount : null,
+      bankBranch:  paymentMethod === 'bank' ? bankBranch  : null,
+      idType:      idType || 'national_id',
+      idNumber,
+      idDocumentPath: req.files.idDocument[0].filename,
+      selfiePath:     req.files.selfie?.[0]?.filename || null,
+      yearsOfExperience: +yearsOfExperience,
+      location,
+      country: country || 'Ghana',
+      verificationStatus: 'pending',
+    };
+
+    // ── Create user ────────────────────────────────────────────────────────
+    const user = await User.create({
+      email: email.trim().toLowerCase(),
+      passwordHash: await hashPassword(password),
+      firstName: firstName.trim(),
+      lastName:  lastName.trim(),
+      phone:     phone.trim(),
+      role,
+      address:             address.trim(),
+      businessName:        businessName.trim(),
+      businessType:        businessType,
+      businessDescription: businessDescription?.trim() || null,
+      isVerified: false,
+      consentData,
+    });
+
+    // ── Send OTP ───────────────────────────────────────────────────────────
+    const otp = generateOtp();
+    saveOtp(email, otp);
+    try {
+      await sendOtpEmail(email.trim().toLowerCase(), firstName.trim(), otp);
+    } catch (e) {
+      console.error('Failed to send OTP email to provider:', e);
+    }
+
+    res.status(201).json({
+      success: true,
+      requiresVerification: true,
+      message: 'Registration submitted! Please check your email for a 6-digit verification code.',
+      email: user.email,
+    });
+  } catch (error) {
+    console.error('Provider registration error:', error);
+    // Clean up uploaded files on error
+    if (req.files) {
+      Object.values(req.files).flat().forEach(f => {
+        try { fs.unlinkSync(f.path); } catch (_) {}
+      });
+    }
+    if (error.name === 'SequelizeUniqueConstraintError')
+      return res.status(409).json({ success: false, message: 'An account with this email already exists.' });
+    if (error.name === 'SequelizeValidationError')
+      return res.status(400).json({ success: false, message: error.errors?.[0]?.message || 'Validation failed' });
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });

@@ -8,7 +8,11 @@ export const appointmentService = {
       const bookingData = {
         serviceProviderId: appointmentData.serviceProviderId,
         serviceType: appointmentData.serviceType,
-        title: appointmentData.title || appointmentData.serviceType,
+        // title must be min 5 chars — use explicit title, label, or formatted serviceType
+        title: appointmentData.title ||
+               (appointmentData.serviceType
+                 ? appointmentData.serviceType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+                 : 'Service Booking'),
         description: appointmentData.description || appointmentData.notes || '',
         scheduledDate: appointmentData.date,
         scheduledTime: appointmentData.time,

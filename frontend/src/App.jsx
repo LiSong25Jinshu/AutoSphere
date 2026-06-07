@@ -19,6 +19,8 @@ const Login = lazy(() => import('./pages/public/Login'));
 const Register = lazy(() => import('./pages/public/Register'));
 const PrivacyPolicy = lazy(() => import('./pages/public/PrivacyPolicy'));
 
+const ProviderSignup = lazy(() => import('./pages/public/ProviderSignup'));
+
 // Auth utility pages
 const GoogleAuthCallback = lazy(() => import('./components/GoogleAuthCallback'));
 const ForgotPasswordForm = lazy(() => import('./components/ForgotPasswordForm'));
@@ -832,6 +834,7 @@ function AppContent() {
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/register-provider" element={<ProviderSignup />} />
           <Route path="/forgot-password" element={<ForgotPasswordForm />} />
           <Route path="/reset-password" element={<ResetPasswordForm />} />
               <Route path="/verify-email" element={<EmailVerificationForm />} />

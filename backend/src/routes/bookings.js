@@ -509,40 +509,61 @@ router.patch('/:id/status', [
 
     // Check if database is available
     const dbAvailable = await isDatabaseAvailable();
-    
+
     if (!dbAvailable) {
-      // Use mock data
+      // ── Mock path ──────────────────────────────────────────────────────────
       console.log('Updating booking status with mock data');
-      const booking = await mockBookingService.findByPk(bookingId);
+      const mockBooking = await mockBookingService.findByPk(bookingId);
 
-      if (!booking) {
-        return res.status(404).json({
-          success: false,
-          message: 'Booking not found'
-        });
+      if (!mockBooking) {
+        return res.status(404).json({ success: false, message: 'Booking not found' });
       }
 
-      // Update booking
       const updateData = { status: req.body.status };
-      
-      if (req.body.providerNotes) {
-        updateData.providerNotes = req.body.providerNotes;
-      }
-      
-      if (req.body.actualCost) {
-        updateData.actualCost = req.body.actualCost;
-      }
-
-      if (req.body.status === 'completed') {
-        updateData.completedAt = new Date();
-      } else if (req.body.status === 'cancelled') {
-        updateData.cancelledAt = new Date();
-      }
+      if (req.body.providerNotes) updateData.providerNotes = req.body.providerNotes;
+      if (req.body.actualCost)    updateData.actualCost    = req.body.actualCost;
+      if (req.body.status === 'completed') updateData.completedAt = new Date();
+      if (req.body.status === 'cancelled') updateData.cancelledAt = new Date();
 
       const updatedBooking = await mockBookingService.update(bookingId, updateData);
+
+      return res.json({
+        success: true,
+        message: 'Booking status updated successfully',
+        data: updatedBooking,
+      });
+    }
+
+    // ── Real DB path ──────────────────────────────────────────────────────────
+    const booking = await Booking.findByPk(bookingId);
+
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Booking not found' });
+    }
+
+    // Check permissions
+    const canUpdate =
+      booking.userId === req.user.id ||
+      booking.serviceProviderId === req.user.id ||
+      req.user.role === 'admin';
+
+    if (!canUpdate) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    const oldStatus = booking.status;
+
+    const updateData = { status: req.body.status };
+    if (req.body.providerNotes && booking.serviceProviderId === req.user.id)
+      updateData.providerNotes = req.body.providerNotes;
+    if (req.body.actualCost && booking.serviceProviderId === req.user.id)
+      updateData.actualCost = req.body.actualCost;
+    if (req.body.status === 'completed') updateData.completedAt = new Date();
+    if (req.body.status === 'cancelled') updateData.cancelledAt = new Date();
+
     await booking.update(updateData);
 
-    // Send status change notification to customer
+    // Send status change email + push notification to customer
     try {
       const user = await User.findByPk(booking.userId);
       if (user) {
@@ -555,17 +576,16 @@ router.patch('/:id/status', [
             scheduledDate: booking.scheduledDate,
             scheduledTime: booking.scheduledTime,
           },
-          booking.status,
+          oldStatus,
           req.body.status
         );
 
-        // Push notification to customer about status change
         const statusLabels = {
-          confirmed: 'Booking Confirmed',
+          confirmed:   'Booking Confirmed',
           in_progress: 'Service Started',
-          completed: 'Service Completed',
-          cancelled: 'Booking Cancelled',
-          no_show: 'Booking Marked No-Show',
+          completed:   'Service Completed',
+          cancelled:   'Booking Cancelled',
+          no_show:     'Booking Marked No-Show',
         };
         sendNotification(
           booking.userId,
@@ -578,59 +598,6 @@ router.patch('/:id/status', [
     } catch (emailError) {
       console.error('Failed to send status change email:', emailError);
     }
-
-    res.json({
-      success: true,
-      message: 'Booking status updated successfully',
-      data: booking,
-    });
-
-      return res.json({
-        success: true,
-        message: 'Booking status updated successfully',
-        data: updatedBooking,
-      });
-    }
-
-    const booking = await Booking.findByPk(bookingId);
-
-    if (!booking) {
-      return res.status(404).json({
-        success: false,
-        message: 'Booking not found'
-      });
-    }
-
-    // Check permissions
-    const canUpdate = booking.userId === req.user.id || 
-                     booking.serviceProviderId === req.user.id ||
-                     req.user.role === 'admin';
-
-    if (!canUpdate) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied'
-      });
-    }
-
-    // Update booking
-    const updateData = { status: req.body.status };
-    
-    if (req.body.providerNotes && booking.serviceProviderId === req.user.id) {
-      updateData.providerNotes = req.body.providerNotes;
-    }
-    
-    if (req.body.actualCost && booking.serviceProviderId === req.user.id) {
-      updateData.actualCost = req.body.actualCost;
-    }
-
-    if (req.body.status === 'completed') {
-      updateData.completedAt = new Date();
-    } else if (req.body.status === 'cancelled') {
-      updateData.cancelledAt = new Date();
-    }
-
-    await booking.update(updateData);
 
     res.json({
       success: true,
