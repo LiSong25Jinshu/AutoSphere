@@ -79,6 +79,17 @@ const AICarFinder = () => {
     }));
   };
 
+  const parseBudget = (budget) => {
+    const map = {
+      'under-20k': {min: 0, max: 20000},
+      '20k-30k': {min: 20000, max: 30000},
+      '30k-40k': {min: 30000, max: 40000},
+      '40k-50k': {min: 40000, max: 50000},
+      '50k-plus': {min: 50000, max: 999999}
+    };
+    return map[budget] || {};
+  };
+
   const handleFindCars = async () => {
     setIsLoading(true);
     try {
@@ -98,7 +109,17 @@ const AICarFinder = () => {
         return;
       }
 
-      const res = await axios.get(`/api/recommendations/${userId}`);
+      const budget = parseBudget(preferences.budget);
+
+      const res = await axios.get(`/api/recommendations/${userId}`, {
+        params: {
+          budget_min: budget.min, 
+          budget_max: budget.max,
+          fuel_type: preferences.fuelType,
+          body_type: preferences.bodyType,
+          transmission: preferences.transmission
+        }
+      });
       
       const recs = (res.data.recommendations || []).map((rec) => ({
         id: rec.vehicle_id,
@@ -175,11 +196,11 @@ const AICarFinder = () => {
                     style={{ width: '100%', padding: '12px', border: '1px solid #e6e6e6', borderRadius: '8px' }}
                   >
                     <option value="">Select budget range</option>
-                    <option value="under-20k">Under $20,000</option>
-                    <option value="20k-30k">$20,000 - $30,000</option>
-                    <option value="30k-40k">$30,000 - $40,000</option>
-                    <option value="40k-50k">$40,000 - $50,000</option>
-                    <option value="50k-plus">$50,000+</option>
+                    <option value="under-20k">Under GHC20,000</option>
+                    <option value="20k-30k">GHC20,000 - GHC30,000</option>
+                    <option value="30k-40k">GHC30,000 - GHC40,000</option>
+                    <option value="40k-50k">GHC40,000 - GHC50,000</option>
+                    <option value="50k-plus">GHC50,000+</option>
                   </select>
                 </div>
 

@@ -58,13 +58,28 @@ def get_recommendations(user_id):
     Called by Node.js backend like: Get /recommendions/123
     """
     try:
-        n = int(request.args.get('n', 10))   # How many recommendations?
+        n = int(request.args.get('n', 10))   # Number of recommendations
 
-        # Safely fetch preferences - return empty dict if table doesn't exist
+        # Get preferences from query params first
+        query_preferences = {}
+        if request.args.get('budget_min'):
+            query_preferences['budget_min'] = float(request.args.get('budget_min'))
+        if request.args.get('budget_max'):
+            query_preferences['budget_max'] = float(request.args.get('budget_max'))
+        if request.args.get('fuel_type'):
+            query_preferences['preferred_fuel'] = request.args.get('fuel_type')
+        if request.args.get('body_type'):
+            query_preferences['preferred_body_type'] = request.args.get('body_type')
+        if request.args.get('transmission'):
+            query_preferences['preferred_transmission'] = request.args.get('transmission')
+
+        # Safely fetch preferences from db - return empty dict if table doesn't exist
         try:
-            preferences = fetch_user_preferences(user_id)
+            db_preferences = fetch_user_preferences(user_id)
         except:
-            preferences = {}
+            db_preferences = {}
+
+        preferences = {**db_preferences, **query_preferences}
             
         recs = engine.get_recommendations(user_id, preferences, n)
 
@@ -82,14 +97,14 @@ def get_recommendations(user_id):
                 enriched.append({
                     'vehicle_id': vid,
                     'score': rec['score'],
-                    'make': v.get('make', 'Unknown'),
-                    'model': v.get('model', 'Unknown'),
-                    'year': int(v['year']) if pd.notna(v.get('year')) else None,
-                    'price': float(v['price']) if pd.notna(v.get('price')) else None,
-                    'fuel_type': v.get('fuel_type', None),
-                    'transmission': v.get('transmission', None),
-                    'body_type': v.get('body_type', None),
-                    'mileage': float(v['mileage']) if pd.notna(v.get('mileage')) else None,
+                    'make': v['make'] if pd.notna(v['make']) else 'Unknown',
+                    'model': v['model'] if pd.notna(v['model']) else 'Unknown',
+                    'year': int(v['year']) if pd.notna(v['year']) else None,
+                    'price': float(v['price']) if pd.notna(v['price']) else None,
+                    'fuel_type': v['fuel_type'] if pd.notna(v['fuel_type']) else None,
+                    'transmission': v['transmission'] if pd.notna(v['transmission']) else None,
+                    'body_type': v['body_type'] if pd.notna(v['body_type']) else None,
+                    'mileage': float(v['mileage']) if pd.notna(v['mileage']) else None,
                     'reasons': engine.explain(user_id, vid)
                 })
             else:

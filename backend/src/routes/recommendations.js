@@ -13,7 +13,8 @@ router.get('/:userId', authenticateToken, async (req, res) => {
 
     try {
         const response = await axios.get(
-            `${AI_SERVICE_URL}/recommendations/${userId}?n=10`
+            `${AI_SERVICE_URL}/recommendations/${userId}`, 
+            { params: req.query }   //forward all query params to Flask
         );
         return res.json({ source: 'ai', ...response.data });
 

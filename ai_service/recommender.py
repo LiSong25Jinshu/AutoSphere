@@ -159,7 +159,11 @@ class VehicleRecommendationEngine:
         if 'budget_min' in user_preferences:
             candidates = candidates[candidates['price'] >= user_preferences['budget_min']]
         if 'preferred_fuel' in user_preferences and user_preferences['preferred_fuel']:
-            candidates = candidates[candidates['fuel_type'] == user_preferences['preferred_fuel']]
+            fuel = user_preferences['preferred_fuel'].lower()
+            candidates = candidates[candidates['fuel_type'].str.lower() == fuel]
+        if 'preferred_body_type' in user_preferences and user_preferences['preferred_body_type']:
+            body = user_preferences['preferred_body_type'].lower()
+            candidates = candidates[candidates['body_type'].str.lower() == body]
 
         if candidates.empty:
             candidates = self.vehicle_df.copy()   # Fall back to all vehicles

@@ -11,7 +11,7 @@ import {
   sendBookingConfirmationEmail,
   sendServiceProviderBookingNotification,
   sendBookingStatusChangeEmail,
-  sendBookingRescheduleEmail
+  // sendBookingRescheduleEmail
 } from '../utils/email.js';
 import { sendNotification } from '../utils/pushNotifications.js';
 
