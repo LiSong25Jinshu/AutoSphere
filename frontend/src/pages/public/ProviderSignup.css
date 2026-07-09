@@ -1,0 +1,232 @@
+/* ── Provider / Dealer Signup ─────────────────────────────────────────────── */
+.ps-page {
+  min-height: 100vh;
+  background: #f4f6f9;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 16px 60px;
+}
+
+.ps-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  width: 100%;
+  max-width: 780px;
+  overflow: hidden;
+}
+
+/* ── Header ── */
+.ps-header {
+  background: linear-gradient(135deg, #1565c0 0%, #1976d2 100%);
+  padding: 32px 36px 28px;
+  color: #fff;
+}
+.ps-header h1 { margin: 0 0 6px; font-size: 1.5rem; font-weight: 700; }
+.ps-header p  { margin: 0; opacity: .85; font-size: .9375rem; }
+
+/* ── Step bar ── */
+.ps-steps {
+  display: flex;
+  align-items: center;
+  padding: 20px 36px;
+  background: #f8fafd;
+  border-bottom: 1px solid #e8ecf0;
+  overflow-x: auto;
+  gap: 0;
+}
+.ps-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.ps-step-circle {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .8125rem; font-weight: 700;
+  background: #e0e0e0; color: #888;
+  transition: background .2s, color .2s;
+}
+.ps-step.active  .ps-step-circle { background: #1976d2; color: #fff; }
+.ps-step.done    .ps-step-circle { background: #43a047; color: #fff; }
+.ps-step-label {
+  font-size: .8125rem; color: #888; white-space: nowrap;
+}
+.ps-step.active .ps-step-label { color: #1976d2; font-weight: 600; }
+.ps-step.done   .ps-step-label { color: #43a047; }
+.ps-step-line {
+  flex: 1; min-width: 24px; height: 2px;
+  background: #e0e0e0; margin: 0 6px;
+}
+.ps-step.done + .ps-step .ps-step-line,
+.ps-step.done  .ps-step-line { background: #43a047; }
+
+/* ── Body ── */
+.ps-body { padding: 32px 36px; }
+
+.ps-section-title {
+  font-size: 1rem; font-weight: 700; color: #1a1a1a;
+  margin: 0 0 20px; padding-bottom: 10px;
+  border-bottom: 2px solid #e8ecf0;
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* ── Grid ── */
+.ps-grid { display: grid; gap: 16px; }
+.ps-grid-2 { grid-template-columns: 1fr 1fr; }
+.ps-grid-1 { grid-template-columns: 1fr; }
+
+@media (max-width: 600px) {
+  .ps-grid-2 { grid-template-columns: 1fr; }
+  .ps-body { padding: 24px 18px; }
+  .ps-header { padding: 24px 18px; }
+  .ps-steps { padding: 16px 18px; }
+}
+
+/* ── Field ── */
+.ps-field { display: flex; flex-direction: column; gap: 5px; }
+.ps-field label {
+  font-size: .875rem; font-weight: 600; color: #374151;
+}
+.ps-field .ps-required { color: #e53935; }
+.ps-field input,
+.ps-field select,
+.ps-field textarea {
+  padding: 10px 14px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  font-size: .9375rem;
+  color: #1a1a1a;
+  background: #fff;
+  transition: border-color .15s;
+  width: 100%;
+  box-sizing: border-box;
+}
+.ps-field input:focus,
+.ps-field select:focus,
+.ps-field textarea:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 3px rgba(25,118,210,.12);
+}
+.ps-field input.error,
+.ps-field select.error,
+.ps-field textarea.error { border-color: #e53935; }
+.ps-field .ps-err  { font-size: .8rem; color: #e53935; margin-top: 2px; }
+.ps-field .ps-hint { font-size: .8rem; color: #6b7280; margin-top: 2px; }
+
+/* ── Upload zone ── */
+.ps-upload {
+  border: 2px dashed #c7d2fe;
+  border-radius: 10px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+  background: #f5f7ff;
+}
+.ps-upload:hover { background: #eef0ff; border-color: #6366f1; }
+.ps-upload input[type="file"] { display: none; }
+.ps-upload-icon { font-size: 2rem; margin-bottom: 8px; }
+.ps-upload p { margin: 0; font-size: .875rem; color: #6b7280; }
+.ps-upload p strong { color: #1976d2; }
+.ps-upload.has-file { border-color: #43a047; background: #f0fdf4; }
+.ps-upload.has-file p { color: #43a047; font-weight: 600; }
+
+/* ── Role selector cards ── */
+.ps-role-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+}
+.ps-role-card {
+  border: 2px solid #e0e0e0; border-radius: 12px;
+  padding: 20px 16px; text-align: center; cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.ps-role-card:hover { border-color: #1976d2; background: #f5f9ff; }
+.ps-role-card.selected { border-color: #1976d2; background: #e8f0fe; }
+.ps-role-icon { font-size: 2.2rem; margin-bottom: 8px; }
+.ps-role-name { font-weight: 700; font-size: .9375rem; color: #1a1a1a; }
+.ps-role-desc { font-size: .8125rem; color: #6b7280; margin-top: 4px; }
+
+/* ── Checkbox ── */
+.ps-check-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 14px; border-radius: 8px;
+  border: 1.5px solid #e0e0e0; background: #fafafa;
+}
+.ps-check-row input[type="checkbox"] {
+  width: 18px; height: 18px; margin-top: 2px; cursor: pointer; flex-shrink: 0;
+}
+.ps-check-row label {
+  font-size: .875rem; color: #374151; cursor: pointer; line-height: 1.5;
+}
+.ps-check-row label a { color: #1976d2; text-decoration: underline; }
+
+/* ── Security badges ── */
+.ps-security-list {
+  display: flex; flex-direction: column; gap: 10px;
+  background: #f0f7ff; border-radius: 10px; padding: 18px;
+}
+.ps-security-item {
+  display: flex; align-items: center; gap: 10px;
+  font-size: .875rem; color: #374151;
+}
+.ps-security-item span:first-child { font-size: 1.1rem; }
+
+/* ── Alerts ── */
+.ps-alert {
+  padding: 12px 16px; border-radius: 8px;
+  font-size: .875rem; margin-bottom: 18px;
+}
+.ps-alert.error   { background: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5; }
+.ps-alert.success { background: #f0fdf4; color: #166534; border: 1px solid #86efac; }
+
+/* ── Password wrapper ── */
+.ps-pw-wrap { position: relative; }
+.ps-pw-wrap input { padding-right: 44px; }
+.ps-pw-toggle {
+  position: absolute; right: 12px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none; cursor: pointer; font-size: 1.1rem;
+  color: #6b7280; padding: 2px;
+}
+
+/* ── Password strength ── */
+.ps-pw-strength { margin-top: 6px; }
+.ps-pw-strength-bar {
+  height: 4px; border-radius: 2px; background: #e0e0e0;
+  overflow: hidden; margin-bottom: 4px;
+}
+.ps-pw-strength-fill { height: 100%; border-radius: 2px; transition: width .3s, background .3s; }
+.ps-pw-strength-label { font-size: .78rem; font-weight: 600; }
+
+/* ── Navigation ── */
+.ps-nav {
+  display: flex; align-items: center;
+  padding: 24px 36px;
+  border-top: 1px solid #e8ecf0;
+  gap: 12px;
+}
+@media (max-width: 600px) { .ps-nav { padding: 18px; } }
+
+.ps-btn {
+  padding: 11px 28px; border-radius: 8px; font-size: .9375rem;
+  font-weight: 600; cursor: pointer; border: none; transition: opacity .15s, background .15s;
+}
+.ps-btn:disabled { opacity: .55; cursor: not-allowed; }
+.ps-btn.primary { background: #1976d2; color: #fff; }
+.ps-btn.primary:hover:not(:disabled) { background: #1565c0; }
+.ps-btn.secondary { background: #fff; color: #374151; border: 1.5px solid #d1d5db; }
+.ps-btn.secondary:hover:not(:disabled) { background: #f9fafb; }
+
+/* ── Divider ── */
+.ps-spacer { height: 24px; }
+
+/* ── Success state ── */
+.ps-success-wrap { text-align: center; padding: 40px 20px; }
+.ps-success-icon { font-size: 4rem; margin-bottom: 16px; }
+.ps-success-wrap h2 { color: #1a1a1a; margin: 0 0 10px; }
+.ps-success-wrap p  { color: #6b7280; margin: 0 0 24px; font-size: .9375rem; }
