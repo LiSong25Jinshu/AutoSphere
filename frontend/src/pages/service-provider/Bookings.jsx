@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { bookingAPI } from '../../services/api';
+import PhoneLink from '../../components/PhoneLink';
 import './Bookings.css';
 
 const STATUS_COLORS = {
@@ -146,9 +147,21 @@ const ServiceProviderBookings = () => {
                     <h3>{b.title || label(b.serviceType)}</h3>
                     <p className="spb-customer">
                       👤 {customer}
-                      {b.user?.phone ? ` • ${b.user.phone}` : ''}
-                      {b.user?.email ? ` • ${b.user.email}` : ''}
                     </p>
+                    {b.user?.phone && (
+                      <div className="spb-customer-contact">
+                        <PhoneLink phone={b.user.phone} size="sm" />
+                      </div>
+                    )}
+                    {b.user?.email && (
+                      <a
+                        href={`mailto:${b.user.email}`}
+                        className="spb-email-link"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        ✉️ {b.user.email}
+                      </a>
+                    )}
                     <p className="spb-datetime">
                       📅 {fmtDate(b.scheduledDate)} at {fmtTime(b.scheduledTime)}
                     </p>

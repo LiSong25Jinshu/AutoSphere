@@ -283,3 +283,39 @@
 }
 
 .spb-cost { font-size: 0.875rem; color: #16a34a; margin: 2px 0 0; }
+
+/* ── Customer contact section ──────────────────────────── */
+.spb-customer-contact {
+  margin: 4px 0 2px;
+}
+
+.spb-email-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: .8125rem;
+  color: #6b7280;
+  text-decoration: none;
+  transition: color .15s;
+}
+.spb-email-link:hover { color: #1976d2; text-decoration: underline; }
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .spb-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .spb-card-top {
+    flex-direction: column;
+  }
+
+  .spb-card-actions {
+    flex-wrap: wrap;
+  }
+
+  .spb-btn {
+    flex: 1;
+    text-align: center;
+  }
+}

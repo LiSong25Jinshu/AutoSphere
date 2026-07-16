@@ -92,7 +92,7 @@ export const serviceAPI = {
   update: (id, data) => axios.put(`/api/services/${id}`, data),
   delete: (id) => axios.delete(`/api/services/${id}`),
   getSchedule: () => axios.get('/api/services/schedule'),
-  saveSchedule: (schedule) => axios.put('/api/services/schedule', { schedule }),
+  saveSchedule: (scheduleData) => axios.put('/api/services/schedule', { schedule: scheduleData }),
 };
 
 // ─── GDPR / Privacy ───────────────────────────────────────────────────────────

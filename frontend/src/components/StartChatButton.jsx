@@ -4,7 +4,7 @@
  *
  * Usage:
  *   <StartChatButton userId={dealer.id} userName="John Smith" />
- *   <StartChatButton userId={provider.id} userName="AutoFix Ltd" label="Message Provider" />
+ *   <StartChatButton userId={provider.id} userName="AutoFix Ltd" userRole="dealer" label="Message Provider" />
  */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -12,9 +12,18 @@ import { useAuth } from '../contexts/AuthContext';
 import { messageAPI } from '../services/api';
 import './StartChatButton.css';
 
+const ROLE_LABELS = {
+  dealer:           'Dealer',
+  service_provider: 'Service Provider',
+  user:             'Customer',
+  admin:            'Admin',
+};
+
 const StartChatButton = ({
   userId,
   userName = 'this person',
+  userRole = '',           // 'dealer' | 'service_provider' | 'user'
+  userPhone = '',          // optional — shown in the modal
   label = 'Message',
   icon = '💬',
   variant = 'primary',   // 'primary' | 'outline' | 'ghost'
@@ -47,7 +56,6 @@ const StartChatButton = ({
       const res = await messageAPI.startConversation(userId, msgText.trim());
       if (res.data.success) {
         setShowModal(false);
-        // Navigate to messages with the new conversation
         navigate('/user-messages');
       }
     } catch (err) {
@@ -56,6 +64,8 @@ const StartChatButton = ({
       setLoading(false);
     }
   };
+
+  const roleLabel = ROLE_LABELS[userRole] || '';
 
   return (
     <>
@@ -76,10 +86,27 @@ const StartChatButton = ({
           <div className="scb-modal">
             <div className="scb-modal-header">
               <div className="scb-modal-title">
-                <span className="scb-modal-icon">💬</span>
+                <div className="scb-modal-avatar">
+                  {userName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)}
+                </div>
                 <div>
-                  <h3>Message {userName}</h3>
-                  <p>Start a conversation</p>
+                  <h3>{userName}</h3>
+                  <div className="scb-modal-meta">
+                    {roleLabel && (
+                      <span className={`scb-role-badge scb-role-${userRole}`}>
+                        {roleLabel}
+                      </span>
+                    )}
+                    {userPhone && (
+                      <a
+                        href={`tel:${userPhone.replace(/[\s\-().]/g, '')}`}
+                        className="scb-phone-link"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        📞 {userPhone}
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
               <button

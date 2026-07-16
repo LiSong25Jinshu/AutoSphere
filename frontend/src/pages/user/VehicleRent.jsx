@@ -412,11 +412,19 @@ function VehicleRent() {
                         {selectedVehicle.dealer.firstName} {selectedVehicle.dealer.lastName}
                       </p>
                       {selectedVehicle.dealer.phone && (
-                        <p className="vr-dealer-phone">📞 {selectedVehicle.dealer.phone}</p>
+                        <a
+                          href={`tel:${selectedVehicle.dealer.phone.replace(/[\s\-().]/g, '')}`}
+                          className="vr-dealer-phone"
+                          aria-label={`Call ${selectedVehicle.dealer.firstName}`}
+                        >
+                          📞 {selectedVehicle.dealer.phone}
+                        </a>
                       )}
                       <StartChatButton
                         userId={selectedVehicle.dealer.id}
                         userName={`${selectedVehicle.dealer.firstName} ${selectedVehicle.dealer.lastName}`}
+                        userRole="dealer"
+                        userPhone={selectedVehicle.dealer.phone || ''}
                         label="Message Dealer"
                         variant="outline"
                         size="sm"

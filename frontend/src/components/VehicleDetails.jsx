@@ -445,21 +445,39 @@ const VehicleDetails = ({ vehicleId, onFavorite, onShare, isFavorited = false })
               <List dense>
                 <ListItem>
                   <ListItemIcon><Phone /></ListItemIcon>
-                  <ListItemText 
-                    primary={vehicle.dealer.phone}
-                    secondary="Phone"
+                  <ListItemText
+                    primary={
+                      vehicle.dealer.phone
+                        ? <a
+                            href={`tel:${vehicle.dealer.phone.replace(/[\s\-().]/g, '')}`}
+                            style={{ color: '#1976d2', fontWeight: 600, textDecoration: 'none' }}
+                          >
+                            {vehicle.dealer.phone}
+                          </a>
+                        : '—'
+                    }
+                    secondary="Tap to call"
                   />
                 </ListItem>
                 <ListItem>
                   <ListItemIcon><Email /></ListItemIcon>
-                  <ListItemText 
-                    primary={vehicle.dealer.email}
+                  <ListItemText
+                    primary={
+                      vehicle.dealer.email
+                        ? <a
+                            href={`mailto:${vehicle.dealer.email}`}
+                            style={{ color: '#1976d2', textDecoration: 'none' }}
+                          >
+                            {vehicle.dealer.email}
+                          </a>
+                        : '—'
+                    }
                     secondary="Email"
                   />
                 </ListItem>
                 <ListItem>
                   <ListItemIcon><LocationOn /></ListItemIcon>
-                  <ListItemText 
+                  <ListItemText
                     primary={vehicle.dealer.address}
                     secondary="Address"
                   />

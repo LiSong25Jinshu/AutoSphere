@@ -33,12 +33,12 @@ router.get('/conversations', [
         {
           model: User,
           as: 'firstParticipant',
-          attributes: ['id', 'firstName', 'lastName', 'email'],
+          attributes: ['id', 'firstName', 'lastName', 'email', 'phone', 'role', 'businessName'],
         },
         {
           model: User,
           as: 'secondParticipant',
-          attributes: ['id', 'firstName', 'lastName', 'email'],
+          attributes: ['id', 'firstName', 'lastName', 'email', 'phone', 'role', 'businessName'],
         },
         {
           model: Message,
@@ -362,12 +362,12 @@ router.post('/conversations', [
         {
           model: User,
           as: 'firstParticipant',
-          attributes: ['id', 'firstName', 'lastName', 'email'],
+          attributes: ['id', 'firstName', 'lastName', 'email', 'phone', 'role', 'businessName'],
         },
         {
           model: User,
           as: 'secondParticipant',
-          attributes: ['id', 'firstName', 'lastName', 'email'],
+          attributes: ['id', 'firstName', 'lastName', 'email', 'phone', 'role', 'businessName'],
         },
         {
           model: Message,
