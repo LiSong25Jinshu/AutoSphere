@@ -188,3 +188,62 @@
   animation: scb-spin 0.7s linear infinite;
 }
 @keyframes scb-spin { to { transform: rotate(360deg); } }
+
+/* ── Modal avatar (updated header) ──────────────────────── */
+.scb-modal-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #1976d2;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ── Role & phone meta row ───────────────────────────────── */
+.scb-modal-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.scb-role-badge {
+  font-size: .72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-transform: capitalize;
+}
+.scb-role-dealer           { background: #e3f2fd; color: #1565c0; }
+.scb-role-service_provider { background: #f3e5f5; color: #6a1b9a; }
+.scb-role-user             { background: #e8f5e9; color: #2e7d32; }
+.scb-role-admin            { background: #fce4ec; color: #b71c1c; }
+
+.scb-phone-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: .8rem;
+  font-weight: 600;
+  color: #1976d2;
+  text-decoration: none;
+  background: #e8f0fe;
+  padding: 2px 8px;
+  border-radius: 999px;
+  transition: background .15s, color .15s;
+}
+.scb-phone-link:hover { background: #1976d2; color: #fff; }
+
+/* Responsive */
+@media (max-width: 480px) {
+  .scb-modal { border-radius: 14px 14px 0 0; }
+  .scb-overlay { align-items: flex-end; padding: 0; }
+  .scb-modal-footer { flex-direction: column; }
+  .scb-modal-footer button { width: 100%; text-align: center; }
+}

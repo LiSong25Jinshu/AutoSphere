@@ -16,9 +16,29 @@ import { useMessaging } from '../hooks/useMessaging';
 import { useAuth } from '../contexts/AuthContext';
 import axios from '../utils/axiosConfig.js';
 import EmojiPicker from './EmojiPicker';
+import PhoneLink from './PhoneLink';
 import './MessagingLayout.css';
 
 /* ─── helpers ─────────────────────────────────────────────────────────────── */
+const ROLE_LABELS = {
+  dealer:           { label: 'Dealer',           color: '#1565c0', bg: '#e3f2fd' },
+  service_provider: { label: 'Service Provider', color: '#6a1b9a', bg: '#f3e5f5' },
+  user:             { label: 'Customer',          color: '#2e7d32', bg: '#e8f5e9' },
+  admin:            { label: 'Admin',             color: '#b71c1c', bg: '#fce4ec' },
+};
+
+const RoleBadge = ({ role }) => {
+  if (!role) return null;
+  const meta = ROLE_LABELS[role] || { label: role, color: '#555', bg: '#f5f5f5' };
+  return (
+    <span
+      className="ml-role-badge"
+      style={{ color: meta.color, background: meta.bg }}
+    >
+      {meta.label}
+    </span>
+  );
+};
 const fmtTime = (ts) => {
   if (!ts) return '';
   return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -475,18 +495,16 @@ const MessagingLayout = ({ title = 'Messages', roleLabel = '' }) => {
                         <span className="ml-unread-badge">{unread > 99 ? '99+' : unread}</span>
                       )}
                     </div>
-                    {conv.otherParticipant?.role && (
-                      <span
-                        className="ml-role-tag"
-                        data-role={conv.otherParticipant.role}
-                      >
-                        {conv.otherParticipant.role === 'service_provider'
-                          ? 'Service Provider'
-                          : conv.otherParticipant.role === 'dealer'
-                          ? 'Dealer'
-                          : 'User'}
-                      </span>
-                    )}
+                    <div className="ml-conv-meta-row">
+                      {conv.otherRole && <RoleBadge role={conv.otherRole} />}
+                      {conv.otherPhone && (
+                        <PhoneLink
+                          phone={conv.otherPhone}
+                          size="sm"
+                          className="ml-conv-phone"
+                        />
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -513,13 +531,30 @@ const MessagingLayout = ({ title = 'Messages', roleLabel = '' }) => {
                 {isOtherOnline && <span className="ml-online-dot" />}
               </div>
               <div className="ml-chat-info">
-                <h3 className="ml-chat-name">{activeConversation.name}</h3>
+                <div className="ml-chat-name-row">
+                  <h3 className="ml-chat-name">{activeConversation.name}</h3>
+                  <RoleBadge role={activeConversation.otherRole} />
+                </div>
+                {activeConversation.otherBusinessName && (
+                  <p className="ml-chat-business">
+                    🏢 {activeConversation.otherBusinessName}
+                  </p>
+                )}
                 <p className={`ml-chat-status ${isOtherOnline ? 'online' : ''}`}>
                   {isTyping ? 'typing…' : isOtherOnline ? 'Online' : 'Offline'}
                 </p>
               </div>
             </div>
             <div className="ml-chat-header-actions">
+              {activeConversation.otherPhone && (
+                <PhoneLink
+                  phone={activeConversation.otherPhone}
+                  showIcon={true}
+                  label=""
+                  size="sm"
+                  className="ml-call-btn"
+                />
+              )}
               <button className="ml-icon-btn" title="Search in chat" aria-label="Search in chat">
                 🔍
               </button>

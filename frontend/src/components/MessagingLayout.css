@@ -332,6 +332,36 @@
   color: #111b21;
 }
 
+/* Name + role badge on the same row */
+.ml-chat-name-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+/* Business name line */
+.ml-chat-business {
+  margin: 1px 0 0;
+  font-size: .78rem;
+  color: #8696a0;
+}
+
+/* Role badge used inside the chat header */
+.ml-role-badge {
+  font-size: .68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Phone call button in chat header */
+.ml-call-btn {
+  margin-right: 4px;
+}
+
 .ml-chat-info p.ml-chat-status {
   margin: 0;
   font-size: 0.8125rem;
@@ -340,6 +370,21 @@
 
 .ml-chat-info p.ml-chat-status.online {
   color: #25d366;
+}
+
+/* Conv list: meta row (role + phone) */
+.ml-conv-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+  flex-wrap: wrap;
+}
+
+/* Phone link inside conversation list — smaller variant */
+.ml-conv-phone {
+  font-size: .72rem !important;
+  padding: 1px 6px !important;
 }
 
 /* Back button — visible only on mobile */

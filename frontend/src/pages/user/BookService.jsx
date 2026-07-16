@@ -4,6 +4,7 @@ import { appointmentService } from "../../services/appointmentService";
 import { serviceAPI } from "../../services/api";
 import { CURRENCY_SYMBOL, formatCost } from "../../utils/currency";
 import StartChatButton from "../../components/StartChatButton";
+import PhoneLink from "../../components/PhoneLink";
 import "./BookService.css";
 
 // ─── Service catalogue ────────────────────────────────────────────────────────
@@ -97,24 +98,6 @@ const SERVICE_OPTIONS = [
     description: "Comprehensive 50-point safety & roadworthiness inspection with written report",
     duration: "1–1.5 hrs",
     priceHint: `From ${CURRENCY_SYMBOL}220`,
-  },
-  {
-    value: "repair",
-    label: "General Repair",
-    icon: "🛠️",
-    category: "Repair",
-    description: "Mechanical or electrical fault diagnosis and repair — quote provided upfront",
-    duration: "Varies",
-    priceHint: "Quote on inspection",
-  },
-  {
-    value: "other",
-    label: "Washing Service",
-    icon: "🧼",
-    category: "Cleaning",
-    description: "Professional car washing and detailing services including exterior cleaning, interior vacuuming, polishing, and vehicle care packages",
-    duration: "Varies",
-    priceHint: "Quote on request",
   },
 ];
 
@@ -331,7 +314,9 @@ function BookService() {
                         )}
                       </div>
                       {prov.phone && (
-                        <div className="bs-prov-contact">📞 {prov.phone}</div>
+                        <div className="bs-prov-contact">
+                          <PhoneLink phone={prov.phone} size="sm" />
+                        </div>
                       )}
                       <div className="bs-prov-services">
                         {prov.services.map((s) => (
@@ -357,6 +342,8 @@ function BookService() {
                       <StartChatButton
                         userId={prov.id}
                         userName={`${prov.firstName} ${prov.lastName}`}
+                        userRole="service_provider"
+                        userPhone={prov.phone || ''}
                         label="Message"
                         variant="ghost"
                         size="sm"
@@ -459,7 +446,9 @@ function BookService() {
               {selectedProvider?.phone && (
                 <div className="bs-confirm-row">
                   <span className="bs-confirm-label">Contact</span>
-                  <span className="bs-confirm-value">{selectedProvider.phone}</span>
+                  <span className="bs-confirm-value">
+                    <PhoneLink phone={selectedProvider.phone} size="md" />
+                  </span>
                 </div>
               )}
               <div className="bs-confirm-row">

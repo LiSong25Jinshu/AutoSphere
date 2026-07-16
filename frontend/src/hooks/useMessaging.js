@@ -38,6 +38,10 @@ export const useMessaging = () => {
           avatar: c.otherParticipant
             ? `${c.otherParticipant.firstName?.[0] || ''}${c.otherParticipant.lastName?.[0] || ''}`
             : '?',
+          // Expose contact details for the chat header
+          otherPhone:       c.otherParticipant?.phone       || null,
+          otherRole:        c.otherParticipant?.role        || null,
+          otherBusinessName: c.otherParticipant?.businessName || null,
           lastMessage: c.lastMessage?.content || '',
           timestamp: c.lastMessage?.createdAt
             ? new Date(c.lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })

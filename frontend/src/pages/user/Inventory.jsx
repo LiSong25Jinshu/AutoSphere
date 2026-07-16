@@ -220,6 +220,8 @@ const UserInventory = () => {
                           <StartChatButton
                             userId={vehicle.dealerId}
                             userName={vehicle.dealer ? `${vehicle.dealer.firstName} ${vehicle.dealer.lastName}` : 'Dealer'}
+                            userRole="dealer"
+                            userPhone={vehicle.dealer?.phone || ''}
                             label="Message Dealer"
                             variant="ghost"
                             size="sm"
