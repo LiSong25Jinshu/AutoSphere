@@ -37,7 +37,7 @@ router.get('/by-type', async (req, res) => {
 
     // Map booking service types → ServiceOffering categories
     const categoryMap = {
-      car_wash:             ['car_wash'],
+      carwash:             ['carwash'],
       oil_change:           ['maintenance'],
       brake_service:        ['repair', 'maintenance'],
       tire_service:         ['maintenance', 'repair'],
@@ -48,8 +48,8 @@ router.get('/by-type', async (req, res) => {
       general_maintenance:  ['maintenance'],
       inspection:           ['maintenance', 'repair'],
       repair:               ['repair'],
-      Washing:              ['car_wash'],
-      other:                ['maintenance', 'repair', 'car_wash', 'other'],
+      Washing:              ['carwash'],
+      other:                ['maintenance', 'repair', 'carwash', 'other'],
     };
 
     const categories = categoryMap[serviceType] || ['maintenance', 'repair', 'other'];
@@ -119,7 +119,7 @@ router.get('/provider/:providerId', async (req, res) => {
 router.post('/', authenticateToken, [
   body('name').trim().notEmpty().isLength({ max: 200 }),
   body('description').optional().trim(),
-  body('category').isIn(['car_wash', 'maintenance', 'repair', 'other']),
+  body('category').isIn(['carwash', 'maintenance', 'repair', 'other']),
   body('price').isFloat({ min: 0 }),
   body('duration').isInt({ min: 15 }),
   body('isActive').optional().isBoolean(),
@@ -189,7 +189,7 @@ router.put('/schedule', authenticateToken, [
 router.put('/:id', authenticateToken, [
   body('name').optional().trim().notEmpty().isLength({ max: 200 }),
   body('description').optional().trim(),
-  body('category').optional().isIn(['car_wash', 'maintenance', 'repair', 'other']),
+  body('category').optional().isIn(['carwash', 'maintenance', 'repair', 'other']),
   body('price').optional().isFloat({ min: 0 }),
   body('duration').optional().isInt({ min: 15 }),
   body('isActive').optional().isBoolean(),

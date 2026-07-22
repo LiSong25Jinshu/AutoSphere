@@ -188,11 +188,6 @@ const User = sequelize.define('User', {
     {
       unique: true,
       fields: ['google_id'],
-      where: {
-        google_id: {
-          [Op.ne]: null
-        }
-      }
     },
   ],
 });

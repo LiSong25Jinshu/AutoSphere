@@ -1,0 +1,145 @@
+/*
+ * AICarFinder.css
+ * CSS class patterns extracted from autosphere-prototype/src/pages/AICarFinder.js
+ * Merged additively — no existing styles overwritten.
+ * Styled to match the AutoSphere design system (auto-theme.css variables).
+ */
+
+/* ─── Page wrapper ─────────────────────────────────────────────────────────── */
+.ai-car-finder-page {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--autosphere-space-8, 2rem);
+}
+
+.ai-car-finder-page h1 {
+  font-size: var(--autosphere-text-4xl, 2.25rem);
+  font-weight: var(--autosphere-weight-bold, 700);
+  color: var(--autosphere-dark-grey, #2c2c2c);
+  margin-bottom: var(--autosphere-space-2, 0.5rem);
+}
+
+.ai-car-finder-page .subtitle {
+  font-size: var(--autosphere-text-lg, 1.125rem);
+  color: var(--autosphere-medium-grey, #666666);
+  margin-bottom: var(--autosphere-space-8, 2rem);
+}
+
+/* ─── Filter bar ────────────────────────────────────────────────────────────── */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--autosphere-space-3, 0.75rem);
+  align-items: center;
+  margin-bottom: var(--autosphere-space-8, 2rem);
+  padding: var(--autosphere-space-4, 1rem) var(--autosphere-space-5, 1.25rem);
+  background: var(--autosphere-white, #ffffff);
+  border: 1px solid var(--autosphere-platinum, #e6e6e6);
+  border-radius: var(--autosphere-radius-lg, 0.75rem);
+  box-shadow: var(--autosphere-shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+}
+
+.filters input,
+.filters select {
+  flex: 1 1 180px;
+  padding: var(--autosphere-space-3, 0.75rem) var(--autosphere-space-4, 1rem);
+  border: 2px solid var(--autosphere-platinum, #e6e6e6);
+  border-radius: var(--autosphere-radius-md, 0.5rem);
+  font-size: var(--autosphere-text-base, 1rem);
+  color: var(--autosphere-charcoal, #1a1a1a);
+  background-color: var(--autosphere-white, #ffffff);
+  transition: border-color 0.2s ease;
+  min-height: 44px;
+}
+
+.filters input:focus,
+.filters select:focus {
+  outline: none;
+  border-color: var(--autosphere-dark-grey, #2c2c2c);
+  box-shadow: 0 0 0 3px rgba(44, 44, 44, 0.1);
+}
+
+/* ─── Car grid ──────────────────────────────────────────────────────────────── */
+.car-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--autosphere-space-6, 1.5rem);
+}
+
+/* ─── Car card ──────────────────────────────────────────────────────────────── */
+.car-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--autosphere-white, #ffffff);
+  border: 1px solid var(--autosphere-platinum, #e6e6e6);
+  border-radius: var(--autosphere-radius-xl, 1rem);
+  box-shadow: var(--autosphere-shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+  overflow: hidden;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.car-card:hover {
+  box-shadow: var(--autosphere-shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1));
+  transform: translateY(-4px);
+}
+
+.car-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  background-color: var(--autosphere-platinum, #e6e6e6);
+}
+
+/* ─── Car info ──────────────────────────────────────────────────────────────── */
+.car-info {
+  flex: 1;
+  padding: var(--autosphere-space-4, 1rem) var(--autosphere-space-5, 1.25rem);
+}
+
+.car-info h3 {
+  font-size: var(--autosphere-text-xl, 1.25rem);
+  font-weight: var(--autosphere-weight-semibold, 600);
+  color: var(--autosphere-dark-grey, #2c2c2c);
+  margin-bottom: var(--autosphere-space-2, 0.5rem);
+}
+
+.car-info p {
+  font-size: var(--autosphere-text-base, 1rem);
+  color: var(--autosphere-medium-grey, #666666);
+  margin-bottom: var(--autosphere-space-1, 0.25rem);
+}
+
+.car-card > .btn {
+  margin: 0 var(--autosphere-space-5, 1.25rem) var(--autosphere-space-4, 1rem);
+}
+
+/* ─── No results message ────────────────────────────────────────────────────── */
+.no-results {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: var(--autosphere-space-16, 4rem) var(--autosphere-space-8, 2rem);
+  font-size: var(--autosphere-text-lg, 1.125rem);
+  color: var(--autosphere-light-grey, #999999);
+}
+
+/* ─── Responsive ────────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .ai-car-finder-page {
+    padding: var(--autosphere-space-4, 1rem);
+  }
+
+  .filters {
+    flex-direction: column;
+  }
+
+  .filters input,
+  .filters select {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .car-grid {
+    grid-template-columns: 1fr;
+  }
+}

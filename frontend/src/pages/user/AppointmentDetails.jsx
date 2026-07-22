@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { appointmentService } from '../../services/appointmentService';
-import './AppointmentDetails.css';
+import './Appointments.css';
+
+import PhoneCallButton from '../../components/PhoneCallButton';
 
 const AppointmentDetails = () => {
   const { id } = useParams();
@@ -32,6 +34,9 @@ const AppointmentDetails = () => {
           provider: booking.serviceProvider ? 
             `${booking.serviceProvider.firstName} ${booking.serviceProvider.lastName}` : 
             'AutoSphere Service',
+          providerPhone: booking.serviceProvider?.phone || booking.providerPhone || booking.serviceProviderPhone || '',
+          customerPhone: booking.user?.phone || booking.customerPhone || booking.userPhone || '',
+          customerName: booking.user ? `${booking.user.firstName} ${booking.user.lastName}` : 'Customer',
           date: new Date(booking.scheduledDate).toISOString().split('T')[0],
           time: booking.scheduledTime,
           status: booking.status,
@@ -253,6 +258,22 @@ const AppointmentDetails = () => {
               </div>
               
               <div className="service-details">
+                <div className="detail-row">
+                  <span className="detail-label">Service Provider Contact:</span>
+                  <span className="detail-value">
+                    <PhoneCallButton phoneNumber={appointment.providerPhone} label="Provider Phone" />
+                  </span>
+                </div>
+
+                {appointment.customerPhone && (
+                  <div className="detail-row">
+                    <span className="detail-label">Customer Contact:</span>
+                    <span className="detail-value">
+                      <PhoneCallButton phoneNumber={appointment.customerPhone} label="Customer Phone" />
+                    </span>
+                  </div>
+                )}
+
                 <div className="detail-row">
                   <span className="detail-label">Date & Time:</span>
                   <span className="detail-value">

@@ -300,7 +300,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
 router.post('/', [
   body('serviceProviderId').isInt().withMessage('Service provider ID is required'),
   body('serviceType').isIn([
-    'car_wash', 'oil_change', 'brake_service', 'tire_service', 'engine_diagnostic',
+    'carwash', 'oil_change', 'brake_service', 'tire_service', 'engine_diagnostic',
     'transmission_service', 'air_conditioning', 'battery_service',
     'general_maintenance', 'inspection', 'repair', 'other'
   ]).withMessage('Invalid service type'),

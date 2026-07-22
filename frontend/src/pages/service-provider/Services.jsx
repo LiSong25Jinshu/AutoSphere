@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { serviceAPI } from '../../services/api';
 import './Services.css';
 
+import { formatCategory } from '../../utils/formatters';
+
 const EMPTY_FORM = {
   name: '', description: '', category: 'car_wash',
   price: '', duration: '', isActive: true,
@@ -14,7 +16,10 @@ const CATEGORIES = [
   { value: 'other', label: 'Other', icon: '⚙️' },
 ];
 
-const catLabel = (val) => CATEGORIES.find((c) => c.value === val)?.label || val;
+const catLabel = (val) => {
+  const match = CATEGORIES.find((c) => c.value === val);
+  return match ? match.label : formatCategory(val);
+};
 const catIcon = (val) => CATEGORIES.find((c) => c.value === val)?.icon || '⚙️';
 
 const ServiceProviderServices = () => {

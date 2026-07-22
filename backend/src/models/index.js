@@ -75,16 +75,15 @@ const defineAssociations = () => {
 // Initialize associations
 defineAssociations();
 
-// Sync database (only in development)
+// Sync database. Historically this ran sequelize.sync({alter:true}) in development,
+// but connectDB() (config/database.js) now owns schema synchronization there via a
+// fresh SQLite file. Re-running sync({alter:true}) on the existing file re-enters
+// Sequelize's infinite ALTER-TABLE loop on the `users` table under SQLite, which
+// prevented the server from ever binding its port. Production and test environments
+// manage their own schema, so this is intentionally a no-op.
 const syncDatabase = async () => {
-  if (process.env.NODE_ENV === 'development') {
-    try {
-      await sequelize.sync({ alter: true });
-      console.log('Database synchronized successfully');
-    } catch (error) {
-      console.error('Database synchronization failed:', error);
-    }
-  }
+  // No-op: schema sync is handled by connectDB() in development; production and
+  // tests manage their own database setup.
 };
 
 export {

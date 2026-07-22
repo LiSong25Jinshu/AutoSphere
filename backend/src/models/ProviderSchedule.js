@@ -11,7 +11,7 @@ const ProviderSchedule = sequelize.define('ProviderSchedule', {
   },
   // Store schedule as JSON: { Monday: { enabled, start, end }, ... }
   schedule: {
-    type: DataTypes.JSONB,
+    type: DataTypes.JSON,
     allowNull: false,
     defaultValue: {},
   },

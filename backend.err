@@ -1,0 +1,9 @@
+Unable to connect to PostgreSQL: Error: EBUSY: resource busy or locked, unlink 'C:\Users\computer\Desktop\claude\AutoSphere\backend\autosphere.dev.sqlite'
+    at Module.unlinkSync (node:fs:1940:11)
+    at connectDB (file:///C:/Users/computer/Desktop/claude/AutoSphere/backend/src/config/database.js:63:14)
+    at async startServer (file:///C:/Users/computer/Desktop/claude/AutoSphere/backend/src/server.js:131:5) {
+  errno: -4082,
+  code: 'EBUSY',
+  syscall: 'unlink',
+  path: 'C:\\Users\\computer\\Desktop\\claude\\AutoSphere\\backend\\autosphere.dev.sqlite'
+}

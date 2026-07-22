@@ -36,7 +36,7 @@ const Booking = sequelize.define('Booking', {
   },
   serviceType: {
     type: DataTypes.ENUM(
-      'car_wash',
+      'carwash',
       'oil_change',
       'brake_service',
       'tire_service',

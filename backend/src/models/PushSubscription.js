@@ -17,7 +17,7 @@ const PushSubscription = sequelize.define('PushSubscription', {
   },
   // JSON: { p256dh, auth }
   keys: {
-    type: DataTypes.JSONB,
+    type: DataTypes.JSON,
     allowNull: false,
   },
   userAgent: {

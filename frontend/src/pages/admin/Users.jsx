@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { userAPI } from '../../services/api';
-import './Admin.css';
+import PhoneCallButton from '../../components/PhoneCallButton';
 
 const ROLE_COLORS = { user: '#2196f3', dealer: '#ff9800', service_provider: '#9c27b0', admin: '#f44336' };
 const label = (s) => (s || '').replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
@@ -94,7 +94,7 @@ const AdminUsers = () => {
           <table className="admin-table">
             <thead>
               <tr>
-                <th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th>Actions</th>
+                <th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Status</th><th>Joined</th><th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -102,6 +102,7 @@ const AdminUsers = () => {
                 <tr key={u.id}>
                   <td className="admin-name-cell">{u.firstName} {u.lastName}</td>
                   <td className="admin-email-cell">{u.email}</td>
+                  <td className="admin-phone-cell"><PhoneCallButton phoneNumber={u.phone} label="" /></td>
                   <td>
                     <span className="admin-role-badge" style={{ background: ROLE_COLORS[u.role] || '#999' }}>
                       {label(u.role)}
