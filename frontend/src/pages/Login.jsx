@@ -11,7 +11,7 @@ const Login = () => {
     setError('');
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -20,9 +20,15 @@ const Login = () => {
       if (response.ok) {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
-        window.location.href = '/admin/users';
+        const roleHome = {
+          user: '/dashboard',
+          dealer: '/dealer-dashboard',
+          service_provider: '/service-provider-dashboard',
+          admin: '/admin-dashboard',
+        };
+        window.location.href = roleHome[data.user?.role] || '/dashboard';
       } else {
-        setError(data.error || 'Login failed');
+        setError(data.message || data.error || 'Login failed');
       }
     } catch (err) {
       setError('Network error');
@@ -72,9 +78,9 @@ const Login = () => {
         </form>
 
         <div style={{ marginTop: '24px', padding: '16px', background: '#f5f5f5', borderRadius: '8px' }}>
-          <p style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#666' }}><strong>Demo Accounts:</strong></p>
-          <p style={{ margin: '2px 0', fontSize: '12px', color: '#888' }}>Admin: admin@example.com / PASSWORD</p>
-          <p style={{ margin: '2px 0', fontSize: '12px', color: '#888' }}>User: test@example.com / password123</p>
+          <p style={{ margin: '0', fontSize: '13px', color: '#888' }}>
+            Use your registered account credentials to sign in.
+          </p>
         </div>
       </div>
     </div>

@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { adminAPI } from '../services/api';
-import SystemOverview from '../components/admin/SystemOverview';
-import UserManagement from '../components/admin/UserManagement';
-import AnalyticsReporting from '../components/admin/AnalyticsReporting';
-import ContentModeration from '../components/admin/ContentModeration';
-import './admin/Admin.css';
+import { useAuth } from '../../contexts/AuthContext';
+import { adminAPI } from '../../services/api';
+import SystemOverview from '../../components/admin/SystemOverview';
+import UserManagement from '../../components/admin/UserManagement';
+import AnalyticsReporting from '../../components/admin/AnalyticsReporting';
+import ContentModeration from '../../components/admin/ContentModeration';
+import './Admin.css';
 
 const TABS = [
   { id: 'overview',    label: '📊 Overview' },
