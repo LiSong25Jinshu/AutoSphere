@@ -1,6 +1,7 @@
 import pandas as pd
 import glob 
 import os
+import ast
 
 # COLUMN MAPPING: left side(Kaggle CSV columns -- right side(model expectations)
 
@@ -14,7 +15,7 @@ DATASET_MAPS = {
         'Engine Fuel Type':    'fuel_type',
         'Transmission Type': 'transmission',
         'Vehicle Style':   'body_type',
-        'Vehicle Size':  'description' #***
+        'Vehicle Size':  'description', #***
     },
     'Car_price_prediction.csv': {
         'name':           'make',
@@ -25,7 +26,7 @@ DATASET_MAPS = {
         'fuel':            'fuel_type',
         'transmission':    'transmission',
         'seats':           'body_type', #***
-        'Description':     'description' #***
+        'Description':     'description', #***
     },
     "OLX_cars_dataset00.csv": {
         "Make":           "make",
@@ -36,9 +37,19 @@ DATASET_MAPS = {
         'Fuel':           'fuel_type',
         'Transmission':   'transmission',
         'Body_type':      'body_type', #***
-        'Description':    'description'
+        'Description':    'description',
+        "Images URL's" :  'image_url_raw'
     }
 }
+
+def _extract_first_image_url(raw):
+    if pd.isna(raw):
+        return None
+    try:
+        urls = ast.literal_eval(raw)  # turns "['url1', 'url2']" into a real list
+        return urls[0] if urls else None
+    except (ValueError, SyntaxError):
+        return None
 
 def load_Kaggle_vehicles(data_folder='data/'):
     """
@@ -63,6 +74,8 @@ def load_Kaggle_vehicles(data_folder='data/'):
         try:
             df = pd.read_csv(filepath, low_memory=False)
             df = df.rename(columns=column_map)  # Apply this file's specific map
+            if 'image_url_raw' in df.columns:
+                df['image_url'] = df['image_url_raw'].apply(_extract_first_image_url)
             all_dfs.append(df)
         except Exception as e:
             print(f'  Skipped {filepath}: {e}')
@@ -74,8 +87,8 @@ def load_Kaggle_vehicles(data_folder='data/'):
     combined = pd.concat(all_dfs, ignore_index=True)
 
     # Keep only the columns we need
-    needed = ['make', 'model', 'year', 'price', 'mileage',
-              'fuel_type', 'transmission', 'body_type', 'description']
+    needed = ['make', 'model', 'year', 'price', 'mileage', 'fuel_type', 
+              'transmission', 'body_type', 'description', 'image_url']
     available = [c for c in needed if c in combined.columns]
     combined = combined[available].copy()
 
