@@ -7,7 +7,7 @@ import { resolve } from 'dns';
 import { features } from 'process';
 import { error, log } from 'console';
 
-const CSV_PATH = '../ai_service/data/unified_vehicles.csv';
+const CSV_PATH = '../ai_service/data_base/system_inventory.csv';
 
 // Get or Create System Dealer
 async function getOrCreateSystemDealer() {

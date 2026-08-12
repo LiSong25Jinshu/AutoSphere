@@ -51,6 +51,13 @@ describe('App', () => {
     expect(screen.getByText('Discover Your Perfect Vehicle')).toBeInTheDocument();
   });
 
+  it('renders the vehicle marketplace page on the /vehicles route', () => {
+    window.history.pushState({}, '', '/vehicles');
+    render(<App />);
+
+    expect(screen.getByRole('heading', { name: /vehicle marketplace/i })).toBeInTheDocument();
+  });
+
   it('renders Auto-style footer', () => {
     render(<App />);
     
