@@ -13,6 +13,7 @@ import CookieConsent from './components/CookieConsent';
 // Page-level lazy imports — each becomes its own JS chunk
 // Public pages
 const LandingPage = lazy(() => import('./pages/public/LandingPage'));
+const VehiclesPage = lazy(() => import('./pages/public/VehiclesPage'));
 const About = lazy(() => import('./pages/public/About'));
 const Contact = lazy(() => import('./pages/public/Contact'));
 const Login = lazy(() => import('./pages/public/Login'));
@@ -208,7 +209,7 @@ function AppContent() {
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<LandingPage />} />
-            <Route path="/vehicles" element={<LandingPage />} />
+            <Route path="/vehicles" element={<VehiclesPage />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />

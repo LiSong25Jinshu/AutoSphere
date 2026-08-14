@@ -5,9 +5,18 @@ export const vehicleService = {
   getVehicles: async (filters = {}) => {
     try {
       const response = await axios.get('/api/vehicles', { params: filters });
+      const payload = response.data || {};
+
       return {
         success: true,
-        data: response.data  // { success, data: [...], pagination: {...} }
+        data: payload.data || [],
+        pagination: payload.pagination || {
+          page: filters.page || 1,
+          limit: filters.limit || 12,
+          total: Array.isArray(payload.data) ? payload.data.length : 0,
+          pages: 1,
+        },
+        message: payload.message,
       };
     } catch (error) {
       return {
