@@ -74,10 +74,7 @@ const LandingPage = () => {
   ];
 
   const stats = [
-    { number: "15,000+", label: "Vehicles Listed" },
-    { number: "8,000+", label: "Happy Customers" },
-    { number: "750+", label: "Service Providers" },
-    { number: "65+", label: "Cities Covered" },
+  
   ];
 
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -249,7 +246,6 @@ const LandingPage = () => {
               { icon: '🚗', text: 'Access thousands of verified vehicles from trusted dealers' },
               { icon: '🔧', text: 'Book services with certified automotive professionals' },
               { icon: '🤖', text: 'Get personalized recommendations based on your preferences' },
-              { icon: '🔒', text: 'Secure transactions with buyer protection' },
               { icon: '💬', text: '24/7 customer support for all your automotive needs' },
             ].map((item, i) => (
               <div key={i} className="autosphere-why-card autosphere-hover-lift">
@@ -269,7 +265,7 @@ const LandingPage = () => {
           <div className="autosphere-join-grid">
             {[
               { icon: '🏪', text: 'Browse and purchase vehicles from trusted dealers' },
-              { icon: '📅', text: 'Book automotive services with certified providers' },
+              { icon: '📅', text: 'Book automotive services with service providers' },
               { icon: '✨', text: 'Get AI-powered vehicle recommendations' },
               { icon: '🤝', text: 'Connect with automotive professionals' },
               { icon: '🎁', text: 'Access exclusive deals and offers' },

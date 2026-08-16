@@ -218,24 +218,6 @@ const Contact = () => {
               ))}
             </div>
 
-            {/* Office Hours */}
-            <div className="office-hours">
-              <h3>Office Hours</h3>
-              <div className="hours-list">
-                <div className="hours-item">
-                  <span className="day">Monday - Friday</span>
-                  <span>9:00 AM - 6:00 PM</span>
-                </div>
-                <div className="hours-item">
-                  <span className="day">Saturday</span>
-                  <span>10:00 AM - 4:00 PM</span>
-                </div>
-                <div className="hours-item">
-                  <span className="day">Sunday</span>
-                  <span>Closed</span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -260,16 +242,6 @@ const Contact = () => {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-
-        {/* Map Section */}
-        <div className="map-section">
-          <h2>Find Us</h2>
-          <div className="map-placeholder">
-            🗺️ Interactive Map Coming Soon
-            <br />
-            <small>123 Auto Street, Car City, CC 12345</small>
           </div>
         </div>
       </div>
