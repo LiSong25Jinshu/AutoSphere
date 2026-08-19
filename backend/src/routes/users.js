@@ -5,6 +5,7 @@ import { authenticateToken, requireRole, requireAdmin } from '../middleware/auth
 import User from '../models/User.js';
 import { hashPassword } from '../utils/password.js';
 import Booking from '../models/Booking.js';
+import { sendAccountStatusEmail } from '../utils/email.js';
 
 const router = express.Router();
 
@@ -263,158 +264,8 @@ router.get('/', [
   }
 });
 
-// Get user by ID (admin only)
-router.get('/:id', authenticateToken, requireAdmin, async (req, res) => {
-  try {
-    const userId = parseInt(req.params.id);
-    
-    if (isNaN(userId)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid user ID'
-      });
-    }
-
-    const user = await User.findByPk(userId, {
-      attributes: { exclude: ['passwordHash'] },
-    });
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-
-    res.json({
-      success: true,
-      data: user,
-    });
-
-  } catch (error) {
-    console.error('Get user error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
-  }
-});
-
-// Update user role (admin only)
-router.patch('/:id/role', [
-  body('role').isIn(['user', 'dealer', 'service_provider', 'admin']),
-], authenticateToken, requireAdmin, async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        errors: errors.array()
-      });
-    }
-
-    const userId = parseInt(req.params.id);
-    
-    if (isNaN(userId)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid user ID'
-      });
-    }
-
-    const user = await User.findByPk(userId);
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-
-    // Prevent admin from changing their own role
-    if (user.id === req.user.id) {
-      return res.status(400).json({
-        success: false,
-        message: 'Cannot change your own role'
-      });
-    }
-
-    await user.update({ role: req.body.role });
-
-    res.json({
-      success: true,
-      message: 'User role updated successfully',
-      data: user.toJSON(),
-    });
-
-  } catch (error) {
-    console.error('Update user role error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
-  }
-});
-
-// Deactivate/activate user (admin only)
-router.patch('/:id/status', [
-  body('isActive').isBoolean(),
-], authenticateToken, requireAdmin, async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        errors: errors.array()
-      });
-    }
-
-    const userId = parseInt(req.params.id);
-    
-    if (isNaN(userId)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid user ID'
-      });
-    }
-
-    const user = await User.findByPk(userId);
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-
-    // Prevent admin from deactivating themselves
-    if (user.id === req.user.id) {
-      return res.status(400).json({
-        success: false,
-        message: 'Cannot change your own status'
-      });
-    }
-
-    await user.update({ isActive: req.body.isActive });
-
-    res.json({
-      success: true,
-      message: `User ${req.body.isActive ? 'activated' : 'deactivated'} successfully`,
-      data: user.toJSON(),
-    });
-
-  } catch (error) {
-    console.error('Update user status error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
-  }
-});
-
 // Search users — any authenticated user can search to start a conversation
+// ⚠️ Must be defined BEFORE /:id to avoid Express matching 'search' as an id param
 router.get('/search', [
   query('q').optional().trim(),
   query('limit').optional().isInt({ min: 1, max: 20 }),
@@ -436,7 +287,7 @@ router.get('/search', [
     const users = await User.findAll({
       where: {
         isActive: true,
-        id: { [Op.ne]: req.user.id }, // exclude self
+        id: { [Op.ne]: req.user.id },
         [Op.or]: [
           { firstName: { [Op.iLike]: searchTerm } },
           { lastName: { [Op.iLike]: searchTerm } },
@@ -455,29 +306,98 @@ router.get('/search', [
   }
 });
 
-// Get service providers (public endpoint for booking)
+// Get service providers list (public) — must be before /:id
 router.get('/service-providers/list', async (req, res) => {
   try {
     const serviceProviders = await User.findAll({
-      where: { 
-        role: 'service_provider',
-        isVerified: true,
-      },
+      where: { role: 'service_provider', isVerified: true },
       attributes: ['id', 'firstName', 'lastName', 'email', 'phone'],
       order: [['firstName', 'ASC']],
     });
+    res.json({ success: true, data: serviceProviders });
+  } catch (error) {
+    console.error('Get service providers error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Update user role (admin only)
+router.patch('/:id/role', [
+  body('role').isIn(['user', 'dealer', 'service_provider', 'admin']),
+], authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ success: false, message: 'Validation failed', errors: errors.array() });
+
+    const userId = parseInt(req.params.id);
+    if (isNaN(userId)) return res.status(400).json({ success: false, message: 'Invalid user ID' });
+
+    const user = await User.findByPk(userId);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    if (user.id === req.user.id) return res.status(400).json({ success: false, message: 'Cannot change your own role' });
+
+    await user.update({ role: req.body.role });
+    res.json({ success: true, message: 'User role updated successfully', data: user.toJSON() });
+  } catch (error) {
+    console.error('Update user role error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Deactivate/activate user (admin only)
+router.patch('/:id/status', [
+  body('isActive').isBoolean(),
+], authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ success: false, message: 'Validation failed', errors: errors.array() });
+
+    const userId = parseInt(req.params.id);
+    if (isNaN(userId)) return res.status(400).json({ success: false, message: 'Invalid user ID' });
+
+    const user = await User.findByPk(userId);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    if (user.id === req.user.id) return res.status(400).json({ success: false, message: 'Cannot change your own status' });
+
+    await user.update({ isActive: req.body.isActive });
+
+    try {
+      await sendAccountStatusEmail(user.email, user.firstName, req.body.isActive);
+    } catch (e) {
+      console.error('Failed to send account status email:', e.message);
+    }
 
     res.json({
       success: true,
-      data: serviceProviders,
+      message: `User ${req.body.isActive ? 'activated' : 'deactivated'} successfully`,
+      data: user.toJSON(),
+    });
+  } catch (error) {
+    console.error('Update user status error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Get user by ID (admin only) — keep LAST among GET routes to avoid catching named paths
+router.get('/:id', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    if (isNaN(userId)) {
+      return res.status(400).json({ success: false, message: 'Invalid user ID' });
+    }
+
+    const user = await User.findByPk(userId, {
+      attributes: { exclude: ['passwordHash'] },
     });
 
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    res.json({ success: true, data: user });
   } catch (error) {
-    console.error('Get service providers error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
+    console.error('Get user error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 

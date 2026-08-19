@@ -29,25 +29,32 @@ export const useMessaging = () => {
     try {
       const res = await messageAPI.getConversations({ limit: 50 });
       if (res.data.success) {
-        const convs = res.data.data.map((c) => ({
+        const convs = res.data.data.map((c) => {
+          const other = c.otherParticipant;
+          const otherName = other
+            ? [`${other.firstName || ''}`, `${other.lastName || ''}`]
+                .filter(Boolean)
+                .join(' ')
+                .trim() || other.email || 'Unknown'
+            : 'Unknown';
+          return {
           ...c,
           // Normalise the "other participant" for display
-          name: c.otherParticipant
-            ? `${c.otherParticipant.firstName} ${c.otherParticipant.lastName}`
-            : 'Unknown',
-          avatar: c.otherParticipant
-            ? `${c.otherParticipant.firstName?.[0] || ''}${c.otherParticipant.lastName?.[0] || ''}`
+          name: otherName,
+          avatar: other
+            ? `${other.firstName?.[0] || ''}${other.lastName?.[0] || ''}`
             : '?',
           // Expose contact details for the chat header
-          otherPhone:       c.otherParticipant?.phone       || null,
-          otherRole:        c.otherParticipant?.role        || null,
-          otherBusinessName: c.otherParticipant?.businessName || null,
+          otherPhone:       other?.phone       || null,
+          otherRole:        other?.role        || null,
+          otherBusinessName: other?.businessName || null,
           lastMessage: c.lastMessage?.content || '',
           timestamp: c.lastMessage?.createdAt
             ? new Date(c.lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             : '',
           unread: c.unreadCount || 0,
-        }));
+          };
+        });
         setConversations(convs);
         // Seed unread counts
         const counts = {};
@@ -91,18 +98,34 @@ export const useMessaging = () => {
     newSocket.on('disconnect', () => setIsConnected(false));
 
     newSocket.on('message:new', (message) => {
-      // Append to messages if it belongs to the active conversation
+      // Enrich with sender info from the active conversation participants
+      // so the Bubble component can display the sender name
+      const conv = activeConvRef.current;
+      if (conv && !message.sender) {
+        // Determine which participant sent it
+        const isFromParticipant1 = message.senderId === conv.participant1 ||
+                                   message.sender_id === conv.participant1;
+        const senderParticipant = isFromParticipant1
+          ? conv.firstParticipant
+          : conv.secondParticipant;
+        if (senderParticipant) {
+          message.sender = {
+            id: senderParticipant.id,
+            firstName: senderParticipant.firstName,
+            lastName: senderParticipant.lastName,
+          };
+        }
+      }
+
       if (activeConvRef.current?.id === message.conversationId) {
         setMessages((prev) => [...prev, message]);
       }
-      // Increment unread if not in active conversation
       if (!activeConvRef.current || message.conversationId !== activeConvRef.current.id) {
         setUnreadCounts((prev) => ({
           ...prev,
           [message.conversationId]: (prev[message.conversationId] || 0) + 1,
         }));
       }
-      // Update conversation preview
       setConversations((prev) =>
         prev.map((c) =>
           c.id === message.conversationId
@@ -178,9 +201,13 @@ export const useMessaging = () => {
     try {
       const res = await messageAPI.sendMessage(convId, content.trim());
       if (res.data.success) {
-        // Optimistically add to messages
-        setMessages((prev) => [...prev, res.data.data]);
-        // Update conversation preview
+        // The API response includes sender — use it directly
+        const msg = res.data.data;
+        // Ensure sender is populated (fallback to current user if missing)
+        if (!msg.sender && user) {
+          msg.sender = { id: user.id, firstName: user.firstName, lastName: user.lastName };
+        }
+        setMessages((prev) => [...prev, msg]);
         setConversations((prev) =>
           prev.map((c) =>
             c.id === convId ? { ...c, lastMessage: content.trim(), timestamp: 'Just now' } : c
@@ -192,12 +219,11 @@ export const useMessaging = () => {
       return false;
     }
 
-    // Stop typing
     if (socket && isConnected) {
       socket.emit('typing:stop', { conversationId: convId });
     }
     return true;
-  }, [socket, isConnected]);
+  }, [socket, isConnected, user]);
 
   const sendTypingIndicator = useCallback((isTyping) => {
     if (!activeConvRef.current || !socket || !isConnected) return;

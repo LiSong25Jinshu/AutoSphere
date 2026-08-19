@@ -1,11 +1,11 @@
 import { createContext, useContext, useEffect, useReducer, useCallback } from 'react';
-import axios from 'axios';
+import axios from '../utils/axiosConfig.js';   // ← uses Vite proxy, not raw axios
 import { useAuth } from './AuthContext';
 import usePushNotifications from '../hooks/usePushNotifications';
 import useSocket from '../hooks/useSocket';
 
 const NotificationContext = createContext();
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+// No hardcoded URL — all requests go through the Vite /api proxy
 
 const initialState = {
   notifications: [],
@@ -75,11 +75,8 @@ export const NotificationProvider = ({ children }) => {
     if (!token) return;
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
-      const { data } = await axios.get(`${API_URL}/api/notifications?limit=50`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const { data } = await axios.get('/api/notifications?limit=50');
       if (data.success) {
-        // Normalise timestamp field (DB uses createdAt, socket uses timestamp)
         const normalised = data.data.map((n) => ({
           ...n,
           timestamp: n.createdAt || n.timestamp,
@@ -128,9 +125,7 @@ export const NotificationProvider = ({ children }) => {
   const markRead = useCallback(async (id) => {
     dispatch({ type: 'MARK_READ', payload: id });
     try {
-      await axios.patch(`${API_URL}/api/notifications/${id}/read`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.patch(`/api/notifications/${id}/read`);
     } catch (err) {
       console.warn('markRead failed:', err.message);
     }
@@ -139,9 +134,7 @@ export const NotificationProvider = ({ children }) => {
   const markAllRead = useCallback(async () => {
     dispatch({ type: 'MARK_ALL_READ' });
     try {
-      await axios.patch(`${API_URL}/api/notifications/read-all`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.patch('/api/notifications/read-all');
     } catch (err) {
       console.warn('markAllRead failed:', err.message);
     }
@@ -150,9 +143,7 @@ export const NotificationProvider = ({ children }) => {
   const remove = useCallback(async (id) => {
     dispatch({ type: 'REMOVE', payload: id });
     try {
-      await axios.delete(`${API_URL}/api/notifications/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.delete(`/api/notifications/${id}`);
     } catch (err) {
       console.warn('remove notification failed:', err.message);
     }

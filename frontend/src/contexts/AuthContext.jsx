@@ -183,12 +183,13 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Login failed';
       const requiresVerification = error.response?.data?.requiresVerification || false;
+      const isDeactivated = error.response?.data?.error === 'ACCOUNT_DEACTIVATED';
       const email = error.response?.data?.email || null;
       dispatch({
         type: AUTH_ACTIONS.LOGIN_FAILURE,
         payload: errorMessage,
       });
-      return { success: false, error: errorMessage, requiresVerification, email };
+      return { success: false, error: errorMessage, requiresVerification, isDeactivated, email };
     }
   };
 

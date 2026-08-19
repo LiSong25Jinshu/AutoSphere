@@ -51,11 +51,15 @@ const getTransporter = async () => {
   } else {
     const smtpPort = Number(process.env.SMTP_PORT || 587);
 
+    // Force IPv4: the local resolver returns Gmail's IPv6 address, but this
+    // machine has no IPv6 route, so connections fail with ENETUNREACH and Node
+    // does not fall back to IPv4 on its own.
     _transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || 'smtp.gmail.com',
       port: smtpPort,
       secure: smtpPort === 465,
       auth: { user: smtpUser, pass: smtpPass },
+      connectionOptions: { family: 4 },
     });
   }
 
@@ -448,6 +452,66 @@ export const sendContactEmail = async ({ name, email, subject, message }) => {
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error('Contact email failed:', error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+// ─── ACCOUNT STATUS (deactivate / reactivate) ────────────────────────────────
+
+export const sendAccountStatusEmail = async (email, firstName, isActive) => {
+  try {
+    const subject = isActive
+      ? 'Your AutoSphere account has been reactivated'
+      : 'Your AutoSphere account has been deactivated';
+
+    const info = await sendMail({
+      from: process.env.EMAIL_FROM || '"AutoSphere" <noreply@autosphere.com>',
+      to: email,
+      subject,
+      text: isActive
+        ? `Hi ${firstName}, your AutoSphere account has been reactivated. You can log in again.`
+        : `Hi ${firstName}, your AutoSphere account has been deactivated by an administrator. Contact support@autosphere.com for assistance.`,
+      html: isActive
+        ? `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:32px 24px;border:1px solid #e9edef;border-radius:12px;">
+            <h2 style="color:#1a1a1a;margin:0 0 16px;">Account Reactivated ✅</h2>
+            <p style="color:#54656f;margin:0 0 16px;">Hi ${escapeHtml(firstName)},</p>
+            <p style="color:#54656f;margin:0 0 24px;">
+              Your AutoSphere account has been <strong>reactivated</strong>. You can now log in and access all platform features.
+            </p>
+            <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/login"
+               style="background:#1976d2;color:#fff;padding:12px 24px;text-decoration:none;border-radius:8px;display:inline-block;font-weight:600;">
+              Log In Now
+            </a>
+            <p style="color:#8696a0;font-size:.8125rem;margin-top:24px;">
+              If you did not request this change please contact us at support@autosphere.com.
+            </p>
+          </div>
+        `
+        : `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:32px 24px;border:1px solid #e9edef;border-radius:12px;">
+            <h2 style="color:#b91c1c;margin:0 0 16px;">Account Deactivated 🚫</h2>
+            <p style="color:#54656f;margin:0 0 16px;">Hi ${escapeHtml(firstName)},</p>
+            <p style="color:#54656f;margin:0 0 16px;">
+              Your AutoSphere account has been <strong>deactivated</strong> by an administrator.
+              You will no longer be able to log in until the account is reactivated.
+            </p>
+            <p style="color:#54656f;margin:0 0 24px;">
+              If you believe this is a mistake or need assistance, please contact our support team.
+            </p>
+            <a href="mailto:support@autosphere.com"
+               style="background:#1976d2;color:#fff;padding:12px 24px;text-decoration:none;border-radius:8px;display:inline-block;font-weight:600;">
+              Contact Support
+            </a>
+            <p style="color:#8696a0;font-size:.8125rem;margin-top:24px;">
+              AutoSphere Support · support@autosphere.com
+            </p>
+          </div>
+        `,
+    });
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('Account status email failed:', error.message);
     return { success: false, error: error.message };
   }
 };

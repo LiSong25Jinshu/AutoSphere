@@ -76,7 +76,7 @@ const UserDashboard = () => {
   const quickActions = [
     { title: 'Book Service', description: 'Schedule maintenance or repairs', icon: '🔧', className: 'primary', action: () => navigate('/book-service') },
     { title: 'Browse Vehicles', description: 'Find your next car', icon: '🚗', className: 'secondary', action: () => navigate('/vehicles') },
-    { title: 'Rent Vehicles', description: 'Rent your next car', icon: '🚘', className: 'secondary', action: () => navigate('/vehicles')},
+    { title: 'Rent Vehicles', description: 'Rent your next car', icon: '🚘', className: 'secondary', action: () => navigate('/rent-vehicle') },
     { title: 'Messages', description: 'Chat with dealers & providers', icon: '💬', className: 'success', action: () => navigate('/user-messages') },
     { title: 'Vehicle Insights', description: 'Track your vehicle data', icon: '📊', className: 'info', action: () => navigate('/vehicle-insights') },
   ];

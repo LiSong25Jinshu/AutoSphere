@@ -446,8 +446,8 @@ body {
   left: 0;
   right: 0;
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
   z-index: 1000;
   padding: 0;
   transition: all var(--autosphere-transition-normal);
@@ -605,8 +605,8 @@ body {
   left: 0;
   right: 0;
   background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   z-index: 1000;
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
@@ -1513,6 +1513,7 @@ body {
   left: 0;
   right: 0;
   background: rgba(255, 255, 255, 0.95);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   z-index: 1000;
   padding: var(--auto-spacing-sm) 0;

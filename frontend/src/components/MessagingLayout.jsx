@@ -89,9 +89,16 @@ const TypingIndicator = () => (
 );
 
 /* ─── Single message bubble ───────────────────────────────────────────────── */
-const Bubble = ({ msg, isOwn, onReply }) => {
+const Bubble = ({ msg, isOwn, onReply, otherName }) => {
   const time = fmtTime(msg.createdAt || msg.created_at);
   const isRead = msg.isRead || msg.is_read;
+
+  // Build sender display name — try multiple field shapes the backend may return
+  const senderName = !isOwn
+    ? (msg.sender?.firstName && msg.sender?.lastName)
+        ? `${msg.sender.firstName} ${msg.sender.lastName}`
+        : msg.sender?.firstName || msg.sender?.name || otherName || ''
+    : '';
 
   return (
     <div className={`ml-bubble-wrap ${isOwn ? 'own' : 'other'}`}>
@@ -109,10 +116,8 @@ const Bubble = ({ msg, isOwn, onReply }) => {
         )}
 
         {/* Sender name (for other's messages) */}
-        {!isOwn && msg.sender && (
-          <div className="ml-sender-name">
-            {msg.sender.firstName} {msg.sender.lastName}
-          </div>
+        {!isOwn && senderName && (
+          <div className="ml-sender-name">{senderName}</div>
         )}
 
         <div className="ml-text">{msg.content}</div>
@@ -583,10 +588,9 @@ const MessagingLayout = ({ title = 'Messages', roleLabel = '' }) => {
                   <Bubble
                     key={item.key}
                     msg={item.data}
-                    isOwn={
-                      (item.data.senderId || item.data.sender_id) === user?.id
-                    }
+                    isOwn={(item.data.senderId || item.data.sender_id) === user?.id}
                     onReply={setReplyTo}
+                    otherName={activeConversation?.name || ''}
                   />
                 )
               )

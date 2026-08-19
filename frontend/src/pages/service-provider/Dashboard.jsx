@@ -43,17 +43,17 @@ const ServiceProviderDashboard = () => {
   const statCards = stats
     ? [
         { label: "Today's Bookings", value: stats.todaysCount, icon: '📅', note: `${stats.pendingCount} pending` },
-        { label: 'Weekly Revenue', value: `GH₵ ${stats.weeklyRevenue.toLocaleString()}`, icon: '💰', note: 'This week' },
+        { label: 'Weekly Revenue', value: `GH₵ ${stats.weeklyRevenue.toLocaleString()}`, icon: 'when ', note: 'This week' },
         { label: 'Customer Rating', value: stats.avgRating ?? '—', icon: '⭐', note: stats.ratingCount ? `${stats.ratingCount} reviews` : 'No reviews yet' },
         { label: 'Completed', value: stats.completedTotal, icon: '✅', note: 'All time' },
       ]
     : [];
 
   const quickActions = [
-    { title: 'Manage Schedule', icon: '📅', path: '/service-provider/schedule' },
-    { title: 'Add Service', icon: '➕', path: '/service-provider/services' },
-    { title: 'Messages', icon: '💬', path: '/service-provider/messages' },
-    { title: 'All Bookings', icon: '📋', path: '/service-provider/bookings' },
+    { title: 'Manage Schedule', icon: '📅', path: '/service-provider/availability' },
+    { title: 'Add Service',     icon: '➕', path: '/service-provider/services' },
+    { title: 'Messages',        icon: '💬', path: '/service-provider/messages' },
+    { title: 'All Bookings',    icon: '📋', path: '/service-provider/bookings' },
   ];
 
   return (

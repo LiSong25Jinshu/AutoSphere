@@ -1,10 +1,10 @@
 import { verifyAccessToken, extractTokenFromHeader } from '../utils/jwt.js';
+import User from '../models/User.js';
 
 /**
- * Authentication middleware to verify JWT tokens
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- * @param {Function} next - Express next function
+ * Authentication middleware to verify JWT tokens.
+ * Also checks that the account is still active — deactivated accounts
+ * get a 403 ACCOUNT_DEACTIVATED response on every request.
  */
 export const authenticateToken = async (req, res, next) => {
   try {
@@ -12,13 +12,13 @@ export const authenticateToken = async (req, res, next) => {
     const token = extractTokenFromHeader(authHeader);
 
     // Development bypass for testing without database
-    // Only use bypass if no real token is provided
     if (process.env.NODE_ENV === 'development' && req.headers['x-test-mode'] === 'true' && !token) {
       req.user = {
         id: 4,
         email: 'test@autosphere.com',
         role: 'user',
         isVerified: true,
+        isActive: true,
       };
       return next();
     }
@@ -31,15 +31,35 @@ export const authenticateToken = async (req, res, next) => {
       });
     }
 
-    // Verify the token
+    // Verify the JWT signature and expiry
     const decoded = verifyAccessToken(token);
-    
-    // Add user info to request object
+
+    // ── Check account is still active in the DB ────────────────────────────
+    // We do a lightweight DB lookup so deactivation takes effect immediately
+    // without waiting for the token to expire.
+    let dbUser = null;
+    try {
+      dbUser = await User.findByPk(decoded.id, {
+        attributes: ['id', 'email', 'role', 'isVerified', 'isActive'],
+      });
+    } catch (_) {
+      // DB unavailable — fall back to token data only (development tolerance)
+    }
+
+    if (dbUser && !dbUser.isActive) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been deactivated. Please contact support.',
+        error: 'ACCOUNT_DEACTIVATED',
+      });
+    }
+
     req.user = {
       id: decoded.id,
       email: decoded.email,
       role: decoded.role,
       isVerified: decoded.isVerified,
+      isActive: dbUser ? dbUser.isActive : true,
     };
 
     next();

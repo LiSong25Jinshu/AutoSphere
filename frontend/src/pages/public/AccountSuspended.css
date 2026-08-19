@@ -1,0 +1,112 @@
+/* ── Account Suspended page ────────────────────────────── */
+.sus-page {
+  min-height: 100vh;
+  background: #f4f6f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.sus-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.10);
+  max-width: 520px;
+  width: 100%;
+  padding: 48px 40px;
+  text-align: center;
+}
+
+/* Icon */
+.sus-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  line-height: 1;
+}
+
+/* Title */
+.sus-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #b91c1c;
+  margin: 0 0 16px;
+}
+
+/* Main message */
+.sus-msg {
+  color: #374151;
+  font-size: .9375rem;
+  line-height: 1.6;
+  margin: 0 0 24px;
+}
+
+/* Reason box */
+.sus-reason-box {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 10px;
+  padding: 18px 20px;
+  text-align: left;
+  margin-bottom: 24px;
+}
+
+.sus-reason-title {
+  font-weight: 700;
+  color: #b91c1c;
+  font-size: .875rem;
+  margin: 0 0 10px;
+}
+
+.sus-reason-list {
+  margin: 0;
+  padding: 0 0 0 18px;
+  color: #6b7280;
+  font-size: .875rem;
+  line-height: 1.8;
+}
+
+/* Support text */
+.sus-support {
+  color: #6b7280;
+  font-size: .875rem;
+  line-height: 1.6;
+  margin: 0 0 24px;
+}
+
+/* Buttons */
+.sus-btn {
+  display: block;
+  width: 100%;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: .9375rem;
+  font-weight: 700;
+  text-decoration: none;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+  margin-bottom: 10px;
+  transition: opacity .15s;
+  box-sizing: border-box;
+}
+
+.sus-btn:hover { opacity: .88; }
+
+.sus-btn.primary {
+  background: #1976d2;
+  color: #fff;
+}
+
+.sus-btn.secondary {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .sus-card {
+    padding: 36px 20px;
+  }
+  .sus-title { font-size: 1.3rem; }
+}

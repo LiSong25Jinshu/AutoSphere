@@ -253,6 +253,15 @@ router.post('/login', [
     const isValid = await user.validatePassword(password);
     if (!isValid) return res.status(401).json({ success: false, message: 'Invalid email or password' });
 
+    // Block deactivated accounts
+    if (!user.isActive) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been deactivated. Please contact support at support@autosphere.com.',
+        error: 'ACCOUNT_DEACTIVATED',
+      });
+    }
+
     // Block unverified users regardless of environment
     if (!user.isVerified)
       return res.status(403).json({

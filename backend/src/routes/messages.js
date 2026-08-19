@@ -59,7 +59,11 @@ router.get('/conversations', [
     const conversationsWithUnread = conversations.map(conv => {
       const convData = conv.toJSON();
       convData.unreadCount = conv.getUnreadCount(req.user.id);
-      convData.otherParticipant = conv.getOtherParticipant(req.user.id);
+      // `getOtherParticipant` returns the other user's *id*; here we need the
+      // full user object (id, name, email, phone, role) so the UI can display it.
+      const otherParticipant =
+        conv.participant1 === req.user.id ? conv.secondParticipant : conv.firstParticipant;
+      convData.otherParticipant = otherParticipant ? otherParticipant.get({ plain: true }) : null;
       return convData;
     });
 

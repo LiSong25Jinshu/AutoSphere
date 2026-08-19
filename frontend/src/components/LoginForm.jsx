@@ -72,14 +72,19 @@ const LoginForm = () => {
     if (!validateForm()) return;
     const result = await handleLogin(formData);
     if (!result.success) {
-      // If unverified, send them to the OTP screen
+      // Deactivated account — go to the suspended page immediately
+      if (result.isDeactivated) {
+        navigate('/account-suspended', { replace: true });
+        return;
+      }
+      // Unverified — send to OTP screen
       if (result.requiresVerification) {
         navigate('/verify-email', {
           state: { email: result.email || formData.email, fromLogin: true },
         });
-      } else {
-        setLoginError(result.error);
+        return;
       }
+      setLoginError(result.error);
     }
   };
 

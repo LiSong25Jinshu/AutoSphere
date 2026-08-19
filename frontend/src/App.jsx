@@ -211,7 +211,6 @@ function AppContent() {
             {/* Public routes */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/vehicles" element={<VehiclesPage />} />
-            <Route path="/vehicles/:id" element={<VehiclesPage />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />

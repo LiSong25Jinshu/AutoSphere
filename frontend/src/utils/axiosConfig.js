@@ -106,6 +106,21 @@ axios.interceptors.response.use(
 
     // Handle 403 Forbidden
     if (error.response?.status === 403) {
+      const errCode = error.response.data?.error;
+
+      // Account deactivated — clear session and redirect to a suspended page
+      if (errCode === 'ACCOUNT_DEACTIVATED') {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('refreshToken');
+        delete axios.defaults.headers.common['Authorization'];
+
+        if (window.location.pathname !== '/account-suspended') {
+          window.location.href = '/account-suspended';
+        }
+        return Promise.reject(error);
+      }
+
       console.warn('Access forbidden:', error.response.data?.message);
     }
 

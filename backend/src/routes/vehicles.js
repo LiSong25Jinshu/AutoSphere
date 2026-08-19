@@ -392,9 +392,9 @@ router.post('/', [
   body('transmission').isIn(['manual', 'automatic', 'cvt']),
   body('bodyType').isIn(['sedan', 'suv', 'hatchback', 'coupe', 'convertible', 'truck', 'van', 'wagon']),
   body('mileage').optional().isInt({ min: 0 }),
-  body('color').optional().trim().isLength({ max: 30 }),
-  body('vin').optional().isLength({ min: 17, max: 17 }),
-  body('description').optional().trim(),
+  body('color').optional({ checkFalsy: true }).trim().isLength({ max: 30 }),
+  body('vin').optional({ checkFalsy: true }).isLength({ min: 17, max: 17 }),
+  body('description').optional({ checkFalsy: true }).trim(),
   body('features').optional().isArray(),
   body('images').optional().isArray(),
 ], authenticateToken, requireRole('dealer'), async (req, res) => {
@@ -449,6 +449,9 @@ router.put('/:id', [
   body('transmission').optional().isIn(['manual', 'automatic', 'cvt']),
   body('bodyType').optional().isIn(['sedan', 'suv', 'hatchback', 'coupe', 'convertible', 'truck', 'van', 'wagon']),
   body('status').optional().isIn(['available', 'sold', 'pending', 'reserved']),
+  body('color').optional({ checkFalsy: true }).trim().isLength({ max: 30 }),
+  body('vin').optional({ checkFalsy: true }).isLength({ min: 17, max: 17 }),
+  body('description').optional({ checkFalsy: true }).trim(),
 ], authenticateToken, requireRole('dealer'), async (req, res) => {
   try {
     const errors = validationResult(req);
