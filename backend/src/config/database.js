@@ -54,17 +54,16 @@ export const connectDB = async () => {
     if (process.env.NODE_ENV === 'development') {
       const dialect = sequelize.getDialect();
       if (dialect === 'sqlite') {
-        // Sequelize's sync() on an *existing* SQLite file can loop on the
-        // `users` table's indexes, so for local dev we always start from a
-        // fresh file. This guarantees a clean boot and avoids the hang.
+        // Avoid altering an existing SQLite database. Besides being unsafe for
+        // local data, deleting it fails when another process has the file open.
         const fs = await import('fs');
         const storage = sequelize.getQueryInterface().sequelize.options.storage;
-        if (fs.existsSync(storage)) {
-          fs.unlinkSync(storage);
-          console.log('Removed existing SQLite dev database for a clean boot');
+        if (!fs.existsSync(storage)) {
+          await sequelize.sync();
+          console.log('Database synchronized (new SQLite file)');
+        } else {
+          console.log('Using existing SQLite development database');
         }
-        await sequelize.sync();
-        console.log('Database synchronized (fresh SQLite file)');
       } else {
         await sequelize.sync({ alter: true });
         console.log('Database synchronized');

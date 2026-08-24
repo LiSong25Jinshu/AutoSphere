@@ -105,6 +105,10 @@ const MessageBubble = ({
     );
   };
 
+  const senderName =
+    message.sender?.name ||
+    [message.sender?.firstName, message.sender?.lastName].filter(Boolean).join(' ');
+
   return (
     <Box
       sx={{
@@ -133,13 +137,13 @@ const MessageBubble = ({
         }}
       >
         {/* Sender name for group conversations */}
-        {!isOwn && message.sender?.name && (
+        {!isOwn && senderName && (
           <Typography 
             variant="caption" 
             color="text.secondary"
             sx={{ ml: 1, mb: 0.5, display: 'block' }}
           >
-            {message.sender.name}
+            {senderName}
           </Typography>
         )}
 
