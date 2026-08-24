@@ -39,6 +39,22 @@ DATASET_MAPS = {
         'Body_type':      'body_type', #***
         'Description':    'description',
         "Images URL's" :  'image_url_raw'
+    },
+    "autosphere_vehicles_dataset_images.csv": {
+    'make': 'make',
+    'model': 'model',
+    'year': 'year',
+    'price': 'price',
+    'mileage': 'mileage',
+    'fuel_type': 'fuel_type',
+    'transmission': 'transmission',
+    'body_type': 'body_type',
+    'condition': 'condition',
+    'seat': 'seat',
+    'color': 'color',
+    'features': 'features',
+    'description': 'description',
+    'image_url': 'image_url'
     }
 }
 
@@ -88,7 +104,8 @@ def load_Kaggle_vehicles(data_folder='data/'):
 
     # Keep only the columns we need
     needed = ['make', 'model', 'year', 'price', 'mileage', 'fuel_type', 
-              'transmission', 'body_type', 'description', 'image_url']
+              'transmission', 'body_type', 'description',
+               'condition', 'seat', 'color', 'features', 'image_url']
     available = [c for c in needed if c in combined.columns]
     combined = combined[available].copy()
 

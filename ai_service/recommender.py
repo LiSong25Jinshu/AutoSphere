@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.decomposition import NMF
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MultiLabelBinarizer
 
 class VehicleRecommendationEngine:
     def __init__(self):
@@ -66,6 +66,7 @@ class VehicleRecommendationEngine:
         can understand.
         """
         self.vehicle_df = vehicle_df.copy()
+        vehicle_df = vehicle_df.reset_index(drop=True)
         features = pd.DataFrame()
         features['vehicle_id'] = vehicle_df['vehicle_id']
 
@@ -80,6 +81,17 @@ class VehicleRecommendationEngine:
         trans_dummies = pd.get_dummies(vehicle_df['transmission'], prefix='trans')
         body_dummies = pd.get_dummies(vehicle_df['body_type'], prefix='body')
         make_dummies = pd.get_dummies(vehicle_df['make'], prefix='make')
+        
+        # Multi-label features - a car can have several features(Bluetooth AND Sunroof AND ...)
+        raw_features = vehicle_df['features'] if 'features' in vehicle_df.columns else pd.Series([''] * len(vehicle_df))
+        feature_lists = raw_features.fillna('').apply(
+            lambda s: [f.strip() for f in str(s).split(';') if f.strip()]
+        )
+        mlb = MultiLabelBinarizer()
+        feature_dummies = pd.DataFrame(
+            mlb.fit_transform(feature_lists),
+            columns=[f'feat_{f}' for f in mlb.classes_]
+        )
 
         # Text Features - TF-IDF on description
         tfidf = TfidfVectorizer(max_features=50, stop_words='english')
@@ -91,7 +103,8 @@ class VehicleRecommendationEngine:
         # Combine all features into one big feature matrix
         feature_matrix = pd.concat([
             features[['price_norm', 'mileage_norm', 'year_norm']],
-            fuel_dummies, trans_dummies, body_dummies, make_dummies, desc_df],
+            fuel_dummies, trans_dummies, body_dummies, make_dummies,
+            feature_dummies, desc_df],
         axis=1)
 
         self.vehicle_features = feature_matrix.values
@@ -123,7 +136,7 @@ class VehicleRecommendationEngine:
     # Generate Recommendations
     def collaborative_recommendations(self, user_id, n=20):
         """Get recommendations using what similar users liked"""
-        if user_id not in self.user_id:
+        if user_id not in self.user_ids:
             return []   # New user - no history yet
 
         user_idx = self.user_ids.index(user_id)
@@ -164,6 +177,9 @@ class VehicleRecommendationEngine:
         if 'preferred_body_type' in user_preferences and user_preferences['preferred_body_type']:
             body = user_preferences['preferred_body_type'].lower()
             candidates = candidates[candidates['body_type'].str.lower() == body]
+        if 'preferred_transmission' in user_preferences and user_preferences['preferred_transmission']:
+            trans = user_preferences['preferred_transmission'].lower()
+            candidates = candidates[candidates['transmission'].str.lower() == trans]
 
         if candidates.empty:
             candidates = self.vehicle_df.copy()   # Fall back to all vehicles
@@ -187,7 +203,7 @@ class VehicleRecommendationEngine:
         # Run collab filter if model is trained
         if self.collab_model is not None and user_id in self.user_ids:
             collab = self.collaborative_recommendations(user_id, n *2)
-            for items in collab:
+            for item in collab:
                 combined[item['vehicle_id']] = 0.6 * item['score']
 
         # Always run content-based filter
@@ -210,5 +226,7 @@ class VehicleRecommendationEngine:
         if self.vehicle_df is not None:
             v = self.vehicle_df[self.vehicle_df['vehicle_id'] == vehicle_id]
             if not v.empty:
-                reasons.append(f"Matches your interest in {v.iloc[0]['make']}{v.iloc[0]['body_type']} vehicles")
+                reasons.append(f"Matches your interest in {v.iloc[0]['make']} {v.iloc[0]['body_type']} vehicles")
+                if v.iloc[0].get('features'):
+                    reasons.append(f"Includes features you're looking for: {v.iloc[0]['features']}")
         return reasons if reasons else ['Highly rated vehicle on AutoSphere']

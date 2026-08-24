@@ -7,7 +7,7 @@ import { resolve } from 'dns';
 import { features } from 'process';
 import { error, log } from 'console';
 
-const CSV_PATH = '../ai_service/data_base/system_inventory.csv';
+const CSV_PATH = '../ai_service/data/autosphere_vehicles_dataset_images.csv';
 
 // Get or Create System Dealer
 async function getOrCreateSystemDealer() {
@@ -58,6 +58,20 @@ function normalizeBodyType(raw) {
     return 'sedan';  // Fallback for unknown body types
 }
 
+function normalizeCondition(raw) {
+    const s = (raw || '').toString().toLowerCase().trim();
+    if (s.includes('foreign')) return 'foreign_used';
+    if (s.includes('local')) return 'local_used';
+    if (s.includes('certified')) return 'certified_pre_owned';
+    if (s.includes('new')) return 'new';
+    return 'used';  // fallback for the original Kaggle CSVs, which have no condition column
+}
+
+function parseFeatures(raw) {
+    if (!raw) return [];
+    return raw.toString().split(';').map(f => f.trim()).filter(Boolean);
+}
+
 function toIntorNull(v) {
     const n = parseInt(v, 10);
     return Number.isFinite(n) ? n : null;
@@ -106,12 +120,12 @@ async function seedVehicles(dealerId) {
             year,
             price,
             mileage: toIntorNull(row['mileage']),
-            condition: 'used',
+            condition: normalizeCondition(row['condition']),
             fuelType: normalizerFuelType(row['fuel_type']),
             transmission: normalizeTransmission(row['transmission']),
             bodyType: normalizeBodyType(row['body_type']),
             description: row['description'] || '',
-            features : [],
+            features : parseFeatures(row['features']),
             images: row['image_url'] ? [row['image_url']] : [],
             status: 'available',
             isfeatured: false,

@@ -72,6 +72,12 @@ def get_recommendations(user_id):
             query_preferences['preferred_body_type'] = request.args.get('body_type')
         if request.args.get('transmission'):
             query_preferences['preferred_transmission'] = request.args.get('transmission')
+        if request.args.get('usage'):
+            query_preferences['usage'] = request.args.get('usage')
+        if request.args.get('lifestyle'):
+            query_preferences['lifestyle'] = request.args.get('lifestyle')
+        if request.args.get('features'):
+            query_preferences['desired_features'] = request.args.get('features').split(',')
 
         # Safely fetch preferences from db - return empty dict if table doesn't exist
         try:

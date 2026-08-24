@@ -44,6 +44,8 @@ const CONDITION_LABELS = {
   new: "New",
   used: "Used",
   certified_pre_owned: "Certified Pre-Owned",
+  foreign_used: "Foreign Used",
+  local_used: "Local Used",
 };
 
 const FUEL_LABELS = {
