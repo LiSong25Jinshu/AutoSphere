@@ -117,7 +117,10 @@ const AICarFinder = () => {
           budget_max: budget.max,
           fuel_type: preferences.fuelType,
           body_type: preferences.bodyType,
-          transmission: preferences.transmission
+          transmission: preferences.transmission,
+		  usage: preferences.usage,
+		  lifestyle: preferences.lifestyle,
+		  features: preferences.features.join(',')
         }
       });
       

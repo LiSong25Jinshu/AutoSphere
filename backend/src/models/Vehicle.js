@@ -53,7 +53,7 @@ const Vehicle = sequelize.define('Vehicle', {
     },
   },
   condition: {
-    type: DataTypes.ENUM('new', 'used', 'certified_pre_owned'),
+    type: DataTypes.ENUM('new', 'used', 'certified_pre_owned', 'foreign_used', 'local_used'),
     allowNull: false,
     defaultValue: 'used',
   },
