@@ -18,7 +18,7 @@ const Contact = lazy(() => import('./pages/public/Contact'));
 const Login = lazy(() => import('./pages/public/Login'));
 const Register = lazy(() => import('./pages/public/Register'));
 const PrivacyPolicy = lazy(() => import('./pages/public/PrivacyPolicy'));
-const VehiclesPage = lazy(() => import('./pages/public/VehiclesPage'));
+const VehiclesPage = lazy(() => import("./pages/public/VehiclesPage"));
 
 const ProviderSignup = lazy(() => import('./pages/public/ProviderSignup'));
 const AccountSuspended = lazy(() => import('./pages/public/AccountSuspended'));
@@ -66,7 +66,6 @@ const DealerSales = lazy(() => import('./pages/dealer/Sales'));
 const ServiceProviderDashboardPage = lazy(() => import('./pages/service-provider/Dashboard'));
 const ServiceProviderBookings = lazy(() => import('./pages/service-provider/Bookings'));
 const ServiceProviderServices = lazy(() => import('./pages/service-provider/Services'));
-const ServiceProviderProfile = lazy(() => import('./pages/service-provider/Profile'));
 const ServiceProviderMessages = lazy(() => import('./pages/service-provider/Messages'));
 const ServiceProviderAvailability = lazy(() => import('./pages/service-provider/Availability'));
 const ServiceProviderProfilePage = lazy(() => import('./pages/service-provider/ProfilePage'));

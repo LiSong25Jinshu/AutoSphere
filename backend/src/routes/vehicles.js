@@ -355,9 +355,6 @@ router.get('/:id', async (req, res) => {
       });
     }
 
-    // Increment view count
-    await vehicle.incrementViewCount();
-
     // Log the view interaction for AI recommendations
     if (req.user?.id) {
       await UserVehicleInteraction.create({
@@ -395,10 +392,15 @@ router.post('/', [
   body('color').optional({ checkFalsy: true }).trim().isLength({ max: 50 }).withMessage('Color max 50 chars'),
   body('vin').optional({ checkFalsy: true }).trim().isLength({ max: 30 }).withMessage('VIN max 30 chars'),
   body('description').optional({ checkFalsy: true }).trim(),
+
   body('features').optional(),
   body('images').optional(),
   body('status').optional().toLowerCase().isIn(['available', 'sold', 'pending', 'reserved']),
   body('availabilityType').optional().toLowerCase().isIn(['sale', 'rent', 'both']),
+  body('status').optional().isIn(['available', 'sold', 'pending', 'reserved']),
+  body('features').optional().isArray(),
+  body('images').optional().isArray(),
+
 ], authenticateToken, requireRole('dealer'), async (req, res) => {
   try {
     const errors = validationResult(req);

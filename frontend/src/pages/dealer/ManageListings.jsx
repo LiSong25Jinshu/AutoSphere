@@ -90,35 +90,35 @@ const ListingCard = ({ vehicle, onUpdate, onDelete }) => {
   };
 
   return (
-    <div className={`ml-card ${vehicle.status === 'sold' ? 'ml-card--archived' : ''}`}>
+    <div className={`ml-card ${vehicle.status === 'sold' ? 'mgl-card--archived' : ''}`}>
       {/* Thumbnail */}
-      <div className="ml-card-thumb">
+      <div className="mgl-card-thumb">
         {thumb
           ? <img src={thumb} alt={`${vehicle.make} ${vehicle.model}`} />
-          : <div className="ml-card-no-photo">🚗<span>No photo</span></div>
+          : <div className="mgl-card-no-photo">🚗<span>No photo</span></div>
         }
         {vehicle.isFeatured && (
-          <div className="ml-card-featured-badge">⭐ Featured</div>
+          <div className="mgl-card-featured-badge">⭐ Featured</div>
         )}
-        <div className="ml-card-status-dot" style={{ background: meta.color }} title={meta.label} />
+        <div className="mgl-card-status-dot" style={{ background: meta.color }} title={meta.label} />
       </div>
 
       {/* Info */}
-      <div className="ml-card-body">
-        <div className="ml-card-title">
+      <div className="mgl-card-body">
+        <div className="mgl-card-title">
           {vehicle.year} {vehicle.make} {vehicle.model}
         </div>
         {vehicle.vin && (
-          <div className="ml-card-vin">VIN: {vehicle.vin}</div>
+          <div className="mgl-card-vin">VIN: {vehicle.vin}</div>
         )}
 
         {/* Price */}
-        <div className="ml-card-price-row">
+        <div className="mgl-card-price-row">
           {editingPrice ? (
             <>
-              <span className="ml-currency">{CURRENCY_SYMBOL}</span>
+              <span className="mgl-currency">{CURRENCY_SYMBOL}</span>
               <input
-                className="ml-price-input"
+                className="mgl-price-input"
                 type="number"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
@@ -126,17 +126,17 @@ const ListingCard = ({ vehicle, onUpdate, onDelete }) => {
                 autoFocus
                 min="0"
               />
-              <button className="ml-btn-save-price" onClick={savePrice} disabled={saving}>
+              <button className="mgl-btn-save-price" onClick={savePrice} disabled={saving}>
                 {saving ? '…' : '✓'}
               </button>
-              <button className="ml-btn-cancel-price" onClick={() => { setEditingPrice(false); setPrice(vehicle.price); }}>
+              <button className="mgl-btn-cancel-price" onClick={() => { setEditingPrice(false); setPrice(vehicle.price); }}>
                 ✕
               </button>
             </>
           ) : (
             <>
-              <span className="ml-card-price">{CURRENCY_SYMBOL} {Number(price).toLocaleString()}</span>
-              <button className="ml-btn-edit-price" onClick={() => setEditingPrice(true)} title="Edit price">
+              <span className="mgl-card-price">{CURRENCY_SYMBOL} {Number(price).toLocaleString()}</span>
+              <button className="mgl-btn-edit-price" onClick={() => setEditingPrice(true)} title="Edit price">
                 ✏️
               </button>
             </>
@@ -144,17 +144,17 @@ const ListingCard = ({ vehicle, onUpdate, onDelete }) => {
         </div>
 
         {/* Tags row */}
-        <div className="ml-card-tags">
-          <span className="ml-tag ml-tag--condition">{label(vehicle.condition || 'used')}</span>
-          <span className="ml-tag ml-tag--fuel">{label(vehicle.fuelType || '')}</span>
+        <div className="mgl-card-tags">
+          <span className="mgl-tag ml-tag--condition">{label(vehicle.condition || 'used')}</span>
+          <span className="mgl-tag ml-tag--fuel">{label(vehicle.fuelType || '')}</span>
           {vehicle.mileage > 0 && (
-            <span className="ml-tag">{Number(vehicle.mileage).toLocaleString()} km</span>
+            <span className="mgl-tag">{Number(vehicle.mileage).toLocaleString()} km</span>
           )}
         </div>
 
         {/* ── Quick status pills ─────────────────────────────────────── */}
-        <div className="ml-status-pills">
-          <span className="ml-status-pills-label">Status:</span>
+        <div className="mgl-status-pills">
+          <span className="mgl-status-pills-label">Status:</span>
           {VISIBILITY_OPTIONS.map((v) => (
             <button
               key={v.value}
@@ -170,12 +170,12 @@ const ListingCard = ({ vehicle, onUpdate, onDelete }) => {
         </div>
 
         {/* Controls */}
-        <div className="ml-card-controls">
+        <div className="mgl-card-controls">
           {/* Availability */}
-          <div className="ml-control-group">
-            <label className="ml-control-label">Listed for</label>
+          <div className="mgl-control-group">
+            <label className="mgl-control-label">Listed for</label>
             <select
-              className="ml-select"
+              className="mgl-select"
               value={vehicle.availabilityType || 'sale'}
               onChange={(e) => changeAvailability(e.target.value)}
             >
@@ -186,16 +186,16 @@ const ListingCard = ({ vehicle, onUpdate, onDelete }) => {
           </div>
 
           {/* Edit link to Inventory */}
-          <div className="ml-control-group">
-            <label className="ml-control-label">Edit Details</label>
-            <a href="/dealer/inventory" className="ml-edit-in-inventory" title="Edit full vehicle details in Inventory">
+          <div className="mgl-control-group">
+            <label className="mgl-control-label">Edit Details</label>
+            <a href="/dealer/inventory" className="mgl-edit-in-inventory" title="Edit full vehicle details in Inventory">
               📦 Open Inventory
             </a>
           </div>
         </div>
 
         {/* Action buttons */}
-        <div className="ml-card-actions">
+        <div className="mgl-card-actions">
           <button
             className={`ml-btn-featured ${vehicle.isFeatured ? 'active' : ''}`}
             onClick={toggleFeatured}
@@ -204,7 +204,7 @@ const ListingCard = ({ vehicle, onUpdate, onDelete }) => {
             {vehicle.isFeatured ? '⭐ Featured' : '☆ Feature'}
           </button>
           <button
-            className="ml-btn-delete"
+            className="mgl-btn-delete"
             onClick={() => {
               if (window.confirm('Remove this listing? This cannot be undone.')) onDelete(vehicle.id);
             }}
@@ -273,23 +273,23 @@ const ManageListings = () => {
   }, {});
 
   return (
-    <div className="ml-page">
-      {toast && <div className="ml-toast">{toast}</div>}
+    <div className="mgl-page">
+      {toast && <div className="mgl-toast">{toast}</div>}
 
       {/* Header */}
-      <div className="ml-header">
+      <div className="mgl-header">
         <div>
           <h1>Manage Listings</h1>
           <p>Control how your vehicles appear to buyers and renters</p>
         </div>
-        <a href="/dealer/inventory" className="ml-btn-go-inventory">
+        <a href="/dealer/inventory" className="mgl-btn-go-inventory">
           📦 Go to Inventory
         </a>
       </div>
 
       {/* Info banner — distinguish from Inventory */}
-      <div className="ml-info-banner">
-        <span className="ml-info-icon">ℹ️</span>
+      <div className="mgl-info-banner">
+        <span className="mgl-info-icon">ℹ️</span>
         <div>
           <strong>Manage Listings</strong> controls buyer-facing visibility, status, pricing, and featured flags.
           To edit vehicle specs, photos, or VIN — use{' '}
@@ -298,31 +298,31 @@ const ManageListings = () => {
       </div>
 
       {/* Summary strip */}
-      <div className="ml-summary">
+      <div className="mgl-summary">
         {VISIBILITY_OPTIONS.map((v) => (
-          <div key={v.value} className="ml-summary-card" style={{ borderTop: `3px solid ${v.color}` }}>
-            <span className="ml-summary-n" style={{ color: v.color }}>{counts[v.value] || 0}</span>
-            <span className="ml-summary-l">{v.label}</span>
+          <div key={v.value} className="mgl-summary-card" style={{ borderTop: `3px solid ${v.color}` }}>
+            <span className="mgl-summary-n" style={{ color: v.color }}>{counts[v.value] || 0}</span>
+            <span className="mgl-summary-l">{v.label}</span>
           </div>
         ))}
-        <div className="ml-summary-card" style={{ borderTop: '3px solid #1976d2' }}>
-          <span className="ml-summary-n" style={{ color: '#1976d2' }}>
+        <div className="mgl-summary-card" style={{ borderTop: '3px solid #1976d2' }}>
+          <span className="mgl-summary-n" style={{ color: '#1976d2' }}>
             {vehicles.filter((v) => v.isFeatured).length}
           </span>
-          <span className="ml-summary-l">Featured</span>
+          <span className="mgl-summary-l">Featured</span>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="ml-filters">
+      <div className="mgl-filters">
         <input
-          className="ml-search"
+          className="mgl-search"
           type="text"
           placeholder="Search make, model…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <div className="ml-filter-btns">
+        <div className="mgl-filter-btns">
           <button
             className={`ml-filter-btn ${visFilter === 'all' ? 'active' : ''}`}
             onClick={() => setVisFilter('all')}
@@ -343,18 +343,18 @@ const ManageListings = () => {
       </div>
 
       {error && (
-        <div className="ml-error">
+        <div className="mgl-error">
           {error} <button onClick={fetchVehicles}>Retry</button>
         </div>
       )}
 
       {loading ? (
-        <div className="ml-loading">
-          <div className="ml-spinner" />
+        <div className="mgl-loading">
+          <div className="mgl-spinner" />
           <p>Loading listings…</p>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="ml-empty">
+        <div className="mgl-empty">
           <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📋</div>
           <h3>No listings found</h3>
           <p>
@@ -362,12 +362,12 @@ const ManageListings = () => {
               ? 'Try a different filter or search term.'
               : 'Add vehicles in the Inventory page and they will appear here.'}
           </p>
-          <a href="/dealer/inventory" className="ml-btn-go-inventory" style={{ display: 'inline-block', marginTop: '12px' }}>
+          <a href="/dealer/inventory" className="mgl-btn-go-inventory" style={{ display: 'inline-block', marginTop: '12px' }}>
             Go to Inventory
           </a>
         </div>
       ) : (
-        <div className="ml-grid">
+        <div className="mgl-grid">
           {filtered.map((v) => (
             <ListingCard
               key={v.id}

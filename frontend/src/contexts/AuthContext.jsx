@@ -98,7 +98,7 @@ const authReducer = (state, action) => {
 };
 
 // Create context
-const AuthContext = createContext();
+export const AuthContext = createContext(null);
 
 // AuthProvider component
 export const AuthProvider = ({ children }) => {
@@ -234,6 +234,7 @@ export const AuthProvider = ({ children }) => {
         message: response.data.message || 'Registration successful!',
         requiresVerification: response.data.requiresVerification || false,
         email: response.data.email || userData.email,
+        verificationCode: response.data.verificationCode,
       };
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Registration failed';
