@@ -1,4 +1,4 @@
-﻿import express from 'express';
+import express from 'express';
 import { body, query, validationResult } from 'express-validator';
 import { Op } from 'sequelize';
 import multer from 'multer';
@@ -383,27 +383,30 @@ router.get('/:id', async (req, res) => {
 
 // Create new vehicle (dealers only)
 router.post('/', [
-  body('make').notEmpty().trim().isLength({ min: 1, max: 50 }),
-  body('model').notEmpty().trim().isLength({ min: 1, max: 50 }),
-  body('year').isInt({ min: 1900, max: new Date().getFullYear() + 2 }),
-  body('price').isFloat({ min: 0 }),
-  body('condition').isIn(['new', 'used', 'certified_pre_owned']),
-  body('fuelType').isIn(['gasoline', 'diesel', 'hybrid', 'electric', 'plug_in_hybrid']),
-  body('transmission').isIn(['manual', 'automatic', 'cvt']),
-  body('bodyType').isIn(['sedan', 'suv', 'hatchback', 'coupe', 'convertible', 'truck', 'van', 'wagon']),
-  body('mileage').optional().isInt({ min: 0 }),
-  body('color').optional({ checkFalsy: true }).trim().isLength({ max: 30 }),
-  body('vin').optional({ checkFalsy: true }).isLength({ min: 17, max: 17 }),
+  body('make').notEmpty().trim().isLength({ min: 1, max: 50 }).withMessage('Make is required (max 50 chars)'),
+  body('model').notEmpty().trim().isLength({ min: 1, max: 50 }).withMessage('Model is required (max 50 chars)'),
+  body('year').isInt({ min: 1900, max: new Date().getFullYear() + 2 }).withMessage('Valid year is required'),
+  body('price').isFloat({ min: 0 }).withMessage('Price must be a positive number'),
+  body('condition').optional().toLowerCase().isIn(['new', 'used', 'certified_pre_owned']).withMessage('Condition must be new, used, or certified_pre_owned'),
+  body('fuelType').optional().toLowerCase().isIn(['gasoline', 'diesel', 'hybrid', 'electric', 'plug_in_hybrid']).withMessage('Invalid fuel type'),
+  body('transmission').optional().toLowerCase().isIn(['manual', 'automatic', 'cvt']).withMessage('Invalid transmission'),
+  body('bodyType').optional().toLowerCase().isIn(['sedan', 'suv', 'hatchback', 'coupe', 'convertible', 'truck', 'van', 'wagon']).withMessage('Invalid body type'),
+  body('mileage').optional({ checkFalsy: true }).isInt({ min: 0 }).withMessage('Mileage must be a positive integer'),
+  body('color').optional({ checkFalsy: true }).trim().isLength({ max: 50 }).withMessage('Color max 50 chars'),
+  body('vin').optional({ checkFalsy: true }).trim().isLength({ max: 30 }).withMessage('VIN max 30 chars'),
   body('description').optional({ checkFalsy: true }).trim(),
-  body('features').optional().isArray(),
-  body('images').optional().isArray(),
+  body('features').optional(),
+  body('images').optional(),
+  body('status').optional().toLowerCase().isIn(['available', 'sold', 'pending', 'reserved']),
+  body('availabilityType').optional().toLowerCase().isIn(['sale', 'rent', 'both']),
 ], authenticateToken, requireRole('dealer'), async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      const errorMsg = errors.array().map((e) => e.msg).join(', ');
       return res.status(400).json({
         success: false,
-        message: 'Validation failed',
+        message: `Validation failed: ${errorMsg}`,
         errors: errors.array()
       });
     }
@@ -411,6 +414,15 @@ router.post('/', [
     const vehicleData = {
       ...req.body,
       dealerId: req.user.id,
+      condition: req.body.condition ? req.body.condition.toLowerCase() : 'used',
+      fuelType: req.body.fuelType ? req.body.fuelType.toLowerCase() : 'gasoline',
+      transmission: req.body.transmission ? req.body.transmission.toLowerCase() : 'automatic',
+      bodyType: req.body.bodyType ? req.body.bodyType.toLowerCase() : 'sedan',
+      status: req.body.status ? req.body.status.toLowerCase() : 'available',
+      availabilityType: req.body.availabilityType ? req.body.availabilityType.toLowerCase() : 'sale',
+      vin: req.body.vin && req.body.vin.trim() ? req.body.vin.trim() : null,
+      mileage: req.body.mileage !== undefined && req.body.mileage !== '' ? parseInt(req.body.mileage) : null,
+      price: parseFloat(req.body.price),
     };
 
     const vehicle = await Vehicle.create(vehicleData);
@@ -433,32 +445,34 @@ router.post('/', [
     
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: error.message || 'Internal server error'
     });
   }
 });
 
 // Update vehicle (dealer who owns it only)
 router.put('/:id', [
-  body('make').optional().trim().isLength({ min: 1, max: 50 }),
-  body('model').optional().trim().isLength({ min: 1, max: 50 }),
-  body('year').optional().isInt({ min: 1900, max: new Date().getFullYear() + 2 }),
-  body('price').optional().isFloat({ min: 0 }),
-  body('condition').optional().isIn(['new', 'used', 'certified_pre_owned']),
-  body('fuelType').optional().isIn(['gasoline', 'diesel', 'hybrid', 'electric', 'plug_in_hybrid']),
-  body('transmission').optional().isIn(['manual', 'automatic', 'cvt']),
-  body('bodyType').optional().isIn(['sedan', 'suv', 'hatchback', 'coupe', 'convertible', 'truck', 'van', 'wagon']),
-  body('status').optional().isIn(['available', 'sold', 'pending', 'reserved']),
-  body('color').optional({ checkFalsy: true }).trim().isLength({ max: 30 }),
-  body('vin').optional({ checkFalsy: true }).isLength({ min: 17, max: 17 }),
+  body('make').optional().trim().isLength({ min: 1, max: 50 }).withMessage('Make max 50 chars'),
+  body('model').optional().trim().isLength({ min: 1, max: 50 }).withMessage('Model max 50 chars'),
+  body('year').optional().isInt({ min: 1900, max: new Date().getFullYear() + 2 }).withMessage('Valid year is required'),
+  body('price').optional().isFloat({ min: 0 }).withMessage('Price must be a positive number'),
+  body('condition').optional().toLowerCase().isIn(['new', 'used', 'certified_pre_owned']),
+  body('fuelType').optional().toLowerCase().isIn(['gasoline', 'diesel', 'hybrid', 'electric', 'plug_in_hybrid']),
+  body('transmission').optional().toLowerCase().isIn(['manual', 'automatic', 'cvt']),
+  body('bodyType').optional().toLowerCase().isIn(['sedan', 'suv', 'hatchback', 'coupe', 'convertible', 'truck', 'van', 'wagon']),
+  body('status').optional().toLowerCase().isIn(['available', 'sold', 'pending', 'reserved']),
+  body('availabilityType').optional().toLowerCase().isIn(['sale', 'rent', 'both']),
+  body('color').optional({ checkFalsy: true }).trim().isLength({ max: 50 }),
+  body('vin').optional({ checkFalsy: true }).trim().isLength({ max: 30 }),
   body('description').optional({ checkFalsy: true }).trim(),
 ], authenticateToken, requireRole('dealer'), async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      const errorMsg = errors.array().map((e) => e.msg).join(', ');
       return res.status(400).json({
         success: false,
-        message: 'Validation failed',
+        message: `Validation failed: ${errorMsg}`,
         errors: errors.array()
       });
     }
@@ -489,7 +503,30 @@ router.put('/:id', [
       });
     }
 
-    await vehicle.update(req.body);
+    // Whitelist editable fields and map UI names → model names
+    const ALLOWED = [
+      'make', 'model', 'year', 'price', 'mileage', 'condition', 'fuelType',
+      'transmission', 'bodyType', 'color', 'vin', 'description', 'status',
+      'location', 'features', 'availabilityType',
+    ];
+    const updateData = {};
+    for (const key of ALLOWED) {
+      if (req.body[key] !== undefined) {
+        if (key === 'vin') {
+          updateData.vin = req.body.vin && req.body.vin.trim() ? req.body.vin.trim() : null;
+        } else if (key === 'price') {
+          updateData.price = parseFloat(req.body.price);
+        } else if (key === 'mileage') {
+          updateData.mileage = req.body.mileage !== '' && req.body.mileage !== null ? parseInt(req.body.mileage) : null;
+        } else {
+          updateData[key] = req.body[key];
+        }
+      }
+    }
+    // `featured` (UI) → `isFeatured` (model)
+    if (req.body.featured !== undefined) updateData.isFeatured = !!req.body.featured;
+
+    await vehicle.update(updateData);
 
     res.json({
       success: true,

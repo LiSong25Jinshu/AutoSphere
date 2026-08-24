@@ -225,6 +225,15 @@ const UserInventory = () => {
                             label="Message Dealer"
                             variant="ghost"
                             size="sm"
+                            reference={{
+                              type: 'vehicle',
+                              id: vehicle.id,
+                              title: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
+                              subtitle: vehicle.price
+                                ? `GH₵ ${Number(vehicle.price).toLocaleString()} · ${vehicle.condition}`
+                                : vehicle.condition,
+                              image: vehicle.images?.[0],
+                            }}
                           />
                         )}
                       </div>

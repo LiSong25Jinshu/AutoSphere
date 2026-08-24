@@ -39,7 +39,6 @@ const NAV_BY_ROLE = {
     { path: '/admin/reports',           label: 'Reports',        icon: 'bar-chart' },
     { path: '/admin/logs',              label: 'Logs',           icon: 'file' },
     { path: '/admin/system-settings',   label: 'System Settings',icon: 'settings' },
-    { path: '/jobs',                    label: 'Jobs',           icon: 'briefcase' },
   ],
 };
 

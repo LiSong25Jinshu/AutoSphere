@@ -247,3 +247,69 @@
   .scb-modal-footer { flex-direction: column; }
   .scb-modal-footer button { width: 100%; text-align: center; }
 }
+
+/* ── Reference card ─────────────────────────────────────── */
+.scb-ref-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f8faff;
+  border: 1.5px solid #c7d2fe;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.scb-ref-img {
+  width: 64px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 7px;
+  flex-shrink: 0;
+  background: #e5e7eb;
+}
+
+.scb-ref-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 7px;
+  background: #e0e7ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.scb-ref-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.scb-ref-type {
+  font-size: .7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: #6366f1;
+  margin-bottom: 2px;
+}
+
+.scb-ref-title {
+  font-size: .9rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.scb-ref-subtitle {
+  font-size: .78rem;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
+}

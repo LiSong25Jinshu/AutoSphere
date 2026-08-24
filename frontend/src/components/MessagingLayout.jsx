@@ -92,6 +92,7 @@ const TypingIndicator = () => (
 const Bubble = ({ msg, isOwn, onReply, otherName }) => {
   const time = fmtTime(msg.createdAt || msg.created_at);
   const isRead = msg.isRead || msg.is_read;
+  const reference = msg.metadata?.reference || msg.reference;
 
   // Build sender display name — try multiple field shapes the backend may return
   const senderName = !isOwn
@@ -118,6 +119,33 @@ const Bubble = ({ msg, isOwn, onReply, otherName }) => {
         {/* Sender name (for other's messages) */}
         {!isOwn && senderName && (
           <div className="ml-sender-name">{senderName}</div>
+        )}
+
+        {/* Reference card — vehicle / service / rental that was shared */}
+        {reference && (
+          <div className={`ml-ref-card ${isOwn ? 'own' : ''}`}>
+            {reference.image && (
+              <img
+                src={reference.image}
+                alt={reference.title || 'Reference'}
+                className="ml-ref-img"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+              />
+            )}
+            <div className="ml-ref-body">
+              <span className="ml-ref-type">
+                {reference.type === 'vehicle' ? '🚗 Vehicle' :
+                 reference.type === 'rental' ? '🔑 Rental' :
+                 reference.type === 'service' ? '🔧 Service' : '📎 Reference'}
+              </span>
+              {reference.title && (
+                <div className="ml-ref-title">{reference.title}</div>
+              )}
+              {reference.subtitle && (
+                <div className="ml-ref-subtitle">{reference.subtitle}</div>
+              )}
+            </div>
+          </div>
         )}
 
         <div className="ml-text">{msg.content}</div>
@@ -670,7 +698,7 @@ const MessagingLayout = ({ title = 'Messages', roleLabel = '' }) => {
         </div>
       ) : (
         /* Empty state */
-        <div className={`ml-chat ml-chat-empty ${mobileChatOpen ? '' : ''}`}>
+        <div className={`ml-chat ml-chat-empty ${!mobileChatOpen ? 'ml-hidden' : ''}`}>
           <div className="ml-empty-icon">💬</div>
           <h3>AutoSphere Messages</h3>
           <p>Select a conversation or start a new one</p>

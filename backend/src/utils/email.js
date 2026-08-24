@@ -23,7 +23,9 @@ const getTransporter = async () => {
   if (_transporter) return _transporter;
 
   const smtpUser = (process.env.SMTP_USER || '').trim();
-  const smtpPass = (process.env.SMTP_PASS || '').trim();
+  const smtpPass = (process.env.SMTP_PASS || '').trim().replace(/\s+/g, '');
+  const smtpHost = (process.env.SMTP_HOST || 'smtp.gmail.com').trim();
+  const smtpPort = Number(process.env.SMTP_PORT || (smtpHost.includes('gmail') ? 465 : 587));
 
   // Configured = real email + real password (not a placeholder)
   const isConfigured =
@@ -49,17 +51,18 @@ const getTransporter = async () => {
       auth: { user: testAccount.user, pass: testAccount.pass },
     });
   } else {
-    const smtpPort = Number(process.env.SMTP_PORT || 587);
+    const isGmail = smtpHost.includes('gmail');
+    const isSecure = smtpPort === 465;
 
-    // Force IPv4: the local resolver returns Gmail's IPv6 address, but this
-    // machine has no IPv6 route, so connections fail with ENETUNREACH and Node
-    // does not fall back to IPv4 on its own.
     _transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      host: smtpHost,
       port: smtpPort,
-      secure: smtpPort === 465,
+      secure: isSecure,
       auth: { user: smtpUser, pass: smtpPass },
-      connectionOptions: { family: 4 },
+      family: 4,
+      tls: {
+        rejectUnauthorized: false,
+      },
     });
   }
 
@@ -97,6 +100,10 @@ const sendMail = async (mailOptions) => {
 // ─── OTP EMAIL ───────────────────────────────────────────────────────────────
 
 export const sendOtpEmail = async (email, firstName, otp) => {
+  console.log('\n==================================================');
+  console.log(`🔑 VERIFICATION CODE FOR ${email}: ${otp}`);
+  console.log('==================================================\n');
+
   try {
     const info = await sendMail({
       from: process.env.EMAIL_FROM || '"AutoSphere" <noreply@autosphere.com>',
@@ -121,8 +128,8 @@ export const sendOtpEmail = async (email, firstName, otp) => {
     });
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('OTP email failed:', error.message);
-    return { success: false, error: error.message };
+    console.error(`⚠️ OTP email delivery failed (${error.message}). You can use the code above from console: ${otp}`);
+    return { success: false, error: error.message, otp };
   }
 };
 

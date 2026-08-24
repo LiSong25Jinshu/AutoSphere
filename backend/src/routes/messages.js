@@ -188,6 +188,7 @@ router.post('/conversations/:conversationId/messages', [
   body('content').notEmpty().trim().isLength({ min: 1, max: 5000 }),
   body('messageType').optional().isIn(['text', 'image', 'file']),
   body('replyToId').optional().isInt(),
+  body('reference').optional().isObject(),
 ], authenticateToken, async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -250,6 +251,7 @@ router.post('/conversations/:conversationId/messages', [
       content: req.body.content,
       messageType: req.body.messageType || 'text',
       replyToId: req.body.replyToId || null,
+      metadata: req.body.reference ? { reference: req.body.reference } : undefined,
     };
 
     const message = await Message.create(messageData);
@@ -307,6 +309,7 @@ router.post('/conversations', [
   body('conversationType').optional().isIn(['direct', 'support', 'booking_related']),
   body('relatedBookingId').optional().isInt(),
   body('relatedVehicleId').optional().isInt(),
+  body('reference').optional().isObject(),
 ], authenticateToken, async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -318,7 +321,7 @@ router.post('/conversations', [
       });
     }
 
-    const { participantId, initialMessage, conversationType, relatedBookingId, relatedVehicleId } = req.body;
+    const { participantId, initialMessage, conversationType, relatedBookingId, relatedVehicleId, reference } = req.body;
 
     // Check if participant exists
     const participant = await User.findByPk(participantId);
@@ -354,6 +357,7 @@ router.post('/conversations', [
       senderId: req.user.id,
       content: initialMessage,
       messageType: 'text',
+      metadata: reference ? { reference } : undefined,
     });
 
     // Update conversation

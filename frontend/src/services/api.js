@@ -62,8 +62,10 @@ export const messageAPI = {
   getConversations: (params = {}) => axios.get('/api/messages/conversations', { params }),
   getMessages: (conversationId, params = {}) =>
     axios.get(`/api/messages/conversations/${conversationId}/messages`, { params }),
-  sendMessage: (conversationId, content, messageType = 'text') =>
-    axios.post(`/api/messages/conversations/${conversationId}/messages`, { content, messageType }),
+  sendMessage: (conversationId, content, messageType = 'text', reference = null) =>
+    axios.post(`/api/messages/conversations/${conversationId}/messages`, {
+      content, messageType, ...(reference ? { reference } : {}),
+    }),
   startConversation: (participantId, initialMessage, extra = {}) =>
     axios.post('/api/messages/conversations', { participantId, initialMessage, ...extra }),
 };

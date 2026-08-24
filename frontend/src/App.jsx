@@ -18,7 +18,7 @@ const Contact = lazy(() => import('./pages/public/Contact'));
 const Login = lazy(() => import('./pages/public/Login'));
 const Register = lazy(() => import('./pages/public/Register'));
 const PrivacyPolicy = lazy(() => import('./pages/public/PrivacyPolicy'));
-const VehiclesPage = lazy(() => import('./pages/VehiclesPage'));
+const VehiclesPage = lazy(() => import('./pages/public/VehiclesPage'));
 
 const ProviderSignup = lazy(() => import('./pages/public/ProviderSignup'));
 const AccountSuspended = lazy(() => import('./pages/public/AccountSuspended'));
@@ -46,7 +46,7 @@ const AICarFinder = lazy(() => import('./pages/AICarFinder'));
 
 // Admin pages
 const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboard'));
-const AdminJobs = lazy(() => import('./pages/admin/Jobs'));
+//const AdminJobs = lazy(() => import('./pages/admin/Jobs'));
 const AdminUsers = lazy(() => import('./pages/admin/Users'));
 const AdminDealers = lazy(() => import('./pages/admin/Dealers'));
 const AdminServices = lazy(() => import('./pages/admin/Services'));
@@ -57,6 +57,7 @@ const AdminSystemSettings = lazy(() => import('./pages/admin/SystemSettings'));
 // Dealer pages
 const DealerDashboardPage = lazy(() => import('./pages/dealer/Dashboard'));
 const DealerInventory = lazy(() => import('./pages/dealer/Inventory'));
+const DealerManageListings = lazy(() => import('./pages/dealer/ManageListings'));
 const DealerMessages = lazy(() => import('./pages/dealer/Messages'));
 const DealerProfile = lazy(() => import('./pages/dealer/Profile'));
 const DealerSales = lazy(() => import('./pages/dealer/Sales'));
@@ -84,6 +85,7 @@ const PageLoader = () => (
 const ProtectedRoute = ({ children, requiredRole }) => {
   const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
+
 
   if (isLoading) {
     return <div style={{ padding: '40px 20px', textAlign: 'center' }}>Loading...</div>;
@@ -119,7 +121,7 @@ const isDashboardRoute = (path) => {
     '/notifications',
     '/profile',
     '/settings',
-    '/jobs',
+    // '/jobs',
     '/vehicle-insights',
     '/book-service',
     '/rent-vehicle',
@@ -246,7 +248,7 @@ function AppContent() {
 
             {/* ── Admin routes ── */}
             <Route path="/admin-dashboard" element={<DashboardRoute requiredRole="admin"><AdminDashboardPage /></DashboardRoute>} />
-            <Route path="/jobs" element={<DashboardRoute requiredRole="admin"><AdminJobs /></DashboardRoute>} />
+            {/* <Route path="/jobs" element={<DashboardRoute requiredRole="admin"><AdminJobs /></DashboardRoute>} /> */}
             <Route path="/admin/users" element={<DashboardRoute requiredRole="admin"><AdminUsers /></DashboardRoute>} />
             <Route path="/admin/dealers" element={<DashboardRoute requiredRole="admin"><AdminDealers /></DashboardRoute>} />
             <Route path="/admin/services" element={<DashboardRoute requiredRole="admin"><AdminServices /></DashboardRoute>} />
@@ -263,7 +265,7 @@ function AppContent() {
             <Route path="/dealer/sales" element={<DashboardRoute requiredRole="dealer"><DealerSales /></DashboardRoute>} />
             <Route path="/dealer/messages" element={<DashboardRoute requiredRole="dealer"><DealerMessages /></DashboardRoute>} />
             <Route path="/dealer/profile" element={<DashboardRoute requiredRole="dealer"><DealerProfile /></DashboardRoute>} />
-            <Route path="/dealer/manage-listings" element={<DashboardRoute requiredRole="dealer"><DealerInventory /></DashboardRoute>} />
+            <Route path="/dealer/manage-listings" element={<DashboardRoute requiredRole="dealer"><DealerManageListings /></DashboardRoute>} />
 
             {/* ── Service provider routes ── */}
             <Route path="/service-provider-dashboard" element={<DashboardRoute requiredRole="service_provider"><ServiceProviderDashboardPage /></DashboardRoute>} />

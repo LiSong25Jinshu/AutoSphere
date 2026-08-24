@@ -429,6 +429,15 @@ function VehicleRent() {
                         variant="outline"
                         size="sm"
                         className="vr-dealer-chat"
+                        reference={{
+                          type: 'rental',
+                          id: selectedVehicle.id,
+                          title: `${selectedVehicle.year} ${selectedVehicle.make} ${selectedVehicle.model}`,
+                          subtitle: selectedVehicle.price
+                            ? `GH₵ ${Number(selectedVehicle.price).toLocaleString()} / day`
+                            : undefined,
+                          image: selectedVehicle.images?.[0],
+                        }}
                       />
                     </div>
                   )}

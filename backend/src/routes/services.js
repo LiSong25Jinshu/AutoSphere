@@ -117,30 +117,36 @@ router.get('/provider/:providerId', async (req, res) => {
 
 // POST /api/services — create a service
 router.post('/', authenticateToken, [
-  body('name').trim().notEmpty().isLength({ max: 200 }),
+  body('name').trim().notEmpty().withMessage('Service name is required').isLength({ max: 200 }).withMessage('Name must be 200 characters or fewer'),
   body('description').optional().trim(),
-  body('category').isIn(['carwash', 'maintenance', 'repair', 'other']),
-  body('price').isFloat({ min: 0 }),
-  body('duration').isInt({ min: 15 }),
+  body('category').isIn(['carwash', 'car_wash', 'maintenance', 'repair', 'other']).withMessage('Category must be car_wash, maintenance, repair, or other'),
+  body('price').isFloat({ min: 0 }).withMessage('Price must be a positive number'),
+  body('duration').isInt({ min: 1 }).withMessage('Duration must be at least 1 minute'),
   body('isActive').optional().isBoolean(),
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ success: false, message: 'Validation failed', errors: errors.array() });
+    if (!errors.isEmpty()) {
+      const errorMsg = errors.array().map((e) => e.msg).join(', ');
+      return res.status(400).json({ success: false, message: `Validation failed: ${errorMsg}`, errors: errors.array() });
+    }
 
     if (req.user.role !== 'service_provider' && req.user.role !== 'admin') {
       return res.status(403).json({ success: false, message: 'Only service providers can create services' });
     }
 
+    const category = req.body.category === 'carwash' ? 'car_wash' : req.body.category;
+
     const service = await ServiceOffering.create({
       ...req.body,
+      category,
       providerId: req.user.id,
     });
 
     res.status(201).json({ success: true, data: service });
   } catch (error) {
     console.error('Create service error:', error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
+    res.status(500).json({ success: false, message: error.message || 'Internal server error' });
   }
 });
 
@@ -187,16 +193,19 @@ router.put('/schedule', authenticateToken, [
 
 // PUT /api/services/:id — update a service
 router.put('/:id', authenticateToken, [
-  body('name').optional().trim().notEmpty().isLength({ max: 200 }),
+  body('name').optional().trim().notEmpty().withMessage('Service name cannot be empty').isLength({ max: 200 }).withMessage('Name must be 200 characters or fewer'),
   body('description').optional().trim(),
-  body('category').optional().isIn(['carwash', 'maintenance', 'repair', 'other']),
-  body('price').optional().isFloat({ min: 0 }),
-  body('duration').optional().isInt({ min: 15 }),
+  body('category').optional().isIn(['carwash', 'car_wash', 'maintenance', 'repair', 'other']).withMessage('Category must be car_wash, maintenance, repair, or other'),
+  body('price').optional().isFloat({ min: 0 }).withMessage('Price must be a positive number'),
+  body('duration').optional().isInt({ min: 1 }).withMessage('Duration must be at least 1 minute'),
   body('isActive').optional().isBoolean(),
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ success: false, message: 'Validation failed', errors: errors.array() });
+    if (!errors.isEmpty()) {
+      const errorMsg = errors.array().map((e) => e.msg).join(', ');
+      return res.status(400).json({ success: false, message: `Validation failed: ${errorMsg}`, errors: errors.array() });
+    }
 
     const service = await ServiceOffering.findByPk(req.params.id);
     if (!service) return res.status(404).json({ success: false, message: 'Service not found' });
@@ -204,11 +213,14 @@ router.put('/:id', authenticateToken, [
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
 
-    await service.update(req.body);
+    const updateData = { ...req.body };
+    if (updateData.category === 'carwash') updateData.category = 'car_wash';
+
+    await service.update(updateData);
     res.json({ success: true, data: service });
   } catch (error) {
     console.error('Update service error:', error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
+    res.status(500).json({ success: false, message: error.message || 'Internal server error' });
   }
 });
 

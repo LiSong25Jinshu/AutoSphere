@@ -104,6 +104,12 @@ const Vehicle = sequelize.define('Vehicle', {
     allowNull: false,
     defaultValue: 'available',
   },
+  availabilityType: {
+    type: DataTypes.ENUM('sale', 'rent', 'both'),
+    allowNull: false,
+    defaultValue: 'sale',
+    field: 'availability_type',
+  },
   location: {
     type: DataTypes.JSON,
     allowNull: true,
@@ -162,6 +168,9 @@ const Vehicle = sequelize.define('Vehicle', {
     },
     {
       fields: ['status'],
+    },
+    {
+      fields: ['availability_type'],
     },
     {
       fields: ['is_featured'],

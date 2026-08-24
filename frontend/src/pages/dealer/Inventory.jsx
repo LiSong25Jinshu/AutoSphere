@@ -7,13 +7,14 @@ const EMPTY_FORM = {
   make: '', model: '', year: new Date().getFullYear(), price: '',
   mileage: '', condition: 'used', fuelType: 'gasoline',
   transmission: 'automatic', bodyType: 'sedan', color: '',
-  vin: '', description: '', status: 'available',
+  vin: '', description: '', status: 'available', availabilityType: 'sale',
 };
 const CONDITIONS = ['new', 'used', 'certified_pre_owned'];
 const FUEL_TYPES = ['gasoline', 'diesel', 'hybrid', 'electric', 'plug_in_hybrid'];
 const TRANSMISSIONS = ['automatic', 'manual', 'cvt'];
 const BODY_TYPES = ['sedan', 'suv', 'hatchback', 'coupe', 'convertible', 'truck', 'van', 'wagon'];
 const STATUSES = ['available', 'sold', 'pending', 'reserved'];
+const AVAILABILITY_TYPES = ['sale', 'rent', 'both'];
 
 const STATUS_COLORS = {
   available: '#4caf50', sold: '#9e9e9e', pending: '#ff9800', reserved: '#2196f3',
@@ -83,6 +84,7 @@ const DealerInventory = () => {
       fuelType: v.fuelType || 'gasoline', transmission: v.transmission || 'automatic',
       bodyType: v.bodyType || 'sedan', color: v.color || '', vin: v.vin || '',
       description: v.description || '', status: v.status || 'available',
+      availabilityType: v.availabilityType || 'sale',
     });
     setFormError('');
     setShowModal(true);
@@ -99,22 +101,40 @@ const DealerInventory = () => {
     e.preventDefault();
     setSaving(true);
     setFormError('');
+
+    // Frontend validation — catch NaN/empty price before hitting API
+    const parsedPrice = parseFloat(form.price);
+    if (!form.price || isNaN(parsedPrice) || parsedPrice < 0) {
+      setFormError('Please enter a valid price (must be a positive number).');
+      setSaving(false);
+      return;
+    }
+    if (!form.make.trim() || !form.model.trim()) {
+      setFormError('Make and Model are required.');
+      setSaving(false);
+      return;
+    }
+
     try {
       const payload = {
         ...form,
-        year: parseInt(form.year),
-        price: parseFloat(form.price),
+        year: parseInt(form.year) || new Date().getFullYear(),
+        price: parsedPrice,
         mileage: form.mileage ? parseInt(form.mileage) : undefined,
+        // Only include VIN if it's non-empty (avoids length validation failures)
+        vin: form.vin.trim() || undefined,
       };
       let savedVehicle;
       if (editing) {
         const res = await vehicleAPI.update(editing.id, payload);
-        savedVehicle = res.data?.data;
+        // Use returned data; fall back to merging the payload with existing vehicle
+        savedVehicle = res.data?.data || { ...editing, ...payload };
         setVehicles((prev) => prev.map((v) => (v.id === editing.id ? savedVehicle : v)));
         showToast('Vehicle updated successfully');
       } else {
         const res = await vehicleAPI.create(payload);
         savedVehicle = res.data?.data;
+        if (!savedVehicle) throw new Error('No vehicle data returned from server');
         setVehicles((prev) => [savedVehicle, ...prev]);
         showToast('Vehicle added successfully');
       }
@@ -132,6 +152,8 @@ const DealerInventory = () => {
           }
         } catch (photoErr) {
           console.error('Photo upload failed:', photoErr);
+          // Don't block save success — show a warning toast
+          showToast('Vehicle saved, but photo upload failed. Try uploading photos again.');
         } finally {
           setUploadingPhotos(false);
         }
@@ -139,7 +161,7 @@ const DealerInventory = () => {
 
       closeModal();
     } catch (e) {
-      setFormError(e.response?.data?.message || 'Failed to save vehicle');
+      setFormError(e.response?.data?.message || e.message || 'Failed to save vehicle');
     } finally {
       setSaving(false);
     }
@@ -166,6 +188,17 @@ const DealerInventory = () => {
       showToast('Vehicle deleted');
     } catch (e) {
       alert(e.response?.data?.message || 'Failed to delete vehicle');
+    }
+  };
+
+  const handleStatusChange = async (vehicle, newStatus) => {
+    if (vehicle.status === newStatus) return;
+    try {
+      await vehicleAPI.update(vehicle.id, { status: newStatus });
+      setVehicles((prev) => prev.map((v) => (v.id === vehicle.id ? { ...v, status: newStatus } : v)));
+      showToast(`${vehicle.make} ${vehicle.model} marked as ${label(newStatus)}`);
+    } catch (e) {
+      alert(e.response?.data?.message || 'Failed to update status');
     }
   };
 
@@ -222,9 +255,18 @@ const DealerInventory = () => {
                   <td>{v.mileage ? `${Number(v.mileage).toLocaleString()} mi` : '—'}</td>
                   <td>{label(v.condition || '')}</td>
                   <td>
-                    <span className="inv-status" style={{ background: STATUS_COLORS[v.status] || '#999' }}>
-                      {label(v.status || '')}
-                    </span>
+                    <select
+                      className="inv-status-select"
+                      value={v.status}
+                      onChange={(e) => handleStatusChange(v, e.target.value)}
+                      style={{ background: STATUS_COLORS[v.status] || '#999' }}
+                      title="Change vehicle status"
+                      aria-label={`Status for ${v.make} ${v.model}`}
+                    >
+                      {STATUSES.map((s) => (
+                        <option key={s} value={s}>{label(s)}</option>
+                      ))}
+                    </select>
                   </td>
                   <td className="inv-actions">
                     <button className="inv-btn-edit" onClick={() => openEdit(v)}>Edit</button>
@@ -318,6 +360,15 @@ const DealerInventory = () => {
                     {STATUSES.map((s) => <option key={s} value={s}>{label(s)}</option>)}
                   </select>
                 </div>
+              </div>
+              <div className="inv-form-row">
+                <div className="inv-form-group">
+                  <label>Listed for</label>
+                  <select name="availabilityType" value={form.availabilityType} onChange={handleChange}>
+                    {AVAILABILITY_TYPES.map((a) => <option key={a} value={a}>{label(a)}</option>)}
+                  </select>
+                </div>
+                <div className="inv-form-group" />
               </div>
               <div className="inv-form-group full">
                 <label>Description</label>

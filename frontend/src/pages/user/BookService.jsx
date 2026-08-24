@@ -349,6 +349,12 @@ function BookService() {
                         size="sm"
                         className="bs-prov-msg-btn"
                         onClick={(e) => e.stopPropagation()}
+                        reference={serviceType ? {
+                          type: 'service',
+                          id: prov.id,
+                          title: selectedServiceObj?.label || serviceType,
+                          subtitle: selectedServiceObj?.priceHint,
+                        } : null}
                       />
                     </div>
                   </div>
