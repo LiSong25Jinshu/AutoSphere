@@ -19,6 +19,7 @@ const Login = lazy(() => import('./pages/public/Login'));
 const Register = lazy(() => import('./pages/public/Register'));
 const PrivacyPolicy = lazy(() => import('./pages/public/PrivacyPolicy'));
 const VehiclesPage = lazy(() => import("./pages/public/VehiclesPage"));
+const VehicleDetails = lazy(() => import("./components/VehicleDetails"));
 
 const ProviderSignup = lazy(() => import('./pages/public/ProviderSignup'));
 const AccountSuspended = lazy(() => import('./pages/public/AccountSuspended'));
@@ -212,6 +213,7 @@ function AppContent() {
             {/* Public routes */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/vehicles" element={<VehiclesPage />} />
+            <Route path="/vehicles/:id" element={<VehicleDetails />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
