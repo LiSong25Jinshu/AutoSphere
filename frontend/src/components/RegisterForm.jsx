@@ -154,7 +154,11 @@ const RegisterForm = () => {
       if (result.requiresVerification) {
         // Go to OTP verification screen
         navigate('/verify-email', {
-          state: { email: result.email, fromRegistration: true },
+          state: {
+            email: result.email,
+            fromRegistration: true,
+            verificationCode: result.verificationCode,
+          },
         });
       } else {
         setRegistrationSuccess(result.message);

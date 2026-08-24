@@ -23,6 +23,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { getVehiclePrimaryImage } from '../utils/imageUtils';
+import StartChatButton from './StartChatButton';
 
 const VehicleCard = ({ 
   vehicle, 
@@ -36,12 +37,6 @@ const VehicleCard = ({
 
   const handleViewDetails = () => {
     navigate(`/vehicles/${vehicle.id}`);
-  };
-
-  const handleContact = () => {
-    navigate(`/contact/dealer/${vehicle.dealerId}`, {
-      state: { vehicleId: vehicle.id, vehicleName: vehicle.getDisplayName?.() || `${vehicle.year} ${vehicle.make} ${vehicle.model}` }
-    });
   };
 
   const formatPrice = (price) => {
@@ -248,13 +243,16 @@ const VehicleCard = ({
         >
           View Details
         </Button>
-        <Button 
-          variant="contained" 
-          fullWidth 
-          onClick={handleContact}
-        >
-          Contact Dealer
-        </Button>
+        <StartChatButton
+          userId={vehicle.dealerId}
+          userName={vehicle.dealer?.businessName || `${vehicle.dealer?.firstName || ''} ${vehicle.dealer?.lastName || ''}`.trim() || 'Dealer'}
+          userRole="dealer"
+          label="Contact Dealer"
+          relatedVehicleId={vehicle.id}
+          relatedVehicleImage={primaryImage}
+          size="sm"
+          className="vehicle-card-contact"
+        />
       </CardActions>
     </Card>
   );

@@ -48,6 +48,8 @@ import {
   NavigateNext,
 } from '@mui/icons-material';
 import { getVehicleImages } from '../utils/imageUtils';
+import axios from '../utils/axiosConfig';
+import StartChatButton from './StartChatButton';
 
 const VehicleDetails = ({ vehicleId, onFavorite, onShare, isFavorited = false }) => {
   const { id } = useParams();
@@ -72,66 +74,16 @@ const VehicleDetails = ({ vehicleId, onFavorite, onShare, isFavorited = false })
   const fetchVehicleDetails = async (id) => {
     try {
       setLoading(true);
-      // Mock API call - replace with actual API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock vehicle data
-      const mockVehicle = {
-        id: id,
-        make: 'Toyota',
-        model: 'Camry',
-        year: 2022,
-        price: 28500,
-        mileage: 15000,
-        fuelType: 'Gasoline',
-        transmission: 'Automatic',
-        bodyType: 'Sedan',
-        color: 'Silver',
-        availabilityType: 'sale',
-        isAvailable: true,
-        description: 'This well-maintained 2022 Toyota Camry offers exceptional reliability and fuel efficiency. Perfect for daily commuting or family trips. Features include advanced safety systems, comfortable interior, and modern technology.',
-        images: [
-          '/placeholder-car.jpg',
-          '/placeholder-car-2.jpg',
-          '/placeholder-car-3.jpg',
-          '/placeholder-car-4.jpg',
-        ],
-        features: [
-          'Backup Camera',
-          'Bluetooth Connectivity',
-          'Cruise Control',
-          'Keyless Entry',
-          'Power Windows',
-          'Air Conditioning',
-          'Anti-lock Brakes',
-          'Electronic Stability Control',
-          'Airbags',
-          'Power Steering',
-        ],
-        dealer: {
-          id: 1,
-          name: 'AutoSphere Motors',
-          phone: '(555) 123-4567',
-          email: 'sales@autosphere-motors.com',
-          address: '123 Auto Lane, Car City, CC 12345',
-          rating: 4.5,
-          reviewCount: 127,
-        },
-        specifications: {
-          engine: '2.5L 4-Cylinder',
-          horsepower: '203 HP',
-          torque: '184 lb-ft',
-          fuelEconomy: '28 city / 39 highway MPG',
-          drivetrain: 'Front-Wheel Drive',
-          seating: '5 passengers',
-          doors: '4 doors',
-          vin: '1HGBH41JXMN109186',
-        },
-        createdAt: '2024-01-15',
-        updatedAt: '2024-01-20',
-      };
-      
-      setVehicle(mockVehicle);
+      const response = await axios.get(`/api/vehicles/${id}`);
+      const data = response.data?.data;
+      if (!data) throw new Error('Vehicle not found');
+      setVehicle({
+        ...data,
+        images: getVehicleImages(data),
+        features: Array.isArray(data.features) ? data.features : [],
+        specifications: data.specifications || {},
+        dealer: data.dealer || {},
+      });
     } catch (err) {
       setError('Failed to load vehicle details');
     } finally {
@@ -142,15 +94,6 @@ const VehicleDetails = ({ vehicleId, onFavorite, onShare, isFavorited = false })
   const handleImageClick = (index) => {
     setSelectedImageIndex(index);
     setImageDialogOpen(true);
-  };
-
-  const handleContactDealer = () => {
-    navigate(`/contact/dealer/${vehicle.dealer.id}`, {
-      state: { 
-        vehicleId: vehicle.id, 
-        vehicleName: `${vehicle.year} ${vehicle.make} ${vehicle.model}` 
-      }
-    });
   };
 
   const formatPrice = (price) => {
@@ -166,7 +109,7 @@ const VehicleDetails = ({ vehicleId, onFavorite, onShare, isFavorited = false })
   };
 
   const getAvailabilityColor = (type) => {
-    switch (type) {
+    switch (type || vehicle?.status) {
       case 'sale': return 'success';
       case 'rental': return 'info';
       case 'both': return 'warning';
@@ -175,7 +118,7 @@ const VehicleDetails = ({ vehicleId, onFavorite, onShare, isFavorited = false })
   };
 
   const getAvailabilityText = (type) => {
-    switch (type) {
+    switch (type || vehicle?.status) {
       case 'sale': return 'For Sale';
       case 'rental': return 'For Rent';
       case 'both': return 'Sale & Rent';
@@ -412,15 +355,16 @@ const VehicleDetails = ({ vehicleId, onFavorite, onShare, isFavorited = false })
                 </ListItem>
               </List>
 
-              <Button
-                variant="contained"
-                fullWidth
-                size="large"
-                onClick={handleContactDealer}
-                sx={{ mt: 2 }}
-              >
-                Contact Dealer
-              </Button>
+              <StartChatButton
+                userId={vehicle.dealer?.id}
+                userName={vehicle.dealer?.businessName || `${vehicle.dealer?.firstName || ''} ${vehicle.dealer?.lastName || ''}`.trim() || 'Dealer'}
+                userRole="dealer"
+                label="Contact Dealer"
+                relatedVehicleId={vehicle.id}
+                relatedVehicleImage={vehicleImages[0]}
+                size="lg"
+                className="vehicle-details-contact"
+              />
             </CardContent>
           </Card>
 
@@ -534,7 +478,7 @@ const VehicleDetails = ({ vehicleId, onFavorite, onShare, isFavorited = false })
       {/* Floating Action Button for mobile contact */}
       <Fab
         color="primary"
-        onClick={handleContactDealer}
+                onClick={() => document.querySelector('.vehicle-details-contact')?.click()}
         sx={{
           position: 'fixed',
           bottom: 16,

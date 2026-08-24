@@ -355,9 +355,6 @@ router.get('/:id', async (req, res) => {
       });
     }
 
-    // Increment view count
-    await vehicle.incrementViewCount();
-
     // Log the view interaction for AI recommendations
     if (req.user?.id) {
       await UserVehicleInteraction.create({
@@ -395,6 +392,7 @@ router.post('/', [
   body('color').optional({ checkFalsy: true }).trim().isLength({ max: 30 }),
   body('vin').optional({ checkFalsy: true }).isLength({ min: 17, max: 17 }),
   body('description').optional({ checkFalsy: true }).trim(),
+  body('status').optional().isIn(['available', 'sold', 'pending', 'reserved']),
   body('features').optional().isArray(),
   body('images').optional().isArray(),
 ], authenticateToken, requireRole('dealer'), async (req, res) => {

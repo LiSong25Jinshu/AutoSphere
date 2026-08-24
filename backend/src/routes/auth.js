@@ -138,8 +138,10 @@ saveOtp(email, otp);
 console.log('OTP:', otp);
 console.log('Sending email to:', email);
 
-try {
-  const result = await sendOtpEmail(email, firstName, otp);
+    let emailSent = false;
+    try {
+      const result = await sendOtpEmail(email, firstName, otp);
+      emailSent = result?.success === true;
   console.log('Email result:', result);
 } catch (e) {
   console.error('Failed to send OTP email:', e);
@@ -148,8 +150,11 @@ try {
     res.status(201).json({
       success: true,
       requiresVerification: true,
-      message: 'Account created! Please check your email for a 6-digit verification code.',
+      message: emailSent
+        ? 'Account created! Please check your email for a 6-digit verification code.'
+        : 'Account created, but email delivery is unavailable. Use the verification code shown for local development.',
       email,
+      ...(process.env.NODE_ENV !== 'production' ? { verificationCode: otp } : {}),
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -229,7 +234,11 @@ router.post('/resend-otp', [
     const otp = generateOtp();
     saveOtp(email, otp);
     try { await sendOtpEmail(email, user.firstName, otp); } catch (e) { console.error(e); }
-    res.json({ success: true, message: 'A new verification code has been sent to your email.' });
+    res.json({
+      success: true,
+      message: 'A new verification code has been sent to your email.',
+      ...(process.env.NODE_ENV !== 'production' ? { verificationCode: otp } : {}),
+    });
   } catch (error) {
     console.error('Resend OTP error:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });

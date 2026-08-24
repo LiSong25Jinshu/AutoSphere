@@ -6,9 +6,9 @@
  *   <StartChatButton userId={dealer.id} userName="John Smith" />
  *   <StartChatButton userId={provider.id} userName="AutoFix Ltd" userRole="dealer" label="Message Provider" />
  */
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { AuthContext } from '../contexts/AuthContext';
 import { messageAPI } from '../services/api';
 import './StartChatButton.css';
 
@@ -29,9 +29,12 @@ const StartChatButton = ({
   variant = 'primary',   // 'primary' | 'outline' | 'ghost'
   size = 'md',           // 'sm' | 'md' | 'lg'
   className = '',
+  relatedVehicleId = null,
+  relatedVehicleImage = '',
 }) => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const auth = useContext(AuthContext);
+  const isAuthenticated = auth?.isAuthenticated || false;
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [msgText, setMsgText] = useState('');
@@ -53,7 +56,9 @@ const StartChatButton = ({
     setLoading(true);
     setError('');
     try {
-      const res = await messageAPI.startConversation(userId, msgText.trim());
+      const res = await messageAPI.startConversation(userId, msgText.trim(), {
+        relatedVehicleId: relatedVehicleId || undefined,
+      });
       if (res.data.success) {
         setShowModal(false);
         navigate('/user-messages');
@@ -120,6 +125,13 @@ const StartChatButton = ({
 
             <form onSubmit={handleSend}>
               <div className="scb-modal-body">
+                {relatedVehicleImage && (
+                  <img
+                    className="scb-related-image"
+                    src={relatedVehicleImage}
+                    alt={`Vehicle referenced in this conversation`}
+                  />
+                )}
                 <textarea
                   className="scb-textarea"
                   placeholder={`Write a message to ${userName}…`}

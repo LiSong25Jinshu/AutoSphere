@@ -95,4 +95,8 @@
   .inv-form-row { grid-template-columns: 1fr; }
   .inv-controls { flex-direction: column; }
   .inv-search { width: 100%; }
+  .inv-table-wrap { margin: 0 -1rem; border-radius: 0; }
+  .inv-table { min-width: 760px; }
+  .inv-header { align-items: flex-start; gap: 1rem; }
+  .inv-add-btn { flex-shrink: 0; padding: 0.7rem 0.9rem; }
 }
