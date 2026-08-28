@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { resolveImageUrl } from '../utils/imageUtils';
 
 const AICarFinder = () => {
   const [preferences, setPreferences] = useState({
@@ -13,6 +14,7 @@ const AICarFinder = () => {
 
   const [recommendations, setRecommendations] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const bodyTypes = ['Sedan', 'SUV', 'Hatchback', 'Coupe', 'Convertible', 'Truck', 'Wagon'];
   const fuelTypes = ['Gasoline', 'Hybrid', 'Electric', 'Diesel'];
@@ -20,48 +22,6 @@ const AICarFinder = () => {
   const usageTypes = ['Daily Commuting', 'Weekend Trips', 'Family Use', 'Business', 'Adventure'];
   const featureOptions = ['Sunroof', 'Leather Seats', 'Navigation', 'Backup Camera', 'Bluetooth', 'Heated Seats', 'All-Wheel Drive', 'Premium Audio'];
   const lifestyleOptions = ['Urban Professional', 'Family Oriented', 'Adventure Seeker', 'Eco Conscious', 'Luxury Lover', 'Budget Conscious'];
-
-  const mockRecommendations = [
-    {
-      id: 1,
-      make: 'Toyota',
-      model: 'Camry Hybrid',
-      year: 2023,
-      price: 'GH₵ 144,500',
-      mpg: '52 city / 53 highway',
-      image: '/placeholder-car.jpg',
-      aiScore: 95,
-      reasons: ['Excellent fuel economy', 'Reliable brand', 'Spacious interior', 'Advanced safety features'],
-      pros: ['Outstanding reliability', 'Great resale value', 'Comfortable ride'],
-      cons: ['Less exciting to drive', 'Road noise at highway speeds']
-    },
-    {
-      id: 2,
-      make: 'Honda',
-      model: 'CR-V',
-      year: 2023,
-      price: 'GH₵ 161,750',
-      mpg: '28 city / 34 highway',
-      image: '/placeholder-car.jpg',
-      aiScore: 92,
-      reasons: ['Perfect for families', 'Great cargo space', 'All-wheel drive available', 'Honda reliability'],
-      pros: ['Spacious interior', 'Good fuel economy', 'Strong resale value'],
-      cons: ['CVT transmission feel', 'Engine noise under acceleration']
-    },
-    {
-      id: 3,
-      make: 'BMW',
-      model: 'Model 3',
-      year: 2023,
-      price: 'GH₵ 194,950',
-      mpg: '132 MPGe',
-      image: '/placeholder-car.jpg',
-      aiScore: 89,
-      reasons: ['Zero emissions', 'Advanced technology', 'Supercharger network', 'Over-the-air updates'],
-      pros: ['Instant acceleration', 'Minimal maintenance', 'Cutting-edge tech'],
-      cons: ['Build quality concerns', 'Limited service centers']
-    }
-  ];
 
   const handleInputChange = (field, value) => {
     setPreferences(prev => ({
@@ -92,6 +52,7 @@ const AICarFinder = () => {
 
   const handleFindCars = async () => {
     setIsLoading(true);
+    setError('');
     try {
       const { default: axios } = await import('../utils/axiosConfig.js');
 
@@ -104,25 +65,24 @@ const AICarFinder = () => {
       console.log('userId:', userId); // debug line
       
       if (!userId){
-        console.error('No user ID found');
-        setIsLoading(false);
+        setError('Please sign in before requesting recommendations.');
         return;
       }
 
       const budget = parseBudget(preferences.budget);
 
-      const res = await axios.get(`/api/recommendations/${userId}`, {
-        params: {
-          budget_min: budget.min, 
-          budget_max: budget.max,
-          fuel_type: preferences.fuelType,
-          body_type: preferences.bodyType,
-          transmission: preferences.transmission,
-		  usage: preferences.usage,
-		  lifestyle: preferences.lifestyle,
-		  features: preferences.features.join(',')
-        }
-      });
+      const params = {
+        ...(budget.min !== undefined && { budget_min: budget.min }),
+        ...(budget.max !== undefined && { budget_max: budget.max }),
+        ...(preferences.fuelType && { fuel_type: preferences.fuelType.toLowerCase() }),
+        ...(preferences.bodyType && { body_type: preferences.bodyType.toLowerCase() }),
+        ...(preferences.transmission && { transmission: preferences.transmission.toLowerCase() }),
+        ...(preferences.usage && { usage: preferences.usage }),
+        ...(preferences.lifestyle && { lifestyle: preferences.lifestyle }),
+        ...(preferences.features.length > 0 && { features: preferences.features.join(',') }),
+      };
+
+      const res = await axios.get(`/api/recommendations/${userId}`, { params });
       
       const recs = (res.data.recommendations || []).map((rec) => ({
         id: rec.vehicle_id,
@@ -131,10 +91,18 @@ const AICarFinder = () => {
         year: rec.year || '',
         price: rec.price || '',
         mpg: rec.fuel_type || 'N/A',
-        image: '/placeholder-car.jpg',
-        aiScore: Math.round(rec.score *100) || 75,
+        image: resolveImageUrl(rec.image_url || rec.images?.[0]),
+        images: rec.images || (rec.image_url ? [rec.image_url] : []),
+        condition: rec.condition || null,
+        aiScore: Math.round(rec.score * 100) || 75,
+        matchStatus: rec.match_status || 'exact',
+        relaxed: Boolean(rec.relaxed),
         reasons: rec.reasons || ['Recommended based on your activity'],
-        pros: ['Available now', 'Verified listing'],
+        pros: Array.isArray(rec.features)
+          ? rec.features
+          : rec.features
+            ? rec.features.split(';').map(f => f.trim()).filter(Boolean)
+            : ['Available now', 'Verified listing'],
         cons: [],
       }));
       setRecommendations(recs.length > 0 ? recs : []);
@@ -145,6 +113,7 @@ const AICarFinder = () => {
     } catch (err) {
       console.error('AI recommendations error:', err);
       setRecommendations([]);
+      setError(err.response?.data?.message || 'Could not load AI recommendations. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -161,6 +130,7 @@ const AICarFinder = () => {
       lifestyle: ''
     });
     setRecommendations([]);
+    setError('');
   };
 
   return (
@@ -331,6 +301,11 @@ const AICarFinder = () => {
               )}
             </div>
             <div className="dashboard-card-content">
+              {error && (
+                <div role="alert" style={{ color: '#b42318', backgroundColor: '#fff1f0', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px' }}>
+                  {error}
+                </div>
+              )}
               {isLoading ? (
                 <div style={{ textAlign: 'center', padding: '60px 20px' }}>
                   <div style={{ fontSize: '48px', marginBottom: '16px' }}>🤖</div>
@@ -375,13 +350,17 @@ const AICarFinder = () => {
                         fontSize: '14px',
                         fontWeight: '600'
                       }}>
-                        AI Score: {car.aiScore}%
+                        {car.relaxed ? 'Closest match' : 'AI Score'}: {car.aiScore}%
                       </div>
 
                       <div style={{ display: 'flex', gap: '20px' }}>
-                        <img 
+                        <img
                           src={car.image} 
                           alt={`${car.make} ${car.model}`}
+                          onError={(event) => {
+                            event.currentTarget.onerror = null;
+                            event.currentTarget.src = '/images/placeholder-car.svg';
+                          }}
                           style={{ 
                             width: '120px', 
                             height: '80px', 
@@ -394,6 +373,11 @@ const AICarFinder = () => {
                           <h3 style={{ margin: '0 0 8px 0', fontSize: '20px' }}>
                             {car.year} {car.make} {car.model}
                           </h3>
+                          {car.relaxed && (
+                            <div style={{ marginBottom: '8px', fontSize: '12px', color: '#ff9800', fontWeight: 600 }}>
+                              Closest match — some preferences were not met
+                            </div>
+                          )}
                           <div style={{ display: 'flex', gap: '20px', marginBottom: '12px' }}>
                             <span style={{ fontWeight: '600', fontSize: '18px', color: '#2c2c2c' }}>
                               {car.price}
