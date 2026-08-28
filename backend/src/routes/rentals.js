@@ -4,6 +4,7 @@ import { Op } from 'sequelize';
 import { authenticateToken } from '../middleware/auth.js';
 import Vehicle from '../models/Vehicle.js';
 import User from '../models/User.js';
+import Booking from '../models/Booking.js';
 
 const router = express.Router();
 
@@ -141,12 +142,48 @@ router.post('/request', [
     const dailyRate = Math.round(parseFloat(vehicle.price) * 0.003);
     const estimatedTotal = dailyRate * days;
 
-    // Return the rental request summary — in a full implementation this would
-    // be persisted to a RentalRequest table and trigger notifications.
+    // Persist as a booking with serviceType 'other' and a rental flag in notes
+    // This lets customers see rental history in My Appointments / My Rentals
+    const title = `Rental: ${vehicle.year} ${vehicle.make} ${vehicle.model}`;
+    const rentalMeta = JSON.stringify({
+      isRental: true,
+      vehicleId,
+      vehicleName: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
+      startDate,
+      endDate,
+      pickupTime,
+      days,
+      dailyRate,
+      estimatedTotal,
+      driverLicense: driverLicense || null,
+    });
+
+    // Find or use the vehicle's dealer as serviceProvider
+    const dealerId = vehicle.dealerId;
+    if (!dealerId) {
+      return res.status(400).json({ success: false, message: 'This vehicle has no assigned dealer' });
+    }
+
+    const booking = await Booking.create({
+      userId:            req.user.id,
+      serviceProviderId: dealerId,
+      vehicleId,
+      serviceType:       'other',
+      title,
+      description:       notes || `Rental request for ${vehicle.year} ${vehicle.make} ${vehicle.model}`,
+      scheduledDate:     startDate,
+      scheduledTime:     pickupTime,
+      estimatedCost:     estimatedTotal,
+      customerNotes:     `[RENTAL] ${rentalMeta}`,
+      status:            'pending',
+      priority:          'normal',
+    });
+
     res.status(201).json({
       success: true,
       message: 'Rental request submitted successfully! The dealer will contact you to confirm.',
       data: {
+        bookingId: booking.id,
         vehicleId,
         vehicleName: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
         dealerName: vehicle.dealer ? `${vehicle.dealer.firstName} ${vehicle.dealer.lastName}` : 'Dealer',
@@ -160,10 +197,7 @@ router.post('/request', [
         notes: notes || null,
         driverLicense: driverLicense || null,
         requestedAt: new Date().toISOString(),
-        requestedBy: {
-          id: req.user.id,
-          email: req.user.email,
-        },
+        status: 'pending',
       },
     });
   } catch (error) {
@@ -173,3 +207,59 @@ router.post('/request', [
 });
 
 export default router;
+
+// ─── GET /api/rentals/my ─────────────────────────────────────────────────────
+// Authenticated: return the current customer's rental bookings
+router.get('/my', authenticateToken, async (req, res) => {
+  try {
+    const bookings = await Booking.findAll({
+      where: {
+        userId: req.user.id,
+        customerNotes: { [Op.like]: '[RENTAL]%' },
+      },
+      include: [
+        {
+          model: User,
+          as: 'serviceProvider',
+          attributes: ['id', 'firstName', 'lastName', 'email', 'phone'],
+        },
+        {
+          model: Vehicle,
+          as: 'vehicle',
+          attributes: ['id', 'make', 'model', 'year', 'images'],
+        },
+      ],
+      order: [['scheduledDate', 'DESC']],
+    });
+
+    // Parse the embedded rental metadata from customerNotes
+    const rentals = bookings.map((b) => {
+      let meta = {};
+      try {
+        const raw = (b.customerNotes || '').replace('[RENTAL] ', '');
+        meta = JSON.parse(raw);
+      } catch { /* ignore parse errors */ }
+      return {
+        id: b.id,
+        status: b.status,
+        vehicleName: meta.vehicleName || b.title,
+        vehicle: b.vehicle,
+        dealer: b.serviceProvider,
+        startDate: meta.startDate || b.scheduledDate,
+        endDate: meta.endDate,
+        pickupTime: meta.pickupTime || b.scheduledTime,
+        days: meta.days,
+        dailyRate: meta.dailyRate,
+        estimatedTotal: meta.estimatedTotal || b.estimatedCost,
+        driverLicense: meta.driverLicense,
+        notes: b.description,
+        createdAt: b.createdAt,
+      };
+    });
+
+    res.json({ success: true, data: rentals });
+  } catch (error) {
+    console.error('Get my rentals error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});

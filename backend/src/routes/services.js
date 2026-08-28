@@ -37,7 +37,8 @@ router.get('/by-type', async (req, res) => {
 
     // Map booking service types → ServiceOffering categories
     const categoryMap = {
-      carwash:             ['carwash'],
+      car_wash:             ['car_wash'],
+      carwash:              ['car_wash'],
       oil_change:           ['maintenance'],
       brake_service:        ['repair', 'maintenance'],
       tire_service:         ['maintenance', 'repair'],
@@ -48,8 +49,8 @@ router.get('/by-type', async (req, res) => {
       general_maintenance:  ['maintenance'],
       inspection:           ['maintenance', 'repair'],
       repair:               ['repair'],
-      Washing:              ['carwash'],
-      other:                ['maintenance', 'repair', 'carwash', 'other'],
+      Washing:              ['car_wash'],
+      other:                ['maintenance', 'repair', 'car_wash', 'other'],
     };
 
     const categories = categoryMap[serviceType] || ['maintenance', 'repair', 'other'];

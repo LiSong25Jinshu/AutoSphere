@@ -111,7 +111,17 @@ export const gdprAPI = {
 // ─── Rentals ──────────────────────────────────────────────────────────────────
 
 export const rentalAPI = {
-  getVehicles: (params = {}) => axios.get('/api/rentals/vehicles', { params }),
-  getVehicleById: (id) => axios.get(`/api/rentals/vehicles/${id}`),
-  submitRequest: (data) => axios.post('/api/rentals/request', data),
+  getVehicles:   (params = {}) => axios.get('/api/rentals/vehicles', { params }),
+  getVehicleById: (id)         => axios.get(`/api/rentals/vehicles/${id}`),
+  submitRequest:  (data)       => axios.post('/api/rentals/request', data),
+  getMyRentals:   ()           => axios.get('/api/rentals/my'),
+};
+
+// ─── Customer Garage (My Vehicles) ───────────────────────────────────────────
+
+export const myVehiclesAPI = {
+  getAll:   ()           => axios.get('/api/user-vehicles'),
+  add:      (data)       => axios.post('/api/user-vehicles', data),
+  update:   (id, data)   => axios.put(`/api/user-vehicles/${id}`, data),
+  remove:   (id)         => axios.delete(`/api/user-vehicles/${id}`),
 };

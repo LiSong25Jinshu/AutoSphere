@@ -18,6 +18,7 @@ import { initializeMessageSocket } from './sockets/messageSocket.js';
 
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
+import userVehicleRoutes from './routes/userVehicles.js';
 import vehicleRoutes from './routes/vehicles.js';
 import bookingRoutes, { setIo as setBookingsIo } from './routes/bookings.js';
 import messageRoutes from './routes/messages.js';
@@ -80,6 +81,7 @@ app.use('/api/', rateLimiter);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/user-vehicles', userVehicleRoutes);
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/messages', messageRoutes);

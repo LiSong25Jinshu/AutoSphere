@@ -187,20 +187,6 @@
   text-decoration: underline;
 }
 
-/* Office Hours */
-.office-hours {
-  background: #f5f5f5;
-  padding: 1.5rem;
-  border-radius: 8px;
-  margin-top: 1.5rem;
-}
-
-.office-hours h3 {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #2c2c2c;
-  margin-bottom: 1rem;
-}
 
 .hours-list {
   display: flex;
@@ -291,30 +277,8 @@
   margin: 0;
 }
 
-/* Map Section */
-.map-section {
-  background: white;
-  padding: 2.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  text-align: center;
-}
 
-.map-section h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #2c2c2c;
-  margin-bottom: 1rem;
-}
 
-.map-placeholder {
-  background: #f5f5f5;
-  border: 2px dashed #ccc;
-  border-radius: 8px;
-  padding: 3rem;
-  color: #666666;
-  font-size: 1.125rem;
-}
 
 /* Success Message */
 .success-message {

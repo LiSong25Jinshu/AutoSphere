@@ -39,6 +39,7 @@ const UserAppointmentDetails = lazy(() => import('./pages/user/AppointmentDetail
 const UserMessages = lazy(() => import('./pages/user/Messages'));
 const UserNotifications = lazy(() => import('./pages/user/Notifications'));
 const UserInventory = lazy(() => import('./pages/user/Inventory'));
+const UserMyRentals = lazy(() => import('./pages/user/MyRentals'));
 const VehicleInsights = lazy(() => import('./pages/user/VehicleInsights'));
 const UserSettings = lazy(() => import('./pages/user/Settings'));
 const BookService = lazy(() => import('./pages/user/BookService'));
@@ -62,6 +63,7 @@ const DealerManageListings = lazy(() => import('./pages/dealer/ManageListings'))
 const DealerMessages = lazy(() => import('./pages/dealer/Messages'));
 const DealerProfile = lazy(() => import('./pages/dealer/Profile'));
 const DealerSales = lazy(() => import('./pages/dealer/Sales'));
+const DealerInspections = lazy(() => import('./pages/dealer/Inspections'));
 
 // Service provider pages
 const ServiceProviderDashboardPage = lazy(() => import('./pages/service-provider/Dashboard'));
@@ -117,6 +119,7 @@ const isDashboardRoute = (path) => {
     '/service-provider-dashboard',
     '/appointments',
     '/inventory',
+    '/my-rentals',
     '/user-messages',
     '/notifications',
     '/profile',
@@ -236,6 +239,7 @@ function AppContent() {
             <Route path="/profile" element={<DashboardRoute><UserProfile /></DashboardRoute>} />
             <Route path="/appointments" element={<DashboardRoute><UserAppointments /></DashboardRoute>} />
             <Route path="/appointments/:id" element={<DashboardRoute><UserAppointmentDetails /></DashboardRoute>} />
+            <Route path="/my-rentals" element={<DashboardRoute><UserMyRentals /></DashboardRoute>} />
             <Route path="/user-messages" element={<DashboardRoute><UserMessages /></DashboardRoute>} />
             <Route path="/notifications" element={<DashboardRoute><UserNotifications /></DashboardRoute>} />
             <Route path="/inventory" element={<DashboardRoute><UserInventory /></DashboardRoute>} />
@@ -267,6 +271,7 @@ function AppContent() {
             <Route path="/dealer/messages" element={<DashboardRoute requiredRole="dealer"><DealerMessages /></DashboardRoute>} />
             <Route path="/dealer/profile" element={<DashboardRoute requiredRole="dealer"><DealerProfile /></DashboardRoute>} />
             <Route path="/dealer/manage-listings" element={<DashboardRoute requiredRole="dealer"><DealerManageListings /></DashboardRoute>} />
+            <Route path="/dealer/inspections" element={<DashboardRoute requiredRole="dealer"><DealerInspections /></DashboardRoute>} />
 
             {/* ── Service provider routes ── */}
             <Route path="/service-provider-dashboard" element={<DashboardRoute requiredRole="service_provider"><ServiceProviderDashboardPage /></DashboardRoute>} />

@@ -11,7 +11,7 @@ import {
   sendBookingConfirmationEmail,
   sendServiceProviderBookingNotification,
   sendBookingStatusChangeEmail,
-  // sendBookingRescheduleEmail
+  sendBookingRescheduleEmail,
 } from '../utils/email.js';
 import { sendNotification } from '../utils/pushNotifications.js';
 
@@ -158,33 +158,6 @@ router.get('/', [
       whereClause.status = req.query.status;
     }
 
-    // Check if database is available
-    const dbAvailable = await isDatabaseAvailable();
-    
-    if (!dbAvailable) {
-      // Use mock data
-      console.log('Using mock data for bookings');
-      const bookings = await mockBookingService.findAll({
-        where: whereClause,
-        order: [['scheduledDate', 'DESC']],
-        limit,
-        offset,
-      });
-
-      const totalCount = await mockBookingService.count({ where: whereClause });
-
-      return res.json({
-        success: true,
-        data: bookings,
-        pagination: {
-          page,
-          limit,
-          total: totalCount,
-          pages: Math.ceil(totalCount / limit),
-        },
-      });
-    }
-
     const bookings = await Booking.findAll({
       where: whereClause,
       include: [
@@ -300,7 +273,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
 router.post('/', [
   body('serviceProviderId').isInt().withMessage('Service provider ID is required'),
   body('serviceType').isIn([
-    'carwash', 'oil_change', 'brake_service', 'tire_service', 'engine_diagnostic',
+    'car_wash', 'carwash', 'oil_change', 'brake_service', 'tire_service', 'engine_diagnostic',
     'transmission_service', 'air_conditioning', 'battery_service',
     'general_maintenance', 'inspection', 'repair', 'other'
   ]).withMessage('Invalid service type'),

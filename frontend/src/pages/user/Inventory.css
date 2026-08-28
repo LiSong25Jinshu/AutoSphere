@@ -390,3 +390,249 @@
     width: 100%;
   }
 }
+
+/* ── Customer-owned vehicle card ─────────────────────────── */
+.vehicle-card.owned {
+  border: 2px solid #e8ecf0;
+}
+
+.vcard-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 18px 0;
+}
+
+.vcard-icon {
+  font-size: 2.2rem;
+  flex-shrink: 0;
+}
+
+.vcard-title h3 {
+  margin: 0 0 3px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.vcard-color {
+  font-size: .8rem;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 1px 8px;
+  border-radius: 999px;
+}
+
+.vehicle-card.owned .vehicle-details {
+  padding: 12px 18px;
+  margin-bottom: 0;
+}
+
+.vehicle-card.owned .detail-item {
+  border-bottom: 1px solid #f3f4f6;
+  padding: 6px 0;
+}
+
+.vehicle-card.owned .detail-item:last-child { border-bottom: none; }
+
+.vehicle-card.owned .vehicle-actions {
+  padding: 12px 18px 18px;
+  border-top: 1px solid #f3f4f6;
+  gap: 8px;
+}
+
+/* Danger button */
+.btn.danger {
+  background: transparent;
+  color: #ef4444;
+  border: 2px solid #ef4444;
+}
+
+.btn.danger:hover {
+  background: #ef4444;
+  color: #fff;
+}
+
+/* Toast */
+.inv-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #1a1a1a;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: .875rem;
+  font-weight: 600;
+  z-index: 2000;
+  box-shadow: 0 4px 16px rgba(0,0,0,.2);
+  animation: inv-fade .2s ease;
+}
+
+@keyframes inv-fade {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Availability badge on saved listing thumbnail */
+.vcard-availability-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0,0,0,.6);
+  color: #fff;
+  font-size: .72rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+
+/* Modal form styles (reuse dealer inv-modal pattern) */
+.inv-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.inv-modal {
+  background: #fff;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 92vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,.2);
+}
+
+.inv-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #f3f4f6;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 1;
+}
+
+.inv-modal-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.inv-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: #9ca3af;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.inv-modal-close:hover { background: #f3f4f6; color: #374151; }
+
+.inv-form-error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin: 0 24px;
+  font-size: .875rem;
+}
+
+.inv-form {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.inv-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.inv-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.inv-form-group.full { grid-column: 1 / -1; }
+
+.inv-form-group label {
+  font-size: .8125rem;
+  font-weight: 700;
+  color: #374151;
+}
+
+.inv-form-group input,
+.inv-form-group select,
+.inv-form-group textarea {
+  padding: 9px 13px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  font-size: .9rem;
+  color: #1a1a1a;
+  background: #fff;
+  transition: border-color .15s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.inv-form-group input:focus,
+.inv-form-group select:focus,
+.inv-form-group textarea:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 3px rgba(25,118,210,.1);
+}
+
+.inv-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 6px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.inv-btn-cancel {
+  padding: 9px 20px;
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  border-radius: 8px;
+  font-size: .9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.inv-btn-save {
+  padding: 9px 24px;
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: .9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s;
+}
+
+.inv-btn-save:disabled { opacity: .55; cursor: not-allowed; }
+.inv-btn-save:hover:not(:disabled) { background: #1565c0; }
+
+@media (max-width: 480px) {
+  .inv-form-row { grid-template-columns: 1fr; }
+  .inv-modal-header, .inv-form { padding: 16px; }
+}
