@@ -42,7 +42,8 @@ def fetch_vehicle_data():  #Body type doesn't exist in the database
         SELECT
             id AS vehicle_id,
             make, model, year, price, fuel_type,
-            transmission, body_type, mileage, color, description
+            transmission, body_type, mileage, color, description,
+            condition, features, images
         FROM vehicles
         WHERE status = 'available'
     '''

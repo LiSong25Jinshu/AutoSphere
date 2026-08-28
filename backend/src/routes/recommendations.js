@@ -11,6 +11,20 @@ const AI_SERVICE_URL = 'http://localhost:5002';
 router.get('/:userId', authenticateToken, async (req, res) => {
     const { userId } = req.params;
 
+    const allowedParams = new Set([
+        'n', 'budget_min', 'budget_max', 'fuel_type', 'body_type',
+        'transmission', 'condition', 'make', 'model', 'min_year',
+        'max_year', 'min_mileage', 'max_mileage', 'features', 'usage',
+        'lifestyle',
+    ]);
+    const unsupportedParams = Object.keys(req.query).filter((key) => !allowedParams.has(key));
+    if (unsupportedParams.length > 0) {
+        return res.status(400).json({
+            success: false,
+            message: `Unsupported recommendation parameter: ${unsupportedParams[0]}`,
+        });
+    }
+
     try {
         const response = await axios.get(
             `${AI_SERVICE_URL}/recommendations/${userId}`, 
@@ -19,18 +33,13 @@ router.get('/:userId', authenticateToken, async (req, res) => {
         return res.json({ source: 'ai', ...response.data });
 
     } catch (error) {
-        console.error('AI service error:', error.message);
+        console.error('AI service error:', error.response?.data || error.message);
 
-        // Fallback to simple DB recommendations if AI service is down
-        const vehicles = await Vehicle.findAll({
-            where: { status: 'available' },
-            order: [['createdAt', 'DESC']],
-            limit: 10,
-        });
-
-        return res.json({
-            source: 'fallback',
-            recommendations: vehicles
+        return res.status(502).json({
+            success: false,
+            source: 'unavailable',
+            message: 'AI recommendations are temporarily unavailable',
+            fallbackReason: 'ai_service_error',
         });
     }
 });
