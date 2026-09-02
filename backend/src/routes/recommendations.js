@@ -28,19 +28,42 @@ router.get('/:userId', authenticateToken, async (req, res) => {
     try {
         const response = await axios.get(
             `${AI_SERVICE_URL}/recommendations/${userId}`, 
-            { params: req.query }   //forward all query params to Flask
+            { params: req.query }   // forward all query params to Flask
         );
-        return res.json({ source: 'ai', ...response.data });
+
+        const payload = response?.data || {};
+        const recommendations = Array.isArray(payload.recommendations) ? payload.recommendations : [];
+
+        return res.json({
+            success: true,
+            source: 'ai',
+            ...payload,
+            recommendations,
+            metadata: {
+                ...(payload.metadata || {}),
+                result_count: recommendations.length,
+            },
+        });
 
     } catch (error) {
         console.error('AI service error:', error.response?.data || error.message);
 
-        return res.status(502).json({
-            success: false,
-            source: 'unavailable',
-            message: 'AI recommendations are temporarily unavailable',
-            fallbackReason: 'ai_service_error',
-        });
+        const statusCode = error.response?.status === 500 ? 200 : 502;
+        const fallbackPayload = {
+            success: statusCode === 200,
+            source: statusCode === 200 ? 'ai' : 'unavailable',
+            recommendations: [],
+            metadata: {
+                result_count: 0,
+                fallback_used: true,
+                source_status: statusCode === 200 ? 'empty_result' : 'service_unavailable',
+            },
+            message: statusCode === 200
+                ? 'No exact match was found; the dataset returned no ranked vehicles.'
+                : 'AI recommendations are temporarily unavailable',
+        };
+
+        return res.status(statusCode).json(fallbackPayload);
     }
 });
 

@@ -41,13 +41,26 @@ const AICarFinder = () => {
 
   const parseBudget = (budget) => {
     const map = {
-      'under-20k': {min: 0, max: 20000},
-      '20k-30k': {min: 20000, max: 30000},
-      '30k-40k': {min: 30000, max: 40000},
-      '40k-50k': {min: 40000, max: 50000},
-      '50k-plus': {min: 50000, max: 999999}
+      'under-200k': { min: 0, max: 200000 },
+      '200k-300k': { min: 200000, max: 300000 },
+      '300k-400k': { min: 300000, max: 400000 },
+      '400k-500k': { min: 400000, max: 500000 },
+      '500k-plus': { min: 500000, max: 9999999 }
     };
     return map[budget] || {};
+  };
+
+  const getMatchLabel = (matchStatus) => {
+    switch (matchStatus) {
+      case 'exact':
+        return { label: 'Exact match', color: '#00cc66', description: 'This vehicle matches your preferences closely.' };
+      case 'closest_match':
+        return { label: 'Closest match', color: '#ff9800', description: 'This is the closest fit, with a few preferences not fully met.' };
+      case 'best_available':
+        return { label: 'Best available', color: '#4f46e5', description: 'This is the strongest option available from the current dataset.' };
+      default:
+        return { label: 'Recommended', color: '#666', description: 'Recommended based on your activity and preferences.' };
+    }
   };
 
   const handleFindCars = async () => {
@@ -84,27 +97,30 @@ const AICarFinder = () => {
 
       const res = await axios.get(`/api/recommendations/${userId}`, { params });
       
-      const recs = (res.data.recommendations || []).map((rec) => ({
-        id: rec.vehicle_id,
-        make: rec.make || 'Unknown',
-        model: rec.model || '',
-        year: rec.year || '',
-        price: rec.price || '',
-        mpg: rec.fuel_type || 'N/A',
-        image: resolveImageUrl(rec.image_url || rec.images?.[0]),
-        images: rec.images || (rec.image_url ? [rec.image_url] : []),
-        condition: rec.condition || null,
-        aiScore: Math.round(rec.score * 100) || 75,
-        matchStatus: rec.match_status || 'exact',
-        relaxed: Boolean(rec.relaxed),
-        reasons: rec.reasons || ['Recommended based on your activity'],
-        pros: Array.isArray(rec.features)
-          ? rec.features
-          : rec.features
-            ? rec.features.split(';').map(f => f.trim()).filter(Boolean)
-            : ['Available now', 'Verified listing'],
-        cons: [],
-      }));
+      const recs = (res.data.recommendations || []).map((rec) => {
+        const matchStatus = rec.match_status || (rec.relaxed ? 'closest_match' : 'exact');
+        return {
+          id: rec.vehicle_id,
+          make: rec.make || 'Unknown',
+          model: rec.model || '',
+          year: rec.year || '',
+          price: rec.price || '',
+          mpg: rec.fuel_type || 'N/A',
+          image: resolveImageUrl(rec.image_url || rec.images?.[0]),
+          images: rec.images || (rec.image_url ? [rec.image_url] : []),
+          condition: rec.condition || null,
+          aiScore: Math.round(rec.score * 100) || 75,
+          matchStatus,
+          relaxed: Boolean(rec.relaxed) || matchStatus !== 'exact',
+          reasons: rec.reasons || ['Recommended based on your activity'],
+          pros: Array.isArray(rec.features)
+            ? rec.features
+            : rec.features
+              ? rec.features.split(';').map(f => f.trim()).filter(Boolean)
+              : ['Available now', 'Verified listing'],
+          cons: [],
+        };
+      });
       setRecommendations(recs.length > 0 ? recs : []);
       if (recs.length === 0) {
         setRecommendations([{ id: 0, make: 'No', model: 'matches found', year: '', price: '', mpg: '', image: '', aiScore: 0, reasons: ['Try adjusting your preferences'], pros: [], cons: [] }]);
@@ -169,11 +185,11 @@ const AICarFinder = () => {
                     style={{ width: '100%', padding: '12px', border: '1px solid #e6e6e6', borderRadius: '8px' }}
                   >
                     <option value="">Select budget range</option>
-                    <option value="under-20k">Under GHC20,000</option>
-                    <option value="20k-30k">GHC20,000 - GHC30,000</option>
-                    <option value="30k-40k">GHC30,000 - GHC40,000</option>
-                    <option value="40k-50k">GHC40,000 - GHC50,000</option>
-                    <option value="50k-plus">GHC50,000+</option>
+                    <option value="under-200k">Under GHC200,000</option>
+                    <option value="200k-300k">GHC200,000 - GHC300,000</option>
+                    <option value="300k-400k">GHC300,000 - GHC400,000</option>
+                    <option value="400k-500k">GHC400,000 - GHC500,000</option>
+                    <option value="500k-plus">GHC500,000+</option>
                   </select>
                 </div>
 
@@ -331,7 +347,9 @@ const AICarFinder = () => {
                 </div>
               ) : recommendations.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  {recommendations.map((car) => (
+                  {recommendations.map((car) => {
+                    const matchInfo = getMatchLabel(car.matchStatus);
+                    return (
                     <div key={car.id} style={{ 
                       border: '1px solid #e6e6e6', 
                       borderRadius: '12px', 
@@ -343,14 +361,14 @@ const AICarFinder = () => {
                         position: 'absolute',
                         top: '16px',
                         right: '16px',
-                        backgroundColor: car.aiScore >= 90 ? '#00cc66' : car.aiScore >= 80 ? '#ff9800' : '#666',
+                        backgroundColor: matchInfo.color,
                         color: 'white',
                         padding: '6px 12px',
                         borderRadius: '20px',
                         fontSize: '14px',
                         fontWeight: '600'
                       }}>
-                        {car.relaxed ? 'Closest match' : 'AI Score'}: {car.aiScore}%
+                        {matchInfo.label}: {car.aiScore}%
                       </div>
 
                       <div style={{ display: 'flex', gap: '20px' }}>
@@ -373,11 +391,9 @@ const AICarFinder = () => {
                           <h3 style={{ margin: '0 0 8px 0', fontSize: '20px' }}>
                             {car.year} {car.make} {car.model}
                           </h3>
-                          {car.relaxed && (
-                            <div style={{ marginBottom: '8px', fontSize: '12px', color: '#ff9800', fontWeight: 600 }}>
-                              Closest match — some preferences were not met
-                            </div>
-                          )}
+                          <div style={{ marginBottom: '8px', fontSize: '12px', color: matchInfo.color, fontWeight: 600 }}>
+                            {matchInfo.description}
+                          </div>
                           <div style={{ display: 'flex', gap: '20px', marginBottom: '12px' }}>
                             <span style={{ fontWeight: '600', fontSize: '18px', color: '#2c2c2c' }}>
                               {car.price}
@@ -427,7 +443,8 @@ const AICarFinder = () => {
                         </div>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div style={{ textAlign: 'center', padding: '60px 20px', color: '#666' }}>

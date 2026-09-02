@@ -115,6 +115,14 @@ def get_recommendations(user_id):
         preferences = {key: value for key, value in {**db_preferences, **query_preferences}.items() if value is not None}
             
         recs = engine.get_recommendations(user_id, preferences, n)
+        if not recs:
+            fallback = engine.fallback_recommendations(preferences, n)
+            if fallback:
+                recs = [{
+                    'vehicle_id': item['vehicle_id'],
+                    'score': item.get('score', 0.0),
+                    'match_status': 'best_available'
+                } for item in fallback[:n]]
 
         # Enrich each recommendations with full vehicle details
         enriched = []
@@ -159,6 +167,7 @@ def get_recommendations(user_id):
                 'result_count': len(enriched),
                 'model_source': 'hybrid' if engine.collab_model is not None else 'content',
                 'applied_filters': query_preferences,
+                'fallback_used': len(enriched) > 0 and all(item.get('match_status') == 'best_available' for item in enriched) if enriched else False,
             },
         })
     except Exception as e:
