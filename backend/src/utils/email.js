@@ -20,14 +20,20 @@ export const resetTransporter = () => {
 };
 
 const getTransporter = async () => {
+  // Return cached transporter — do NOT re-verify on every call.
+  // Re-verifying inside a long-running server causes "Greeting never received"
+  // because Gmail rate-limits repeated SMTP probe connections.
   if (_transporter) return _transporter;
 
   const smtpUser = (process.env.SMTP_USER || '').trim();
   const smtpPass = (process.env.SMTP_PASS || '').trim().replace(/\s+/g, '');
   const smtpHost = (process.env.SMTP_HOST || 'smtp.gmail.com').trim();
-  const smtpPort = Number(process.env.SMTP_PORT || (smtpHost.includes('gmail') ? 465 : 587));
+  const smtpPort = Number(process.env.SMTP_PORT || 587);
+  // For Gmail: port 587 requires secure:false (STARTTLS)
+  //            port 465 requires secure:true  (implicit SSL)
+  const isSecure = smtpPort === 465;
 
-  // Configured = real email + real password (not a placeholder)
+  // Configured = real credentials present (not placeholder values)
   const isConfigured =
     smtpUser.includes('@') &&
     smtpPass.length >= 8 &&
@@ -51,8 +57,7 @@ const getTransporter = async () => {
       auth: { user: testAccount.user, pass: testAccount.pass },
     });
   } else {
-    const isGmail = smtpHost.includes('gmail');
-    const isSecure = smtpPort === 465;
+    console.log(`📧 SMTP config: host=${smtpHost} port=${smtpPort} secure=${isSecure} user=${smtpUser}`);
 
     _transporter = nodemailer.createTransport({
       host: smtpHost,
@@ -60,19 +65,14 @@ const getTransporter = async () => {
       secure: isSecure,
       auth: { user: smtpUser, pass: smtpPass },
       family: 4,
+      pool: false,         // disable connection pooling — avoid stale sockets
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
       tls: {
         rejectUnauthorized: false,
       },
     });
-  }
-
-  try {
-    await _transporter.verify();
-    console.log('✅ SMTP server ready');
-  } catch (err) {
-    console.error('❌ SMTP verification failed:', err.message);
-    _transporter = null;
-    throw err;
   }
 
   return _transporter;
@@ -100,10 +100,6 @@ const sendMail = async (mailOptions) => {
 // ─── OTP EMAIL ───────────────────────────────────────────────────────────────
 
 export const sendOtpEmail = async (email, firstName, otp) => {
-  console.log('\n==================================================');
-  console.log(`🔑 VERIFICATION CODE FOR ${email}: ${otp}`);
-  console.log('==================================================\n');
-
   try {
     const info = await sendMail({
       from: process.env.EMAIL_FROM || '"AutoSphere" <noreply@autosphere.com>',
@@ -126,10 +122,11 @@ export const sendOtpEmail = async (email, firstName, otp) => {
         </div>
       `,
     });
+    console.log(`✅ OTP email sent successfully to ${email}`);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error(`⚠️ OTP email delivery failed (${error.message}). You can use the code above from console: ${otp}`);
-    return { success: false, error: error.message, otp };
+    console.error(`❌ OTP email delivery failed for ${email}: ${error.message}`);
+    return { success: false, error: error.message };
   }
 };
 

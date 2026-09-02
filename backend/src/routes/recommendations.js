@@ -48,22 +48,24 @@ router.get('/:userId', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('AI service error:', error.response?.data || error.message);
 
-        const statusCode = error.response?.status === 500 ? 200 : 502;
-        const fallbackPayload = {
-            success: statusCode === 200,
-            source: statusCode === 200 ? 'ai' : 'unavailable',
+        // Always return 200 with graceful degradation — a missing AI service
+        // should not break the page with a 500 error in the browser.
+        const isFlask500 = error.response?.status === 500;
+        const isUnavailable = !error.response; // connection refused / timeout
+
+        return res.status(200).json({
+            success: isFlask500, // Flask returned something — just no results
+            source: 'unavailable',
             recommendations: [],
             metadata: {
                 result_count: 0,
                 fallback_used: true,
-                source_status: statusCode === 200 ? 'empty_result' : 'service_unavailable',
+                source_status: isUnavailable ? 'service_unavailable' : 'empty_result',
             },
-            message: statusCode === 200
-                ? 'No exact match was found; the dataset returned no ranked vehicles.'
-                : 'AI recommendations are temporarily unavailable',
-        };
-
-        return res.status(statusCode).json(fallbackPayload);
+            message: isUnavailable
+                ? 'AI recommendations are temporarily unavailable'
+                : 'No exact match was found; the dataset returned no ranked vehicles.',
+        });
     }
 });
 

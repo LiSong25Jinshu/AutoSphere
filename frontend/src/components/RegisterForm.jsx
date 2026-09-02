@@ -157,7 +157,6 @@ const RegisterForm = () => {
           state: {
             email: result.email,
             fromRegistration: true,
-            verificationCode: result.verificationCode,
           },
         });
       } else {

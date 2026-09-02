@@ -21,9 +21,6 @@ const EmailVerificationForm = () => {
 
   // Email comes from navigation state (post-register/login) or query param
   const stateEmail = location.state?.email || '';
-  const [localVerificationCode, setLocalVerificationCode] = useState(
-    location.state?.verificationCode || ''
-  );
   const [email, setEmail] = useState(stateEmail);
   const [emailInput, setEmailInput] = useState(stateEmail); // editable if not pre-filled
 
@@ -154,8 +151,7 @@ const EmailVerificationForm = () => {
     if (!targetEmail || resendCooldown > 0) return;
     setResendMsg('');
     try {
-      const response = await axios.post('/api/auth/resend-otp', { email: targetEmail });
-      if (response.data?.verificationCode) setLocalVerificationCode(response.data.verificationCode);
+      await axios.post('/api/auth/resend-otp', { email: targetEmail });
       setResendMsg('A new code has been sent to your email.');
       setDigits(['', '', '', '', '', '']);
       setStatus('idle');
@@ -225,11 +221,6 @@ const EmailVerificationForm = () => {
               <strong>{email || emailInput || 'your email'}</strong>.
               Enter it below to verify your account.
             </p>
-            {localVerificationCode && (
-              <p className="evf-sub" style={{ color: '#b45309', fontWeight: 600 }}>
-                Local development code: {localVerificationCode}
-              </p>
-            )}
 
             {/* Email input — only shown if not pre-filled */}
             {!email && (

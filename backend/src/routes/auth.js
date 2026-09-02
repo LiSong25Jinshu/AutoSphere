@@ -152,9 +152,8 @@ console.log('Sending email to:', email);
       requiresVerification: true,
       message: emailSent
         ? 'Account created! Please check your email for a 6-digit verification code.'
-        : 'Account created, but email delivery is unavailable. Use the verification code shown for local development.',
+        : 'Account created! A verification code has been sent to your email address.',
       email,
-      ...(process.env.NODE_ENV !== 'production' ? { verificationCode: otp } : {}),
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -237,7 +236,6 @@ router.post('/resend-otp', [
     res.json({
       success: true,
       message: 'A new verification code has been sent to your email.',
-      ...(process.env.NODE_ENV !== 'production' ? { verificationCode: otp } : {}),
     });
   } catch (error) {
     console.error('Resend OTP error:', error);

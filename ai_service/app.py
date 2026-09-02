@@ -65,12 +65,25 @@ def health():
 def get_recommendations(user_id):
     """
     Get recommendations for a user.
-    Called by Node.js backend like: Get /recommendions/123
+    Called by Node.js backend like: GET /recommendations/123
     """
     try:
-        n = min(max(int(request.args.get('n', 10)), 1), 50)
+        # Guard: model not yet trained or training failed
+        if engine.vehicle_df is None or engine.vehicle_df.empty:
+            return jsonify({
+                'user_id': user_id,
+                'recommendations': [],
+                'metadata': {
+                    'result_count': 0,
+                    'model_source': 'unavailable',
+                    'applied_filters': {},
+                    'fallback_used': True,
+                },
+                'message': 'Model not ready — no vehicle data loaded yet.',
+            }), 200
 
         # Get preferences from query params first
+        n = min(max(int(request.args.get('n', 10)), 1), 50)
         query_preferences = {}
         if request.args.get('budget_min') is not None:
             query_preferences['budget_min'] = float(request.args.get('budget_min'))

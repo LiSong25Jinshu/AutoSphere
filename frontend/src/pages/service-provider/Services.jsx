@@ -257,7 +257,7 @@ const ServiceProviderServices = () => {
                 <label>Description</label>
                 <textarea
                   name="description" value={formData.description}
-                  onChange={handleInputChange} rows="3" placeholder="Describe what's included"
+                  onChange={handleInputChange} rows="3" placeholder="Describe what's included in your service"
                 />
               </div>
               <div className="form-row">

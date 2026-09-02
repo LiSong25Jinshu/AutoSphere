@@ -97,7 +97,16 @@ const AICarFinder = () => {
 
       const res = await axios.get(`/api/recommendations/${userId}`, { params });
       
-      const recs = (res.data.recommendations || []).map((rec) => {
+      const data = res.data;
+
+      // Graceful degradation: AI service may be unavailable but returns 200
+      if (!data.success && data.source === 'unavailable') {
+        setError('AI recommendations are temporarily unavailable. Please try again later.');
+        setRecommendations([]);
+        return;
+      }
+      
+      const recs = (data.recommendations || []).map((rec) => {
         const matchStatus = rec.match_status || (rec.relaxed ? 'closest_match' : 'exact');
         return {
           id: rec.vehicle_id,
