@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { rentalAPI } from "../../services/api";
 import { CURRENCY_SYMBOL, formatPrice } from "../../utils/currency";
 import StartChatButton from "../../components/StartChatButton";
@@ -58,6 +58,7 @@ const FUEL_LABELS = {
 
 function VehicleRent() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState(0);
 
   // ── Step 0: Browse ──────────────────────────────────────────────────────────
@@ -110,6 +111,13 @@ function VehicleRent() {
   }, [appliedFilters]);
 
   useEffect(() => { fetchVehicles(1, appliedFilters); }, [appliedFilters]);
+
+  useEffect(() => {
+    const vehicleId = searchParams.get("vehicleId");
+    if (vehicleId) {
+      selectVehicle({ id: vehicleId });
+    }
+  }, [searchParams]);
 
   const applyFilters = () => {
     setAppliedFilters({ ...filters });

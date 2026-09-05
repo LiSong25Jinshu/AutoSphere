@@ -31,6 +31,7 @@ import adminRoutes from './routes/admin.js';
 import pushRoutes from './routes/push.js';
 import gdprRoutes from './routes/gdpr.js';
 import rentalRoutes from './routes/rentals.js';
+import savedVehicleRoutes from './routes/savedVehicles.js';
 
 const app = express();
 const server = createServer(app);
@@ -94,6 +95,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/push', pushRoutes);
 app.use('/api/gdpr', gdprRoutes);
 app.use('/api/rentals', rentalRoutes);
+app.use('/api/saved-vehicles', savedVehicleRoutes);
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({

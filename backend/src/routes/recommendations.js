@@ -7,6 +7,38 @@ import { authenticateToken } from '../middleware/auth.js';
 const router = express.Router();
 const AI_SERVICE_URL = 'http://localhost:5002';
 
+const resolveMarketplaceVehicleId = async (recommendation) => {
+    if (Number.isInteger(Number(recommendation.marketplace_vehicle_id))) {
+        return Number(recommendation.marketplace_vehicle_id);
+    }
+
+    if (!recommendation.make || !recommendation.model || !recommendation.year) {
+        return null;
+    }
+
+    const candidates = await Vehicle.findAll({
+        where: {
+            make: recommendation.make,
+            model: recommendation.model,
+            year: Number(recommendation.year),
+            status: { [Op.ne]: 'sold' },
+        },
+        attributes: ['id', 'price'],
+        order: [['createdAt', 'DESC']],
+        limit: 10,
+    });
+
+    if (candidates.length === 0) return null;
+    if (recommendation.price == null) return candidates[0].id;
+
+    const targetPrice = Number(recommendation.price);
+    return candidates.reduce((closest, candidate) => (
+        Math.abs(Number(candidate.price) - targetPrice) < Math.abs(Number(closest.price) - targetPrice)
+            ? candidate
+            : closest
+    )).id;
+};
+
 // GET /api/recommendations/:userId - Get AI powered recommendations
 router.get('/:userId', authenticateToken, async (req, res) => {
     const { userId } = req.params;
@@ -32,7 +64,11 @@ router.get('/:userId', authenticateToken, async (req, res) => {
         );
 
         const payload = response?.data || {};
-        const recommendations = Array.isArray(payload.recommendations) ? payload.recommendations : [];
+        const rawRecommendations = Array.isArray(payload.recommendations) ? payload.recommendations : [];
+        const recommendations = await Promise.all(rawRecommendations.map(async (recommendation) => ({
+            ...recommendation,
+            marketplace_vehicle_id: await resolveMarketplaceVehicleId(recommendation),
+        })));
 
         return res.json({
             success: true,

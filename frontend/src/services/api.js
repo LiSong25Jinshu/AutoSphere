@@ -125,3 +125,11 @@ export const myVehiclesAPI = {
   update:   (id, data)   => axios.put(`/api/user-vehicles/${id}`, data),
   remove:   (id)         => axios.delete(`/api/user-vehicles/${id}`),
 };
+
+// ─── Saved marketplace vehicles ─────────────────────────────────────────────
+
+export const savedVehiclesAPI = {
+  getAll: () => axios.get('/api/saved-vehicles'),
+  save: (vehicleId) => axios.post(`/api/saved-vehicles/${vehicleId}`),
+  remove: (vehicleId) => axios.delete(`/api/saved-vehicles/${vehicleId}`),
+};

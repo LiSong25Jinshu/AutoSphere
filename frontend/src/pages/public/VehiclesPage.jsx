@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { vehicleService } from '../../services/vehicleService';
+import { savedVehiclesAPI } from '../../services/api';
 import './VehiclesPage.css';
 
 const pageSize = 12;
@@ -170,7 +171,7 @@ const buildApiFilters = (filterState, currentPage) => {
   return apiFilters;
 };
 
-const VehicleCard = ({ vehicle, isAuthenticated, navigate }) => {
+const VehicleCard = ({ vehicle, isAuthenticated, navigate, isSaved, onToggleSave, saving }) => {
   const handlePrimaryAction = () => {
     if (!isAuthenticated) {
       navigate('/login', { state: { from: `/vehicles/${vehicle.id}` } });
@@ -208,8 +209,13 @@ const VehicleCard = ({ vehicle, isAuthenticated, navigate }) => {
           <button type="button" className="auto-btn auto-btn-primary" onClick={handlePrimaryAction}>
             {isAuthenticated ? 'View details' : 'Sign in to buy'}
           </button>
-          <button type="button" className="auto-btn auto-btn-secondary" onClick={() => navigate('/login')}>
-            Save
+          <button
+            type="button"
+            className="auto-btn auto-btn-secondary"
+            onClick={() => onToggleSave(vehicle.id)}
+            disabled={saving}
+          >
+            {saving ? 'Saving…' : isSaved ? 'Remove saved' : 'Save'}
           </button>
         </div>
       </div>
@@ -226,6 +232,8 @@ const VehiclesPage = () => {
   const [vehicles, setVehicles] = useState(mockVehicles);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(mockVehicles.length);
+  const [savedVehicleIds, setSavedVehicleIds] = useState([]);
+  const [savingVehicleId, setSavingVehicleId] = useState(null);
 
   useEffect(() => {
     const loadVehicles = async () => {
@@ -262,6 +270,41 @@ const VehiclesPage = () => {
 
     loadVehicles();
   }, [filters, currentPage]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setSavedVehicleIds([]);
+      return;
+    }
+
+    savedVehiclesAPI.getAll()
+      .then((response) => {
+        if (response.data?.success) {
+          setSavedVehicleIds((response.data.data || []).map((vehicle) => vehicle.id));
+        }
+      })
+      .catch(() => {});
+  }, [isAuthenticated]);
+
+  const handleToggleSave = async (vehicleId) => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: `/vehicles/${vehicleId}` } });
+      return;
+    }
+
+    setSavingVehicleId(vehicleId);
+    try {
+      if (savedVehicleIds.includes(vehicleId)) {
+        await savedVehiclesAPI.remove(vehicleId);
+        setSavedVehicleIds((ids) => ids.filter((id) => id !== vehicleId));
+      } else {
+        await savedVehiclesAPI.save(vehicleId);
+        setSavedVehicleIds((ids) => [...ids, vehicleId]);
+      }
+    } finally {
+      setSavingVehicleId(null);
+    }
+  };
 
   const featuredVehicles = useMemo(
     () => vehicles.filter((vehicle) => vehicle.isFeatured).slice(0, 3),
@@ -442,7 +485,15 @@ const VehiclesPage = () => {
           ) : (
             <div className="vehicle-grid">
               {vehicles.map((vehicle) => (
-                <VehicleCard key={vehicle.id} vehicle={vehicle} isAuthenticated={isAuthenticated} navigate={navigate} />
+                <VehicleCard
+                  key={vehicle.id}
+                  vehicle={vehicle}
+                  isAuthenticated={isAuthenticated}
+                  navigate={navigate}
+                  isSaved={savedVehicleIds.includes(vehicle.id)}
+                  onToggleSave={handleToggleSave}
+                  saving={savingVehicleId === vehicle.id}
+                />
               ))}
             </div>
           )}

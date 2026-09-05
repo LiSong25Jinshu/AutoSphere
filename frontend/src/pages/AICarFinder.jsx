@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { resolveImageUrl } from '../utils/imageUtils';
+import { savedVehiclesAPI } from '../services/api';
 
 const AICarFinder = () => {
+  const navigate = useNavigate();
   const [preferences, setPreferences] = useState({
     budget: '',
     bodyType: '',
@@ -15,6 +18,20 @@ const AICarFinder = () => {
   const [recommendations, setRecommendations] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [savingVehicleId, setSavingVehicleId] = useState(null);
+  const [savedVehicleIds, setSavedVehicleIds] = useState([]);
+
+  useEffect(() => {
+    savedVehiclesAPI.getAll()
+      .then((response) => {
+        if (response.data?.success) {
+          setSavedVehicleIds((response.data.data || []).map((vehicle) => vehicle.id));
+        }
+      })
+      .catch(() => {
+        // Saving remains available after sign-in even when the initial lookup is unauthorized.
+      });
+  }, []);
 
   const bodyTypes = ['Sedan', 'SUV', 'Hatchback', 'Coupe', 'Convertible', 'Truck', 'Wagon'];
   const fuelTypes = ['Gasoline', 'Hybrid', 'Electric', 'Diesel'];
@@ -109,7 +126,8 @@ const AICarFinder = () => {
       const recs = (data.recommendations || []).map((rec) => {
         const matchStatus = rec.match_status || (rec.relaxed ? 'closest_match' : 'exact');
         return {
-          id: rec.vehicle_id,
+          id: rec.marketplace_vehicle_id || rec.vehicle_id,
+          marketplaceVehicleId: rec.marketplace_vehicle_id,
           make: rec.make || 'Unknown',
           model: rec.model || '',
           year: rec.year || '',
@@ -141,6 +159,29 @@ const AICarFinder = () => {
       setError(err.response?.data?.message || 'Could not load AI recommendations. Please try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSaveVehicle = async (vehicle) => {
+    if (!vehicle.marketplaceVehicleId) {
+      setError('This recommendation is not linked to a marketplace listing yet.');
+      return;
+    }
+
+    setSavingVehicleId(vehicle.marketplaceVehicleId);
+    setError('');
+    try {
+      if (savedVehicleIds.includes(vehicle.marketplaceVehicleId)) {
+        await savedVehiclesAPI.remove(vehicle.marketplaceVehicleId);
+        setSavedVehicleIds((ids) => ids.filter((id) => id !== vehicle.marketplaceVehicleId));
+      } else {
+        await savedVehiclesAPI.save(vehicle.marketplaceVehicleId);
+        setSavedVehicleIds((ids) => [...ids, vehicle.marketplaceVehicleId]);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Could not update your saved vehicles.');
+    } finally {
+      setSavingVehicleId(null);
     }
   };
 
@@ -439,14 +480,41 @@ const AICarFinder = () => {
                           </div>
 
                           <div style={{ marginTop: '16px', display: 'flex', gap: '12px' }}>
-                            <button className="autosphere-btn-primary" style={{ padding: '8px 16px', fontSize: '14px' }}>
+                            <button
+                              className="autosphere-btn-primary"
+                              onClick={() => navigate(`/vehicles/${car.marketplaceVehicleId}`)}
+                              disabled={!car.marketplaceVehicleId}
+                              style={{ padding: '8px 16px', fontSize: '14px' }}
+                            >
                               View Details
                             </button>
-                            <button className="autosphere-btn-secondary" style={{ padding: '8px 16px', fontSize: '14px' }}>
-                              Save to Favorites
+                            <button
+                              className="autosphere-btn-secondary"
+                              onClick={() => handleSaveVehicle(car)}
+                              disabled={!car.marketplaceVehicleId || savingVehicleId === car.marketplaceVehicleId}
+                              style={{ padding: '8px 16px', fontSize: '14px' }}
+                            >
+                              {savingVehicleId === car.marketplaceVehicleId
+                                ? 'Saving...'
+                                : savedVehicleIds.includes(car.marketplaceVehicleId)
+                                  ? 'Remove Saved'
+                                  : 'Save to Favorites'}
                             </button>
-                            <button className="autosphere-btn-secondary" style={{ padding: '8px 16px', fontSize: '14px' }}>
+                            <button
+                              className="autosphere-btn-secondary"
+                              onClick={() => navigate(`/vehicles/${car.marketplaceVehicleId}?testDrive=1`)}
+                              disabled={!car.marketplaceVehicleId}
+                              style={{ padding: '8px 16px', fontSize: '14px' }}
+                            >
                               Schedule Test Drive
+                            </button>
+                            <button
+                              className="autosphere-btn-secondary"
+                              onClick={() => navigate(`/rent-vehicle?vehicleId=${car.marketplaceVehicleId}`)}
+                              disabled={!car.marketplaceVehicleId}
+                              style={{ padding: '8px 16px', fontSize: '14px' }}
+                            >
+                              Rent This Vehicle
                             </button>
                           </div>
                         </div>

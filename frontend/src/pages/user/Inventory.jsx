@@ -9,7 +9,7 @@
  */
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { myVehiclesAPI, vehicleAPI } from '../../services/api';
+import { myVehiclesAPI, savedVehiclesAPI } from '../../services/api';
 import StartChatButton from '../../components/StartChatButton';
 import { CURRENCY_SYMBOL } from '../../utils/currency';
 import './Inventory.css';
@@ -195,7 +195,7 @@ const UserInventory = () => {
     try {
       const [myRes, savedRes] = await Promise.allSettled([
         myVehiclesAPI.getAll(),
-        vehicleAPI.getAll({ limit: 20 }),
+        savedVehiclesAPI.getAll(),
       ]);
 
       if (myRes.status === 'fulfilled' && myRes.value.data?.success) {

@@ -274,7 +274,7 @@ router.post('/', [
   body('serviceProviderId').isInt().withMessage('Service provider ID is required'),
   body('serviceType').isIn([
     'car_wash', 'carwash', 'oil_change', 'brake_service', 'tire_service', 'engine_diagnostic',
-    'transmission_service', 'air_conditioning', 'battery_service',
+    'transmission_service', 'air_conditioning', 'battery_service', 'test_drive',
     'general_maintenance', 'inspection', 'repair', 'other'
   ]).withMessage('Invalid service type'),
   body('title').notEmpty().trim().isLength({ min: 5, max: 200 }),
@@ -325,7 +325,8 @@ router.post('/', [
 
     // Verify service provider exists and has correct role
     const serviceProvider = await User.findByPk(req.body.serviceProviderId);
-    if (!serviceProvider || serviceProvider.role !== 'service_provider') {
+    const isValidTestDriveDealer = req.body.serviceType === 'test_drive' && serviceProvider?.role === 'dealer';
+    if (!serviceProvider || (serviceProvider.role !== 'service_provider' && !isValidTestDriveDealer)) {
       return res.status(400).json({
         success: false,
         message: 'Invalid service provider'
@@ -341,6 +342,18 @@ router.post('/', [
           message: 'Vehicle not found'
         });
       }
+
+      if (req.body.serviceType === 'test_drive' && vehicle.dealerId !== Number(req.body.serviceProviderId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Test drives must be requested from the vehicle dealer'
+        });
+      }
+    } else if (req.body.serviceType === 'test_drive') {
+      return res.status(400).json({
+        success: false,
+        message: 'A vehicle is required for a test drive'
+      });
     }
 
     const bookingData = {

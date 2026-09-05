@@ -21,8 +21,8 @@ export const appointmentService = {
       };
 
       // Only include vehicleId if it's a valid number
-      if (appointmentData.vehicleId && typeof appointmentData.vehicleId === 'number') {
-        bookingData.vehicleId = appointmentData.vehicleId;
+      if (appointmentData.vehicleId && Number.isInteger(Number(appointmentData.vehicleId))) {
+        bookingData.vehicleId = Number(appointmentData.vehicleId);
       }
 
       console.log('=== FRONTEND BOOKING DEBUG ===');
