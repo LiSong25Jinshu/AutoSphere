@@ -22,6 +22,7 @@ router.get('/stats', authenticateToken, requireAdmin, async (req, res) => {
       newVehiclesThisMonth,
       newBookingsThisMonth,
       unverifiedUsers,
+      pendingApprovals,
     ] = await Promise.all([
       User.count(),
       Vehicle.count(),
@@ -39,6 +40,12 @@ router.get('/stats', authenticateToken, requireAdmin, async (req, res) => {
         where: { createdAt: { [Op.gte]: new Date(new Date().setDate(1)) } },
       }),
       User.count({ where: { isVerified: false } }),
+      User.count({
+        where: {
+          role: { [Op.in]: ['dealer', 'service_provider'] },
+          approvalStatus: 'pending',
+        },
+      }),
     ]);
 
     // Bookings by status breakdown
@@ -87,6 +94,7 @@ router.get('/stats', authenticateToken, requireAdmin, async (req, res) => {
           activeBookings,
           pendingBookings,
           unverifiedUsers,
+            pendingApprovals,
           conversations: totalConversations,
         },
         thisMonth: {

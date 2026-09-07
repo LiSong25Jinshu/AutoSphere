@@ -321,6 +321,53 @@ router.get('/service-providers/list', async (req, res) => {
   }
 });
 
+// Approve or reject a dealer/service_provider (admin only)
+router.patch('/:id/approval', [
+  body('approvalStatus').isIn(['approved', 'rejected']).withMessage('approvalStatus must be approved or rejected'),
+  body('reason').optional().trim().isLength({ max: 500 }),
+], authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ success: false, message: 'Validation failed', errors: errors.array() });
+
+    const userId = parseInt(req.params.id);
+    if (isNaN(userId)) return res.status(400).json({ success: false, message: 'Invalid user ID' });
+
+    const user = await User.findByPk(userId);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    if (!['dealer', 'service_provider'].includes(user.role)) {
+      return res.status(400).json({ success: false, message: 'Approval is only applicable to dealers and service providers' });
+    }
+
+    const { approvalStatus, reason } = req.body;
+    const consentData = user.consentData ? { ...user.consentData } : {};
+    consentData.verificationStatus = approvalStatus;
+    consentData.reviewedAt = new Date().toISOString();
+    consentData.reviewedBy = req.user.id;
+    if (reason) consentData.rejectionReason = reason;
+
+    await user.update({ approvalStatus, consentData });
+
+    // Send notification email (fire and forget)
+    try {
+      const { sendAccountStatusEmail } = await import('../utils/email.js');
+      if (approvalStatus === 'approved') {
+        await sendAccountStatusEmail(user.email, user.firstName, true);
+      }
+    } catch (_) {}
+
+    res.json({
+      success: true,
+      message: `Account ${approvalStatus} successfully`,
+      data: user.toJSON(),
+    });
+  } catch (error) {
+    console.error('Approval update error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
 // Update user role (admin only)
 router.patch('/:id/role', [
   body('role').isIn(['user', 'dealer', 'service_provider', 'admin']),

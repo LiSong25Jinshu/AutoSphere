@@ -130,6 +130,8 @@ router.post('/register', [
       phone: cleanPhone,
       role,
       isVerified: false, // always start unverified
+      // dealers and service_providers need admin approval before they can log in
+      approvalStatus: ['dealer', 'service_provider'].includes(role) ? 'pending' : 'approved',
     });
 
   const otp = generateOtp();
@@ -266,6 +268,24 @@ router.post('/login', [
         success: false,
         message: 'Your account has been deactivated. Please contact support at support@autosphere.com.',
         error: 'ACCOUNT_DEACTIVATED',
+      });
+    }
+
+    // Block dealers/service_providers that are still pending admin approval
+    if (['dealer', 'service_provider'].includes(user.role) && user.approvalStatus === 'pending') {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account is awaiting admin approval. You will be notified once your application has been reviewed.',
+        error: 'PENDING_APPROVAL',
+      });
+    }
+
+    // Block dealers/service_providers that have been rejected
+    if (['dealer', 'service_provider'].includes(user.role) && user.approvalStatus === 'rejected') {
+      return res.status(403).json({
+        success: false,
+        message: 'Your application has been rejected. Please contact support@autosphere.com for more information.',
+        error: 'APPLICATION_REJECTED',
       });
     }
 
@@ -464,17 +484,32 @@ router.get('/google/callback', (req, res, next) => {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     return res.redirect(`${frontendUrl}/login?error=oauth_not_configured`);
   }
-  passport.authenticate('google', { session: false, failureRedirect: '/login?error=oauth_failed' })(req, res, next);
-}, (req, res) => {
-  const token = generateAccessToken({
-    id: req.user.id,
-    email: req.user.email,
-    role: req.user.role,
-    isVerified: req.user.isVerified,
-  });
-  const refreshToken = generateRefreshToken({ id: req.user.id });
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-  res.redirect(`${frontendUrl}/auth/callback?token=${token}&refreshToken=${encodeURIComponent(refreshToken)}`);
+  passport.authenticate('google', { session: false }, (err, user) => {
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+    if (err) {
+      console.error('Google OAuth strategy error:', err.message || err);
+      return res.redirect(`${frontendUrl}/login?error=${encodeURIComponent('Google sign-in failed. Please try again.')}`);
+    }
+
+    if (!user) {
+      return res.redirect(`${frontendUrl}/login?error=${encodeURIComponent('Could not retrieve your Google account. Please try again.')}`);
+    }
+
+    try {
+      const token = generateAccessToken({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        isVerified: user.isVerified,
+      });
+      const refreshToken = generateRefreshToken({ id: user.id });
+      return res.redirect(`${frontendUrl}/auth/callback?token=${token}&refreshToken=${encodeURIComponent(refreshToken)}`);
+    } catch (tokenErr) {
+      console.error('Google OAuth token generation error:', tokenErr.message);
+      return res.redirect(`${frontendUrl}/login?error=${encodeURIComponent('Authentication failed. Please try again.')}`);
+    }
+  })(req, res, next);
 });
 
 // POST /api/auth/refresh — issue a new access token using a valid refresh token
@@ -628,7 +663,7 @@ router.post('/register-provider', providerUpload, async (req, res) => {
       businessName:        businessName.trim(),
       businessType:        businessType,
       businessDescription: businessDescription?.trim() || null,
-      isVerified: false,
+      approvalStatus: 'pending', // requires admin review before login is allowed
       consentData,
     });
 

@@ -82,35 +82,59 @@ router.get('/vehicles', [
     const limit  = parseInt(req.query.limit) || 12;
     const offset = (page - 1) * limit;
 
-    // Include vehicles available for rent OR both
+    // Include vehicles available for rent OR both, with a fallback to all
+    // available vehicles if none are specifically marked for rent.
     const where = {
       status: 'available',
+    };
+
+    // First try to find rent/both only; if empty, fall back to all available
+    const rentWhere = {
+      ...where,
       availabilityType: { [Op.in]: ['rent', 'both'] },
     };
 
-    if (req.query.make)         where.make         = { [Op.iLike]: `%${req.query.make}%` };
-    if (req.query.bodyType)     where.bodyType     = req.query.bodyType;
-    if (req.query.transmission) where.transmission = req.query.transmission;
-    if (req.query.fuelType)     where.fuelType     = req.query.fuelType;
+    if (req.query.make)          rentWhere.make         = { [Op.iLike]: `%${req.query.make}%` };
+    if (req.query.bodyType)      rentWhere.bodyType     = req.query.bodyType;
+    if (req.query.transmission)  rentWhere.transmission = req.query.transmission;
+    if (req.query.fuelType)      rentWhere.fuelType     = req.query.fuelType;
 
     if (req.query.minPrice || req.query.maxPrice) {
-      where.price = {};
-      if (req.query.minPrice) where.price[Op.gte] = parseFloat(req.query.minPrice);
-      if (req.query.maxPrice) where.price[Op.lte] = parseFloat(req.query.maxPrice);
+      rentWhere.price = {};
+      if (req.query.minPrice) rentWhere.price[Op.gte] = parseFloat(req.query.minPrice);
+      if (req.query.maxPrice) rentWhere.price[Op.lte] = parseFloat(req.query.maxPrice);
     }
 
     if (req.query.search) {
       const q = `%${req.query.search}%`;
-      where[Op.or] = [{ make: { [Op.iLike]: q } }, { model: { [Op.iLike]: q } }];
+      rentWhere[Op.or] = [{ make: { [Op.iLike]: q } }, { model: { [Op.iLike]: q } }];
     }
 
-    const { rows: vehicles, count: total } = await Vehicle.findAndCountAll({
-      where,
+    // Try rent/both first; if none exist fall back to all available vehicles
+    // so the browse page always has content even before dealers update their listings.
+    let { rows: vehicles, count: total } = await Vehicle.findAndCountAll({
+      where: rentWhere,
       include: [{ model: User, as: 'dealer', attributes: ['id', 'firstName', 'lastName', 'phone'] }],
       order: [['isFeatured', 'DESC'], ['createdAt', 'DESC']],
       limit,
       offset,
     });
+
+    if (total === 0) {
+      // No vehicles specifically marked for rent — show all available vehicles
+      // Copy filters without the availabilityType constraint
+      const fallbackWhere = { ...rentWhere };
+      delete fallbackWhere.availabilityType;
+      const fallback = await Vehicle.findAndCountAll({
+        where: fallbackWhere,
+        include: [{ model: User, as: 'dealer', attributes: ['id', 'firstName', 'lastName', 'phone'] }],
+        order: [['isFeatured', 'DESC'], ['createdAt', 'DESC']],
+        limit,
+        offset,
+      });
+      vehicles = fallback.rows;
+      total    = fallback.count;
+    }
 
     res.json({ success: true, data: vehicles, pagination: { page, limit, total, pages: Math.ceil(total / limit) } });
   } catch (err) {

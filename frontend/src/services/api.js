@@ -53,6 +53,8 @@ export const userAPI = {
   getById: (id) => axios.get(`/api/users/${id}`),
   updateRole: (id, role) => axios.patch(`/api/users/${id}/role`, { role }),
   updateStatus: (id, isActive) => axios.patch(`/api/users/${id}/status`, { isActive }),
+  approveUser: (id, approvalStatus, reason = '') =>
+    axios.patch(`/api/users/${id}/approval`, { approvalStatus, reason }),
   getServiceProviders: () => axios.get('/api/users/service-providers/list'),
 };
 
@@ -145,9 +147,11 @@ export const myVehiclesAPI = {
 };
 
 // ─── Saved marketplace vehicles ─────────────────────────────────────────────
-
+// Points to /api/favorites which uses the FavoriteVehicle model and is fully
+// wired up. The old /api/saved-vehicles endpoint (UserVehicleInteraction) is
+// also now mounted but this alias keeps both pages working with one endpoint.
 export const savedVehiclesAPI = {
-  getAll: () => axios.get('/api/saved-vehicles'),
-  save: (vehicleId) => axios.post(`/api/saved-vehicles/${vehicleId}`),
-  remove: (vehicleId) => axios.delete(`/api/saved-vehicles/${vehicleId}`),
+  getAll:    ()           => axios.get('/api/favorites'),
+  save:      (vehicleId)  => axios.post(`/api/favorites/${vehicleId}`),
+  remove:    (vehicleId)  => axios.delete(`/api/favorites/${vehicleId}`),
 };

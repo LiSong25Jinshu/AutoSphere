@@ -27,38 +27,40 @@ if (googleCredentialsConfigured) {
         clientSecret: googleClientSecret,
         callbackURL: googleCallbackUrl,
       },
-      async (accessToken, refreshToken, profile, done) => {
+      async (_accessToken, _refreshToken, profile, done) => {
         try {
           const email = profile.emails?.[0]?.value;
-          if (!email) return done(new Error('No email found'), null);
+          if (!email) return done(new Error('No email found in Google profile'), null);
 
-          // Check user by googleId
+          // 1. Check by google_id first (returning user)
           let user = await User.findOne({ where: { googleId: profile.id } });
           if (user) return done(null, user);
 
-          // Check user by email
+          // 2. Check by email — link google_id to existing account
           user = await User.findOne({ where: { email } });
           if (user) {
-            user.googleId = profile.id;
-            user.isVerified = true;
-            await user.save();
+            // Only update if not already linked to a different Google account
+            if (!user.googleId) {
+              await user.update({ googleId: profile.id, isVerified: true });
+            }
             return done(null, user);
           }
 
-          // Create new user
+          // 3. Create brand-new user
           user = await User.create({
-            googleId: profile.id,
+            googleId:     profile.id,
             email,
-            firstName: profile.name.givenName,
-            lastName: profile.name.familyName,
-            isVerified: true,
-            passwordHash: 'google-oauth', // placeholder
-            role: 'user',
+            firstName:    profile.name?.givenName  || 'User',
+            lastName:     profile.name?.familyName || '',
+            isVerified:   true,
+            passwordHash: null,  // null is allowed for OAuth users
+            role:         'user',
+            approvalStatus: 'approved',
           });
 
           return done(null, user);
         } catch (error) {
-          console.error('Google OAuth error:', error);
+          console.error('Google OAuth strategy error:', error.message);
           return done(error, null);
         }
       }

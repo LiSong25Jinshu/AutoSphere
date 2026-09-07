@@ -32,6 +32,9 @@ const AdminDashboard = () => {
       if (data?.totals?.unverifiedUsers > 0) {
         live.push({ id: 'unverified', type: 'info', message: `${data.totals.unverifiedUsers} user(s) pending email verification` });
       }
+      if (data?.totals?.pendingApprovals > 0) {
+        live.push({ id: 'approvals', type: 'warning', message: `${data.totals.pendingApprovals} dealer/provider application(s) awaiting your approval` });
+      }
       setAlerts(live);
     } catch {
       // alerts are non-critical, fail silently

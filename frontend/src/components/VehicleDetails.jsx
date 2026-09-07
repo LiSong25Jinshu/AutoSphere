@@ -51,7 +51,12 @@ const VehicleDetails = ({ vehicleId, onFavorite, onShare, isFavorited = false })
     savedVehiclesAPI.getAll()
       .then((response) => {
         if (response.data?.success) {
-          setSaved(response.data.data?.some((savedVehicle) => String(savedVehicle.id) === String(currentVehicleId)) || false);
+          // /api/favorites returns full vehicle objects; compare as numbers
+          setSaved(
+            (response.data.data || []).some(
+              (savedVehicle) => Number(savedVehicle.id) === Number(currentVehicleId)
+            )
+          );
         }
       })
       .catch(() => {

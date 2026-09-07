@@ -184,12 +184,14 @@ export const AuthProvider = ({ children }) => {
       const errorMessage = error.response?.data?.message || 'Login failed';
       const requiresVerification = error.response?.data?.requiresVerification || false;
       const isDeactivated = error.response?.data?.error === 'ACCOUNT_DEACTIVATED';
+      const isPendingApproval = error.response?.data?.error === 'PENDING_APPROVAL';
+      const isRejected = error.response?.data?.error === 'APPLICATION_REJECTED';
       const email = error.response?.data?.email || null;
       dispatch({
         type: AUTH_ACTIONS.LOGIN_FAILURE,
         payload: errorMessage,
       });
-      return { success: false, error: errorMessage, requiresVerification, isDeactivated, email };
+      return { success: false, error: errorMessage, requiresVerification, isDeactivated, isPendingApproval, isRejected, email };
     }
   };
 

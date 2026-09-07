@@ -23,6 +23,7 @@ const VehicleDetails = lazy(() => import("./components/VehicleDetails"));
 
 const ProviderSignup = lazy(() => import('./pages/public/ProviderSignup'));
 const AccountSuspended = lazy(() => import('./pages/public/AccountSuspended'));
+const AccountPending = lazy(() => import('./pages/public/AccountPending'));
 const BusinessSignup = lazy(() => import('./pages/public/BusinessSignup'));
 
 // Auth utility pages
@@ -261,6 +262,7 @@ function AppContent() {
             <Route path="/register" element={<Register />} />
             <Route path="/register-provider" element={<ProviderSignup />} />
             <Route path="/account-suspended" element={<AccountSuspended />} />
+            <Route path="/account-pending" element={<AccountPending />} />
             <Route path="/business-signup" element={<BusinessSignup />} />
             <Route path="/forgot-password" element={<ForgotPasswordForm />} />
             <Route path="/reset-password" element={<ResetPasswordForm />} />

@@ -21,9 +21,7 @@ const Login = () => {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
         const roleHome = {
-          user: '/dashboard',
-          dealer: '/dealer-dashboard',
-          service_provider: '/service-provider-dashboard',
+          user: '/dashboard'
           admin: '/admin-dashboard',
         };
         window.location.href = roleHome[data.user?.role] || '/dashboard';

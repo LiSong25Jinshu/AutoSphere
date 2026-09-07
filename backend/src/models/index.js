@@ -95,6 +95,26 @@ const syncDatabase = async () => {
   } catch (err) {
     console.warn('FavoriteVehicle sync warning:', err.message);
   }
+  // Add approval_status column if missing (idempotent)
+  try {
+    const qi = sequelize.getQueryInterface();
+    const cols = await qi.describeTable('users');
+    if (!cols.approval_status) {
+      const { DataTypes } = await import('sequelize');
+      await qi.addColumn('users', 'approval_status', {
+        type: DataTypes.STRING(20), // use STRING for SQLite compatibility
+        allowNull: false,
+        defaultValue: 'approved',
+      });
+      await sequelize.query(
+        `UPDATE users SET approval_status = 'pending'
+         WHERE role IN ('dealer','service_provider') AND approval_status = 'approved'`
+      );
+      console.log('Added approval_status column to users table');
+    }
+  } catch (err) {
+    console.warn('approval_status column sync warning:', err.message);
+  }
 };
 
 export {

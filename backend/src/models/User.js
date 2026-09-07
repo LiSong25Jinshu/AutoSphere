@@ -146,6 +146,16 @@ const User = sequelize.define('User', {
     defaultValue: true,
     field: 'is_active',
   },
+  // ── Admin approval for dealers and service providers ─────────────────────
+  // 'pending'  → registered but not yet reviewed by admin
+  // 'approved' → admin has approved; account is fully accessible
+  // 'rejected' → admin has rejected the application
+  approvalStatus: {
+    type: DataTypes.ENUM('pending', 'approved', 'rejected'),
+    allowNull: false,
+    defaultValue: 'approved', // regular 'user' role starts approved
+    field: 'approval_status',
+  },
   consentData: {
     type: DataTypes.JSON,
     allowNull: true,
@@ -186,8 +196,13 @@ const User = sequelize.define('User', {
       fields: ['password_reset_token'],
     },
     {
-      unique: true,
+      // google_id is unique but nullable — partial index syntax is not supported
+      // by SQLite, so we enforce uniqueness at the DB level for non-null values
+      // via the column's own unique:true constraint above. No extra index needed.
       fields: ['google_id'],
+    },
+    {
+      fields: ['approval_status'],
     },
   ],
 });

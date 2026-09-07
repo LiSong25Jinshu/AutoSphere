@@ -77,6 +77,16 @@ const LoginForm = () => {
         navigate('/account-suspended', { replace: true });
         return;
       }
+      // Pending admin approval
+      if (result.isPendingApproval) {
+        navigate('/account-pending', { replace: true });
+        return;
+      }
+      // Rejected application
+      if (result.isRejected) {
+        setLoginError(result.error);
+        return;
+      }
       // Unverified — send to OTP screen
       if (result.requiresVerification) {
         navigate('/verify-email', {

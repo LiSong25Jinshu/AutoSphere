@@ -32,6 +32,7 @@ import pushRoutes from './routes/push.js';
 import gdprRoutes from './routes/gdpr.js';
 import rentalRoutes, { setIo as setRentalsIo } from './routes/rentals.js';
 import favoritesRoutes from './routes/favorites.js';
+import savedVehiclesRoutes from './routes/savedVehicles.js';
 
 const app = express();
 const server = createServer(app);
@@ -96,6 +97,7 @@ app.use('/api/push', pushRoutes);
 app.use('/api/gdpr', gdprRoutes);
 app.use('/api/rentals', rentalRoutes);
 app.use('/api/favorites', favoritesRoutes);
+app.use('/api/saved-vehicles', savedVehiclesRoutes);
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({

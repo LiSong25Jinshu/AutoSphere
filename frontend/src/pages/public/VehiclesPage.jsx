@@ -280,7 +280,10 @@ const VehiclesPage = () => {
     savedVehiclesAPI.getAll()
       .then((response) => {
         if (response.data?.success) {
-          setSavedVehicleIds((response.data.data || []).map((vehicle) => vehicle.id));
+          // /api/favorites returns full vehicle objects; normalise to numbers
+          setSavedVehicleIds(
+            (response.data.data || []).map((v) => Number(v.id)).filter(Boolean)
+          );
         }
       })
       .catch(() => {});
@@ -294,12 +297,12 @@ const VehiclesPage = () => {
 
     setSavingVehicleId(vehicleId);
     try {
-      if (savedVehicleIds.includes(vehicleId)) {
+      if (savedVehicleIds.includes(Number(vehicleId))) {
         await savedVehiclesAPI.remove(vehicleId);
-        setSavedVehicleIds((ids) => ids.filter((id) => id !== vehicleId));
+        setSavedVehicleIds((ids) => ids.filter((id) => id !== Number(vehicleId)));
       } else {
         await savedVehiclesAPI.save(vehicleId);
-        setSavedVehicleIds((ids) => [...ids, vehicleId]);
+        setSavedVehicleIds((ids) => [...ids, Number(vehicleId)]);
       }
     } finally {
       setSavingVehicleId(null);
@@ -490,7 +493,7 @@ const VehiclesPage = () => {
                   vehicle={vehicle}
                   isAuthenticated={isAuthenticated}
                   navigate={navigate}
-                  isSaved={savedVehicleIds.includes(vehicle.id)}
+                  isSaved={savedVehicleIds.includes(Number(vehicle.id))}
                   onToggleSave={handleToggleSave}
                   saving={savingVehicleId === vehicle.id}
                 />
