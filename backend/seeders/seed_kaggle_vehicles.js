@@ -17,7 +17,7 @@ async function getOrCreateSystemDealer() {
             firstName: 'AutoSphere',
             lastName: 'Inventory',
             role: 'dealer',
-            is_verified: true
+            isverified: true
         },
     });
 

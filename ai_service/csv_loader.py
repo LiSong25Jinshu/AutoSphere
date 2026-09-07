@@ -6,40 +6,6 @@ import ast
 # COLUMN MAPPING: left side(Kaggle CSV columns -- right side(model expectations)
 
 DATASET_MAPS = {
-    'Car_features_and_msrp.csv': {
-        'Make':         'make',
-        'Model':        'model',
-        'Year':         'year',
-        'MSRP':        'price',
-        'highway MPG':      'mileage',
-        'Engine Fuel Type':    'fuel_type',
-        'Transmission Type': 'transmission',
-        'Vehicle Style':   'body_type',
-        'Vehicle Size':  'description', #***
-    },
-    'Car_price_prediction.csv': {
-        'name':           'make',
-        'Car_Model':       'model', #***
-        'year':            'year',
-        'selling_price':   'price',
-        'km_driven':       'mileage',
-        'fuel':            'fuel_type',
-        'transmission':    'transmission',
-        'seats':           'body_type', #***
-        'Description':     'description', #***
-    },
-    "OLX_cars_dataset00.csv": {
-        "Make":           "make",
-        'Model':          'model',
-        'Year':           'year',
-        'Price':          'price',
-        "KM's driven":    "mileage",
-        'Fuel':           'fuel_type',
-        'Transmission':   'transmission',
-        'Body_type':      'body_type', #***
-        'Description':    'description',
-        "Images URL's" :  'image_url_raw'
-    },
     "autosphere_vehicles_dataset_images.csv": {
     'make': 'make',
     'model': 'model',

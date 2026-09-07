@@ -45,6 +45,7 @@ const Booking = sequelize.define('Booking', {
       'transmission_service',
       'air_conditioning',
       'battery_service',
+      'test_drive',
       'general_maintenance',
       'inspection',
       'repair',

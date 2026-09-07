@@ -83,41 +83,48 @@ def search_commons(query):
 def main():
     import os
 
-    # Resume from a previous partial run if present, instead of starting over
     resume_path = OUTPUT_CSV if os.path.exists(OUTPUT_CSV) else INPUT_CSV
     df = pd.read_csv(resume_path)
 
-    # Fix: image_url starts as all-NaN (float64) — cast to plain text
-    # dtype so writing URL strings into it doesn't warn/break.
     df["image_url"] = df["image_url"].astype("object")
     df["image_url"] = df["image_url"].where(df["image_url"].notna(), "")
 
     license_rows = []
     failed_rows = []
 
-    for idx, row in df.iterrows():
-        existing = str(row["image_url"])
-        if existing.startswith("http"):
-            continue  # already found in a previous run — skip it
+    # Dedupe by make/model - most cars only differ by year/mileage/price,
+    # and one representative photo works fine for all of them. This turns
+    # ~3,347 lookups into ~1,000 or so, which is the difference between a
+    # 2-hour run and a much shorter one.
+    unique_pairs = df[["make", "model"]].drop_duplicates().reset_index(drop=True)
+    print(f"{len(df)} total rows, {len(unique_pairs)} unique make/model pairs to search")
 
-        query = f"{row['year']} {row['make']} {row['model']} {row['body_type']}"
+    for idx, pair in unique_pairs.iterrows():
+        make, model = pair["make"], pair["model"]
+
+        existing_mask = (df["make"] == make) & (df["model"] == model)
+        already_done = df.loc[existing_mask, "image_url"].astype(str).str.startswith("http").all()
+        if already_done and existing_mask.any():
+            continue
+
+        body_type = df.loc[existing_mask, "body_type"].mode().iloc[0] if existing_mask.any() else ""
+
+        query = f"{make} {model} {body_type}"
         result = search_commons(query)
-
         if not result:
-            query2 = f"{row['make']} {row['model']}"
-            result = search_commons(query2)
+            result = search_commons(f"{make} {model}")
 
         if result and result["url"]:
-            df.at[idx, "image_url"] = result["url"]
+            df.loc[existing_mask, "image_url"] = result["url"]
             license_rows.append({
-                "make": row["make"], "model": row["model"], "year": row["year"],
-                "image_url": result["url"], "license": result["license"],
-                "artist": result["artist"], "source_page": result["source_page"],
+                "make": make, "model": model, "image_url": result["url"],
+                "license": result["license"], "artist": result["artist"],
+                "source_page": result["source_page"],
             })
-            print(f"[{idx+1}/{len(df)}] {row['make']} {row['model']} -> found")
+            print(f"[{idx+1}/{len(unique_pairs)}] {make} {model} -> found (applied to {existing_mask.sum()} rows)")
         else:
-            failed_rows.append({"make": row["make"], "model": row["model"], "year": row["year"]})
-            print(f"[{idx+1}/{len(df)}] {row['make']} {row['model']} -> NOT FOUND")
+            failed_rows.append({"make": make, "model": model})
+            print(f"[{idx+1}/{len(unique_pairs)}] {make} {model} -> NOT FOUND")
 
         time.sleep(DELAY_SECONDS)
 
@@ -126,7 +133,6 @@ def main():
 
     df.to_csv(OUTPUT_CSV, index=False)
 
-    # Append rather than overwrite license/failed logs across resumed runs
     for path, rows in [(LICENSE_LOG, license_rows), (FAILED_LOG, failed_rows)]:
         new_df = pd.DataFrame(rows)
         if os.path.exists(path) and not new_df.empty:
@@ -134,10 +140,10 @@ def main():
         if not new_df.empty:
             new_df.to_csv(path, index=False)
 
-    print(f"\nDone this run. {len(license_rows)} matched, {len(failed_rows)} need manual lookup.")
-    print(f"Updated dataset: {OUTPUT_CSV}")
+    print(f"\nDone. {len(license_rows)} unique make/model matched, {len(failed_rows)} need manual lookup.")
+    print(f"Updated dataset: {OUTPUT_CSV}  ({len(df)} rows, all sharing images by make/model)")
     print(f"License records: {LICENSE_LOG}  (keep this for your project report)")
-    print(f"Unmatched rows: {FAILED_LOG}")
+    print(f"Unmatched pairs: {FAILED_LOG}")
 
 
 if __name__ == "__main__":

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box, Container, Grid, Typography, Button, Chip, Card, CardContent,
   ImageList, ImageListItem, Dialog, DialogContent, IconButton,
   Breadcrumbs, Link, Divider, List, ListItem, ListItemIcon, ListItemText,
-  Paper, Skeleton, Alert, Tooltip,
+  Paper, Skeleton, Alert, Tooltip, TextField,
 } from '@mui/material';
 import {
   ArrowBack, Close, Favorite, FavoriteBorder, Share, Print,
@@ -13,16 +13,25 @@ import {
 } from '@mui/icons-material';
 import { getVehicleImages } from '../utils/imageUtils';
 import { vehicleService } from '../services/vehicleService';
+import { savedVehiclesAPI } from '../services/api';
+import { appointmentService } from '../services/appointmentService';
 import StartChatButton from './StartChatButton';
 
 const VehicleDetails = ({ vehicleId, onFavorite, onShare, isFavorited = false }) => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [vehicle, setVehicle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
+  const [saved, setSaved] = useState(isFavorited);
+  const [saving, setSaving] = useState(false);
+  const [testDriveOpen, setTestDriveOpen] = useState(searchParams.get('testDrive') === '1');
+  const [testDriveDate, setTestDriveDate] = useState('');
+  const [testDriveTime, setTestDriveTime] = useState('');
+  const [testDriveSubmitting, setTestDriveSubmitting] = useState(false);
 
   const currentVehicleId = vehicleId || id;
 
@@ -30,6 +39,24 @@ const VehicleDetails = ({ vehicleId, onFavorite, onShare, isFavorited = false })
     if (currentVehicleId) {
       fetchVehicleDetails(currentVehicleId);
     }
+  }, [currentVehicleId]);
+
+  useEffect(() => {
+    if (vehicle && searchParams.get('testDrive') === '1') setTestDriveOpen(true);
+  }, [vehicle, searchParams]);
+
+  useEffect(() => {
+    if (!currentVehicleId) return;
+
+    savedVehiclesAPI.getAll()
+      .then((response) => {
+        if (response.data?.success) {
+          setSaved(response.data.data?.some((savedVehicle) => String(savedVehicle.id) === String(currentVehicleId)) || false);
+        }
+      })
+      .catch(() => {
+        // The detail page remains usable for signed-out visitors.
+      });
   }, [currentVehicleId]);
 
   const fetchVehicleDetails = async (idToFetch) => {
@@ -95,6 +122,51 @@ const VehicleDetails = ({ vehicleId, onFavorite, onShare, isFavorited = false })
   const handleImageClick = (index) => {
     setSelectedImageIndex(index);
     setImageDialogOpen(true);
+  };
+
+  const handleSave = async () => {
+    if (!vehicle?.id || saving) return;
+
+    setSaving(true);
+    try {
+      if (saved) {
+        await savedVehiclesAPI.remove(vehicle.id);
+        setSaved(false);
+      } else {
+        await savedVehiclesAPI.save(vehicle.id);
+        setSaved(true);
+      }
+      onFavorite?.(vehicle.id);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Could not update saved vehicles.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleTestDrive = async () => {
+    if (!vehicle?.id || !dealerId || !testDriveDate || !testDriveTime) return;
+
+    setTestDriveSubmitting(true);
+    try {
+      const result = await appointmentService.requestAppointment({
+        serviceProviderId: Number(dealerId),
+        serviceType: 'test_drive',
+        title: `Test drive: ${vehicle.year} ${vehicle.make} ${vehicle.model}`,
+        description: `Test drive request for ${vehicle.year} ${vehicle.make} ${vehicle.model}`,
+        date: testDriveDate,
+        time: testDriveTime,
+        vehicleId: Number(vehicle.id),
+      });
+
+      if (!result.success) throw new Error(result.message);
+      setTestDriveOpen(false);
+      navigate('/appointments');
+    } catch (err) {
+      setError(err.message || 'Could not schedule the test drive.');
+    } finally {
+      setTestDriveSubmitting(false);
+    }
   };
 
   const formatPrice = (price) => {
@@ -357,12 +429,13 @@ const VehicleDetails = ({ vehicleId, onFavorite, onShare, isFavorited = false })
                   />
                 </Box>
                 <Box>
-                  <Tooltip title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}>
+                  <Tooltip title={saved ? 'Remove from saved vehicles' : 'Save vehicle'}>
                     <IconButton
-                      onClick={() => onFavorite?.(vehicle.id)}
+                      onClick={handleSave}
+                      disabled={saving}
                       color="error"
                     >
-                      {isFavorited ? <Favorite /> : <FavoriteBorder />}
+                      {saved ? <Favorite /> : <FavoriteBorder />}
                     </IconButton>
                   </Tooltip>
                   <Tooltip title="Share vehicle">
@@ -427,6 +500,24 @@ const VehicleDetails = ({ vehicleId, onFavorite, onShare, isFavorited = false })
                   className="vd-contact-btn"
                   reference={messageReference}
                 />
+                {(vehicle.availabilityType === 'rent' || vehicle.availabilityType === 'both') && (
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    sx={{ mt: 1.5 }}
+                    onClick={() => navigate(`/rent-vehicle?vehicleId=${vehicle.id}`)}
+                  >
+                    Rent This Vehicle
+                  </Button>
+                )}
+                <Button
+                  fullWidth
+                  variant="contained"
+                  sx={{ mt: 1.5 }}
+                  onClick={() => setTestDriveOpen(true)}
+                >
+                  Schedule Test Drive
+                </Button>
               </Box>
             </CardContent>
           </Card>
@@ -549,6 +640,44 @@ const VehicleDetails = ({ vehicleId, onFavorite, onShare, isFavorited = false })
             }}
             onError={(e) => { e.target.src = '/placeholder-car.jpg'; }}
           />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={testDriveOpen} onClose={() => setTestDriveOpen(false)} maxWidth="xs" fullWidth>
+        <DialogContent>
+          <Typography variant="h6" gutterBottom>Schedule a Test Drive</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Choose a preferred date and time. The request will be sent to {dealerName}.
+          </Typography>
+          <TextField
+            fullWidth
+            type="date"
+            label="Preferred date"
+            value={testDriveDate}
+            onChange={(event) => setTestDriveDate(event.target.value)}
+            InputLabelProps={{ shrink: true }}
+            inputProps={{ min: new Date().toISOString().split('T')[0] }}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            fullWidth
+            type="time"
+            label="Preferred time"
+            value={testDriveTime}
+            onChange={(event) => setTestDriveTime(event.target.value)}
+            InputLabelProps={{ shrink: true }}
+            sx={{ mb: 2 }}
+          />
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+            <Button onClick={() => setTestDriveOpen(false)}>Cancel</Button>
+            <Button
+              variant="contained"
+              onClick={handleTestDrive}
+              disabled={testDriveSubmitting || !testDriveDate || !testDriveTime}
+            >
+              {testDriveSubmitting ? 'Submitting...' : 'Request Test Drive'}
+            </Button>
+          </Box>
         </DialogContent>
       </Dialog>
 

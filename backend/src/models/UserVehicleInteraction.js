@@ -25,6 +25,12 @@ const UserVehicleInteraction = sequelize.define('UserVehicleInteraction', {
 }, {
     tableName: 'user_vehicle_interactions',
     timestamps: true,  // adds createdAt and updatedAt automatically
+    indexes: [
+        {
+            unique: true,
+            fields: ['user_id', 'vehicle_id', 'interaction_type']
+        }
+    ]
 });
 
 export default UserVehicleInteraction;
