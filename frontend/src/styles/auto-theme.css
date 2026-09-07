@@ -2449,3 +2449,111 @@ body {
   background-color: var(--autosphere-accent-red) !important;
   color: var(--autosphere-white) !important;
 }
+
+/* ============================================================
+   Responsive Public Navbar — hamburger + mobile drawer
+   ============================================================ */
+
+/* Hamburger button — hidden on desktop */
+.auto-nav-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  background: none;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 6px;
+  flex-shrink: 0;
+}
+
+.hamburger-bar {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: #171a20;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+
+/* Animate bars to X when open */
+.auto-nav-hamburger .hamburger-bar.open:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.auto-nav-hamburger .hamburger-bar.open:nth-child(2) {
+  opacity: 0;
+}
+.auto-nav-hamburger .hamburger-bar.open:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* Mobile drawer */
+.auto-nav-mobile-drawer {
+  display: flex;
+  flex-direction: column;
+  background: rgba(255,255,255,0.98);
+  border-top: 1px solid rgba(0,0,0,0.08);
+  padding: 8px 0 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.auto-nav-mobile-link {
+  display: block;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #171a20;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+.auto-nav-mobile-link:hover {
+  background: #f4f4f4;
+}
+.auto-nav-mobile-link-primary {
+  background: #171a20;
+  color: #fff;
+  border-radius: 6px;
+  margin: 4px 16px;
+  padding: 12px 20px;
+  text-align: center;
+}
+.auto-nav-mobile-link-primary:hover {
+  background: #393c41;
+}
+.auto-nav-mobile-divider {
+  height: 1px;
+  background: rgba(0,0,0,0.08);
+  margin: 8px 0;
+}
+
+/* At ≤ 640px: show hamburger, hide desktop nav/utils */
+@media (max-width: 640px) {
+  .auto-nav-links-desktop  { display: none !important; }
+  .auto-nav-utils-desktop  { display: none !important; }
+  .auto-nav-hamburger      { display: flex; }
+
+  .auto-nav-content {
+    height: 52px;
+    padding: 0 16px;
+    flex-wrap: nowrap;
+  }
+}
+
+/* Between 641–768px show fewer links but no hamburger */
+@media (min-width: 641px) and (max-width: 768px) {
+  .auto-nav-mobile-drawer { display: none !important; }
+  .auto-nav-hamburger     { display: none !important; }
+  .auto-nav-links { gap: 16px; }
+  .auto-nav-link  { font-size: 12px; }
+  .auto-nav-util  { font-size: 12px; padding: 6px 10px; }
+}
+
+/* Overflow guard for all public pages */
+body {
+  overflow-x: hidden;
+}

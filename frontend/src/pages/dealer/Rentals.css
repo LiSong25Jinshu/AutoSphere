@@ -1,0 +1,108 @@
+/* Dealer Rentals & Test Drives */
+.dr-page { padding: 24px; max-width: 1100px; margin: 0 auto; }
+
+.dr-toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: #1a1a1a; color: #fff; padding: 12px 24px; border-radius: 8px;
+  font-size: 14px; z-index: 2000; box-shadow: 0 4px 12px rgba(0,0,0,.3);
+  max-width: 420px; text-align: center;
+}
+
+.dr-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+.dr-header h1 { margin: 0 0 4px; font-size: 1.5rem; }
+.dr-header p  { margin: 0; color: #666; font-size: 14px; }
+.dr-btn-refresh {
+  padding: 9px 18px; border: 1px solid #ddd; border-radius: 8px;
+  background: #fff; cursor: pointer; font-size: 14px; white-space: nowrap;
+}
+.dr-btn-refresh:hover { background: #f5f5f5; }
+
+/* Tabs */
+.dr-tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 2px solid #e6e6e6; }
+.dr-tab {
+  padding: 10px 20px; border: none; background: none; cursor: pointer;
+  font-size: 15px; font-weight: 500; color: #666; border-bottom: 2px solid transparent;
+  margin-bottom: -2px; display: flex; align-items: center; gap: 8px;
+}
+.dr-tab.active { color: #1a1a1a; border-bottom-color: #1a1a1a; }
+.dr-tab-badge {
+  background: #e53935; color: #fff; border-radius: 10px;
+  font-size: 11px; font-weight: 700; padding: 1px 7px; min-width: 18px; text-align: center;
+}
+
+/* Stats */
+.dr-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.dr-stat {
+  background: #f8f9fa; border-radius: 10px; padding: 16px;
+  text-align: center; border: 1px solid #e6e6e6;
+}
+.dr-stat-n { display: block; font-size: 1.8rem; font-weight: 700; color: #1a1a1a; }
+.dr-stat-l { display: block; font-size: 13px; color: #666; margin-top: 4px; text-transform: capitalize; }
+
+/* Filters */
+.dr-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.dr-filter-btn {
+  padding: 7px 14px; border: 1px solid #ddd; border-radius: 20px;
+  background: #fff; cursor: pointer; font-size: 13px; color: #555;
+  text-transform: capitalize;
+}
+.dr-filter-btn.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+
+/* Loading / Empty */
+.dr-loading { display: flex; flex-direction: column; align-items: center; padding: 60px; color: #666; gap: 16px; }
+.dr-spinner {
+  width: 36px; height: 36px; border: 3px solid #e6e6e6;
+  border-top-color: #1a1a1a; border-radius: 50%; animation: dr-spin .8s linear infinite;
+}
+@keyframes dr-spin { to { transform: rotate(360deg); } }
+.dr-empty { text-align: center; padding: 60px 20px; color: #666; }
+.dr-empty h3 { margin: 0 0 8px; font-size: 1.1rem; }
+.dr-error { background: #fff1f0; color: #b42318; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; }
+
+/* List */
+.dr-list { display: flex; flex-direction: column; gap: 16px; }
+
+/* Card */
+.dr-card {
+  background: #fff; border: 1px solid #e6e6e6; border-radius: 12px;
+  padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.dr-card-top { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.dr-card-info { flex: 1; }
+.dr-card-info h3 { margin: 0 0 8px; font-size: 1.05rem; }
+.dr-customer { font-size: 14px; color: #444; margin-bottom: 6px; display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.dr-phone { color: #1976d2; text-decoration: none; font-size: 13px; }
+.dr-phone:hover { text-decoration: underline; }
+.dr-dates { font-size: 13px; color: #555; margin-bottom: 5px; }
+.dr-cost  { font-size: 13px; color: #2e7d32; font-weight: 600; margin-bottom: 5px; }
+.dr-notes { font-size: 13px; color: #888; font-style: italic; }
+
+.dr-card-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+.dr-ref { font-size: 12px; color: #999; font-family: monospace; }
+
+/* Status badges */
+.dr-status { padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.dr-pending    { background: #fff3e0; color: #e65100; }
+.dr-confirmed  { background: #e3f2fd; color: #1565c0; }
+.dr-ready      { background: #e8f5e9; color: #2e7d32; }
+.dr-active     { background: #e8f5e9; color: #1b5e20; }
+.dr-completed  { background: #f3e5f5; color: #6a1b9a; }
+.dr-cancelled  { background: #ffebee; color: #c62828; }
+
+/* Action buttons */
+.dr-card-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.dr-btn {
+  padding: 9px 18px; border: none; border-radius: 8px;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.dr-btn.confirm { background: #1a1a1a; color: #fff; }
+.dr-btn.confirm:hover { background: #333; }
+.dr-btn.danger  { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+.dr-btn.danger:hover { background: #ffcdd2; }
+.dr-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+@media (max-width: 640px) {
+  .dr-stats { grid-template-columns: repeat(2, 1fr); }
+  .dr-card-top { flex-direction: column; }
+  .dr-card-right { align-items: flex-start; }
+}

@@ -82,7 +82,21 @@ const getTransporter = async () => {
 
 const sendMail = async (mailOptions) => {
   const transport = await getTransporter();
-  const info = await transport.sendMail(mailOptions);
+  let info;
+  try {
+    info = await transport.sendMail(mailOptions);
+  } catch (err) {
+    // Reset cached transporter on connection errors so next call creates a fresh one
+    if (
+      err.code === 'ECONNECTION' ||
+      err.code === 'ETIMEDOUT' ||
+      err.message?.includes('Greeting never received') ||
+      err.message?.includes('ECONNREFUSED')
+    ) {
+      _transporter = null;
+    }
+    throw err;
+  }
 
   // In dev, log Ethereal preview link so you can read the email in browser
   const previewUrl = nodemailer.getTestMessageUrl(info);

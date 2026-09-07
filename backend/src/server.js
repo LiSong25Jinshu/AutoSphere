@@ -30,7 +30,8 @@ import notificationRoutes from './routes/notifications.js';
 import adminRoutes from './routes/admin.js';
 import pushRoutes from './routes/push.js';
 import gdprRoutes from './routes/gdpr.js';
-import rentalRoutes from './routes/rentals.js';
+import rentalRoutes, { setIo as setRentalsIo } from './routes/rentals.js';
+import favoritesRoutes from './routes/favorites.js';
 
 const app = express();
 const server = createServer(app);
@@ -94,6 +95,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/push', pushRoutes);
 app.use('/api/gdpr', gdprRoutes);
 app.use('/api/rentals', rentalRoutes);
+app.use('/api/favorites', favoritesRoutes);
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({
@@ -105,6 +107,7 @@ app.get('/api/health', (req, res) => {
 
 initializeMessageSocket(io);
 setBookingsIo(io);
+setRentalsIo(io);
 
 // Serve React frontend in production
 if (process.env.NODE_ENV === 'production') {

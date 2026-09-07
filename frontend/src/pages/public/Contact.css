@@ -1,55 +1,68 @@
-/* Contact Page Styles */
+/* ============================================================
+   Contact Page — Responsive Styles
+   Mobile  : ≤ 767px
+   Tablet  : 768px – 1023px
+   Desktop : ≥ 1024px
+   ============================================================ */
+
 .contact-page {
   min-height: 100vh;
   background: #f5f5f5;
-  padding: 2rem 0;
+  padding: clamp(16px, 3vw, 32px) 0;
+  overflow-x: hidden;
 }
 
 .contact-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 0 clamp(16px, 4vw, 32px);
+  box-sizing: border-box;
+  width: 100%;
 }
 
-/* Header Section */
+/* ── Header ──────────────────────────────────────────────── */
 .contact-header {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: clamp(24px, 4vw, 48px);
 }
 
 .contact-header h1 {
-  font-size: 3rem;
+  font-size: clamp(1.75rem, 5vw, 3rem);
   font-weight: 700;
   color: #2c2c2c;
   margin-bottom: 1rem;
+  word-break: break-word;
 }
 
 .contact-header p {
-  font-size: 1.125rem;
+  font-size: clamp(0.95rem, 2vw, 1.125rem);
   color: #666666;
   max-width: 600px;
   margin: 0 auto;
   line-height: 1.6;
 }
 
-/* Main Content Grid */
+/* ── Main grid ───────────────────────────────────────────── */
+/* Desktop: 2 columns; stacks on tablet/mobile               */
 .contact-content {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3rem;
-  margin-bottom: 3rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  gap: clamp(16px, 3vw, 48px);
+  margin-bottom: clamp(24px, 4vw, 48px);
 }
 
-/* Contact Form */
+/* ── Form section ────────────────────────────────────────── */
 .contact-form-section {
   background: white;
-  padding: 2.5rem;
+  padding: clamp(20px, 3vw, 40px);
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .contact-form-section h2 {
-  font-size: 1.5rem;
+  font-size: clamp(1.125rem, 2.5vw, 1.5rem);
   font-weight: 600;
   color: #2c2c2c;
   margin-bottom: 1.5rem;
@@ -58,7 +71,7 @@
 .contact-form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
 .form-group {
@@ -70,11 +83,10 @@
   font-weight: 500;
   color: #2c2c2c;
   margin-bottom: 0.5rem;
+  font-size: 0.9375rem;
 }
 
-.form-group .required {
-  color: #666666;
-}
+.form-group .required { color: #666666; }
 
 .form-input,
 .form-textarea {
@@ -83,6 +95,8 @@
   border-radius: 8px;
   font-size: 1rem;
   transition: border-color 0.2s;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .form-input:focus,
@@ -96,48 +110,50 @@
   min-height: 120px;
 }
 
+/* Side-by-side name + email row — collapses on small screens */
 .form-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
   gap: 1rem;
 }
 
 .submit-btn {
   background: #2c2c2c;
   color: white;
-  padding: 1rem 2rem;
+  padding: 0.9rem 2rem;
   border: none;
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  width: 100%;
 }
 
-.submit-btn:hover {
-  background: #666666;
-  transform: translateY(-2px);
-}
+.submit-btn:hover   { background: #666666; transform: translateY(-2px); }
+.submit-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
 
-.submit-btn:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* Contact Info */
+/* ── Contact info section ────────────────────────────────── */
 .contact-info-section {
   background: white;
-  padding: 2.5rem;
+  padding: clamp(20px, 3vw, 40px);
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .contact-info-section h2 {
-  font-size: 1.5rem;
+  font-size: clamp(1.125rem, 2.5vw, 1.5rem);
   font-weight: 600;
   color: #2c2c2c;
+  margin-bottom: 0.5rem;
+}
+
+.contact-info-section > p {
+  color: #666;
   margin-bottom: 1.5rem;
+  font-size: 0.9375rem;
 }
 
 .contact-info-list {
@@ -161,12 +177,12 @@
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   flex-shrink: 0;
 }
 
 .contact-details h3 {
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 600;
   color: #2c2c2c;
   margin-bottom: 0.25rem;
@@ -176,46 +192,28 @@
   color: #666666;
   margin: 0;
   line-height: 1.5;
+  font-size: 0.9rem;
 }
 
 .contact-details a {
   color: #2c2c2c;
   text-decoration: none;
 }
+.contact-details a:hover { text-decoration: underline; }
 
-.contact-details a:hover {
-  text-decoration: underline;
-}
-
-
-.hours-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.hours-item {
-  display: flex;
-  justify-content: space-between;
-  color: #666666;
-  font-size: 0.875rem;
-}
-
-.hours-item .day {
-  font-weight: 500;
-}
-
-/* FAQ Section */
+/* ── FAQ Section ─────────────────────────────────────────── */
 .faq-section {
   background: white;
-  padding: 2.5rem;
+  padding: clamp(20px, 3vw, 40px);
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  margin-bottom: 3rem;
+  margin-bottom: clamp(24px, 4vw, 48px);
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .faq-section h2 {
-  font-size: 2rem;
+  font-size: clamp(1.25rem, 3vw, 2rem);
   font-weight: 600;
   color: #2c2c2c;
   text-align: center;
@@ -225,7 +223,7 @@
 .faq-list {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .faq-item {
@@ -236,51 +234,48 @@
 
 .faq-question {
   background: #f5f5f5;
-  padding: 1rem 1.5rem;
+  padding: 1rem 1.25rem;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   font-weight: 600;
   color: #2c2c2c;
   transition: background-color 0.2s;
+  font-size: clamp(0.875rem, 2vw, 1rem);
 }
 
-.faq-question:hover {
-  background: #e0e0e0;
-}
+.faq-question:hover { background: #e0e0e0; }
 
 .faq-question .icon {
-  font-size: 1.25rem;
+  font-size: 1rem;
   transition: transform 0.2s;
+  flex-shrink: 0;
 }
 
-.faq-item.active .faq-question .icon {
-  transform: rotate(180deg);
-}
+.faq-item.active .faq-question .icon { transform: rotate(180deg); }
 
 .faq-answer {
-  padding: 0 1.5rem;
+  padding: 0 1.25rem;
   max-height: 0;
   overflow: hidden;
   transition: all 0.3s ease;
 }
 
 .faq-item.active .faq-answer {
-  padding: 1rem 1.5rem;
-  max-height: 200px;
+  padding: 1rem 1.25rem;
+  max-height: 300px;
 }
 
 .faq-answer p {
   color: #666666;
   line-height: 1.6;
   margin: 0;
+  font-size: 0.9375rem;
 }
 
-
-
-
-/* Success Message */
+/* ── Feedback messages ───────────────────────────────────── */
 .success-message {
   background: #f5f5f5;
   color: #2c2c2c;
@@ -292,63 +287,28 @@
   border: 1px solid #e0e0e0;
 }
 
-/* Error Message */
 .error-message {
-  background: #f5f5f5;
-  color: #666666;
+  background: #ffebee;
+  color: #b42318;
   padding: 1rem;
   border-radius: 8px;
   margin-bottom: 1rem;
   text-align: center;
   font-weight: 500;
-  border: 1px solid #e0e0e0;
+  border: 1px solid #ffcdd2;
 }
 
-/* Responsive Design */
-@media (max-width: 968px) {
-  .contact-content {
-    grid-template-columns: 1fr;
-    gap: 2rem;
+/* ── Responsive tweaks ───────────────────────────────────── */
+@media (max-width: 767px) {
+  .contact-info-item {
+    flex-direction: row;   /* keep icon + text side by side */
+    align-items: flex-start;
   }
+
+  /* Full-width button already handled by width:100% above */
 }
 
-@media (max-width: 768px) {
-  .contact-container {
-    padding: 0 1rem;
-  }
-  
-  .contact-header h1 {
-    font-size: 2.5rem;
-  }
-  
-  .contact-form-section,
-  .contact-info-section,
-  .faq-section,
-  .map-section {
-    padding: 2rem;
-  }
-  
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 480px) {
-  .contact-page {
-    padding: 1rem 0;
-  }
-  
-  .contact-header h1 {
-    font-size: 2rem;
-  }
-  
-  .contact-form-section,
-  .contact-info-section,
-  .faq-section,
-  .map-section {
-    padding: 1.5rem;
-  }
-  
+@media (max-width: 479px) {
   .contact-info-item {
     flex-direction: column;
     align-items: center;

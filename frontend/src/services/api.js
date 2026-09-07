@@ -111,10 +111,28 @@ export const gdprAPI = {
 // ─── Rentals ──────────────────────────────────────────────────────────────────
 
 export const rentalAPI = {
-  getVehicles:   (params = {}) => axios.get('/api/rentals/vehicles', { params }),
-  getVehicleById: (id)         => axios.get(`/api/rentals/vehicles/${id}`),
-  submitRequest:  (data)       => axios.post('/api/rentals/request', data),
-  getMyRentals:   ()           => axios.get('/api/rentals/my'),
+  getVehicles:    (params = {}) => axios.get('/api/rentals/vehicles', { params }),
+  getVehicleById: (id)          => axios.get(`/api/rentals/vehicles/${id}`),
+  submitRequest:  (data)        => axios.post('/api/rentals/request', data),
+  scheduleTestDrive: (data)     => axios.post('/api/rentals/test-drive', data),
+  getMyRentals:   ()            => axios.get('/api/rentals/my'),
+  // Dealer
+  getDealerRentals:    ()       => axios.get('/api/rentals/dealer'),
+  getDealerTestDrives: ()       => axios.get('/api/rentals/dealer/test-drives'),
+  updateStatus: (bookingId, status, providerNotes = '') =>
+    axios.patch(`/api/rentals/${bookingId}/status`, { status, providerNotes }),
+};
+
+// ─── Favorites ────────────────────────────────────────────────────────────────
+
+export const favoritesAPI = {
+  getAll:    ()   => axios.get('/api/favorites'),
+  getIds:    ()   => axios.get('/api/favorites/ids'),
+  save:      (id) => axios.post(`/api/favorites/${id}`),
+  remove:    (id) => axios.delete(`/api/favorites/${id}`),
+  toggle:    async (id, currentlyFavorited) => currentlyFavorited
+    ? axios.delete(`/api/favorites/${id}`)
+    : axios.post(`/api/favorites/${id}`),
 };
 
 // ─── Customer Garage (My Vehicles) ───────────────────────────────────────────

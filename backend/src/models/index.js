@@ -10,6 +10,7 @@ import Notification from './Notification.js';
 import PushSubscription from './PushSubscription.js';
 import ServiceOffering from './ServiceOffering.js';
 import ProviderSchedule from './ProviderSchedule.js';
+import FavoriteVehicle from './FavoriteVehicle.js';
 
 // Define associations
 const defineAssociations = () => {
@@ -70,6 +71,12 @@ const defineAssociations = () => {
   // ProviderSchedule associations
   User.hasOne(ProviderSchedule, { foreignKey: 'providerId', as: 'schedule' });
   ProviderSchedule.belongsTo(User, { foreignKey: 'providerId', as: 'provider' });
+
+  // FavoriteVehicle associations
+  User.hasMany(FavoriteVehicle, { foreignKey: 'userId', as: 'favorites' });
+  FavoriteVehicle.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+  Vehicle.hasMany(FavoriteVehicle, { foreignKey: 'vehicleId', as: 'favoritedBy' });
+  FavoriteVehicle.belongsTo(Vehicle, { foreignKey: 'vehicleId', as: 'vehicle' });
 };
 
 // Initialize associations
@@ -82,8 +89,12 @@ defineAssociations();
 // prevented the server from ever binding its port. Production and test environments
 // manage their own schema, so this is intentionally a no-op.
 const syncDatabase = async () => {
-  // No-op: schema sync is handled by connectDB() in development; production and
-  // tests manage their own database setup.
+  // Sync only the FavoriteVehicle table (new addition) — safe, non-destructive
+  try {
+    await FavoriteVehicle.sync({ alter: false });
+  } catch (err) {
+    console.warn('FavoriteVehicle sync warning:', err.message);
+  }
 };
 
 export {
@@ -99,6 +110,7 @@ export {
   PushSubscription,
   ServiceOffering,
   ProviderSchedule,
+  FavoriteVehicle,
   syncDatabase,
 };
 
@@ -113,5 +125,6 @@ export default {
   SavedSearch,
   ServiceOffering,
   ProviderSchedule,
+  FavoriteVehicle,
   syncDatabase,
 };

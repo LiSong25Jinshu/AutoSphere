@@ -299,3 +299,29 @@
   .myr-modal-foot { flex-direction: column; }
   .myr-modal-foot .myr-btn { width: 100%; justify-content: center; }
 }
+
+/* Toast */
+.myr-toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: #1a1a1a; color: #fff; padding: 12px 24px; border-radius: 8px;
+  font-size: 14px; z-index: 2000; box-shadow: 0 4px 12px rgba(0,0,0,.3);
+  max-width: 420px; text-align: center;
+}
+.myr-btn.danger {
+  padding: 9px 18px; background: #ffebee; color: #c62828;
+  border: 1px solid #ffcdd2; border-radius: 8px; cursor: pointer;
+  font-size: 14px; font-weight: 500;
+}
+.myr-btn.danger:hover { background: #ffcdd2; }
+.myr-btn.danger:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Ready-for-pickup status */
+.rent-status-ready {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}

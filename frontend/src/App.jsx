@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
@@ -63,7 +63,7 @@ const DealerManageListings = lazy(() => import('./pages/dealer/ManageListings'))
 const DealerMessages = lazy(() => import('./pages/dealer/Messages'));
 const DealerProfile = lazy(() => import('./pages/dealer/Profile'));
 const DealerSales = lazy(() => import('./pages/dealer/Sales'));
-const DealerInspections = lazy(() => import('./pages/dealer/Inspections'));
+const DealerRentals = lazy(() => import('./pages/dealer/Rentals'));
 
 // Service provider pages
 const ServiceProviderDashboardPage = lazy(() => import('./pages/service-provider/Dashboard'));
@@ -154,24 +154,37 @@ const DashboardRoute = ({ children, requiredRole }) => (
 function Navigation() {
   const { user } = useAuth();
   const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Close menu on route change
+  useEffect(() => { setMenuOpen(false); }, [location.pathname]);
 
   if (isDashboardRoute(location.pathname)) return null;
 
+  const dashTarget =
+    user?.role === 'dealer'           ? '/dealer-dashboard' :
+    user?.role === 'service_provider' ? '/service-provider-dashboard' :
+    user?.role === 'admin'            ? '/admin-dashboard' :
+    '/dashboard';
+
   return (
-    <nav className="auto-nav">
+    <nav className="auto-nav" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000 }}>
       <div className="auto-nav-content">
+        {/* Logo */}
         <div className="auto-nav-brand">
           <Link to="/" className="auto-logo">AutoSphere</Link>
         </div>
 
-        <div className="auto-nav-links">
+        {/* Desktop links — hidden on mobile */}
+        <div className="auto-nav-links auto-nav-links-desktop">
           <Link to="/" className="auto-nav-link">Home</Link>
           <Link to="/vehicles" className="auto-nav-link">Vehicles</Link>
           <Link to="/about" className="auto-nav-link">About</Link>
           <Link to="/contact" className="auto-nav-link">Contact</Link>
         </div>
 
-        <div className="auto-nav-utils">
+        {/* Desktop utils */}
+        <div className="auto-nav-utils auto-nav-utils-desktop">
           {!user ? (
             <>
               <Link to="/login" className="auto-nav-util">Login</Link>
@@ -179,23 +192,47 @@ function Navigation() {
             </>
           ) : (
             <>
-              <Link
-                to={
-                  user.role === 'dealer' ? '/dealer-dashboard' :
-                  user.role === 'service_provider' ? '/service-provider-dashboard' :
-                  user.role === 'admin' ? '/admin-dashboard' :
-                  '/dashboard'
-                }
-                className="auto-nav-util auto-nav-util-primary"
-              >
-                Dashboard
-              </Link>
-              <Link to="/notifications" className="auto-nav-util" title="Notifications">Notifications</Link>
+              <Link to={dashTarget} className="auto-nav-util auto-nav-util-primary">Dashboard</Link>
+              <Link to="/notifications" className="auto-nav-util" title="Notifications">🔔</Link>
               <UserDropdown />
             </>
           )}
         </div>
+
+        {/* Hamburger — only on mobile */}
+        <button
+          className="auto-nav-hamburger"
+          onClick={() => setMenuOpen(o => !o)}
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={menuOpen}
+        >
+          <span className={`hamburger-bar ${menuOpen ? 'open' : ''}`} />
+          <span className={`hamburger-bar ${menuOpen ? 'open' : ''}`} />
+          <span className={`hamburger-bar ${menuOpen ? 'open' : ''}`} />
+        </button>
       </div>
+
+      {/* Mobile drawer */}
+      {menuOpen && (
+        <div className="auto-nav-mobile-drawer">
+          <Link to="/" className="auto-nav-mobile-link">Home</Link>
+          <Link to="/vehicles" className="auto-nav-mobile-link">Vehicles</Link>
+          <Link to="/about" className="auto-nav-mobile-link">About</Link>
+          <Link to="/contact" className="auto-nav-mobile-link">Contact</Link>
+          <div className="auto-nav-mobile-divider" />
+          {!user ? (
+            <>
+              <Link to="/login" className="auto-nav-mobile-link">Login</Link>
+              <Link to="/register" className="auto-nav-mobile-link auto-nav-mobile-link-primary">Sign Up</Link>
+            </>
+          ) : (
+            <>
+              <Link to={dashTarget} className="auto-nav-mobile-link auto-nav-mobile-link-primary">Dashboard</Link>
+              <Link to="/notifications" className="auto-nav-mobile-link">🔔 Notifications</Link>
+            </>
+          )}
+        </div>
+      )}
     </nav>
   );
 }
@@ -271,7 +308,8 @@ function AppContent() {
             <Route path="/dealer/messages" element={<DashboardRoute requiredRole="dealer"><DealerMessages /></DashboardRoute>} />
             <Route path="/dealer/profile" element={<DashboardRoute requiredRole="dealer"><DealerProfile /></DashboardRoute>} />
             <Route path="/dealer/manage-listings" element={<DashboardRoute requiredRole="dealer"><DealerManageListings /></DashboardRoute>} />
-            <Route path="/dealer/inspections" element={<DashboardRoute requiredRole="dealer"><DealerInspections /></DashboardRoute>} />
+            <Route path="/dealer/rentals" element={<DashboardRoute requiredRole="dealer"><DealerRentals /></DashboardRoute>} />
+            <Route path="/dealer/test-drives" element={<DashboardRoute requiredRole="dealer"><DealerRentals /></DashboardRoute>} />
 
             {/* ── Service provider routes ── */}
             <Route path="/service-provider-dashboard" element={<DashboardRoute requiredRole="service_provider"><ServiceProviderDashboardPage /></DashboardRoute>} />

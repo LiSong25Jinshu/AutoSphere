@@ -5,7 +5,7 @@
  */
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { rentalAPI } from '../../services/api';
+import { rentalAPI, bookingAPI } from '../../services/api';
 import { CURRENCY_SYMBOL } from '../../utils/currency';
 import './MyRentals.css';
 
@@ -17,6 +17,9 @@ const STATUS_META = {
   completed:  { label: 'Completed',  cls: 'rent-status-completed',  icon: '🏁', desc: 'Rental has ended' },
   cancelled:  { label: 'Cancelled',  cls: 'rent-status-cancelled',  icon: '❌', desc: 'Rental was cancelled' },
   no_show:    { label: 'No Show',    cls: 'rent-status-cancelled',  icon: '🚫', desc: 'Vehicle not collected' },
+  // ready_for_pickup is stored as 'confirmed' with providerNotes prefix in DB
+  // but the API returns a synthesised status string in some paths
+  ready_for_pickup: { label: 'Ready for Pickup', cls: 'rent-status-confirmed', icon: '🔑', desc: 'Vehicle is ready — go collect it!' },
 };
 
 const fmtDate = (d) => {
@@ -33,6 +36,10 @@ const MyRentals = () => {
   const [error, setError]       = useState('');
   const [filter, setFilter]     = useState('all');
   const [detail, setDetail]     = useState(null);
+  const [cancelling, setCancelling] = useState(null);
+  const [toast, setToast]       = useState('');
+
+  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 3500); };
 
   const fetchRentals = useCallback(async () => {
     setLoading(true);
@@ -53,13 +60,26 @@ const MyRentals = () => {
 
   useEffect(() => { fetchRentals(); }, [fetchRentals]);
 
+  const handleCancel = async (id) => {
+    if (!window.confirm('Cancel this rental request?')) return;
+    setCancelling(id);
+    try {
+      await bookingAPI.updateStatus(id, 'cancelled');
+      setRentals(prev => prev.map(r => r.id === id ? { ...r, status: 'cancelled' } : r));
+      if (detail?.id === id) setDetail(prev => ({ ...prev, status: 'cancelled' }));
+      showToast('Rental request cancelled.');
+    } catch (e) {
+      showToast(e.response?.data?.message || 'Failed to cancel.');
+    } finally {
+      setCancelling(null);
+    }
+  };
+
   const filtered = filter === 'all'
     ? rentals
     : rentals.filter(r => r.status === filter);
 
   const count = (s) => rentals.filter(r => r.status === s).length;
-
-  // ── Loading ────────────────────────────────────────────────────────────────
   if (loading) return (
     <div className="myr-page">
       <div className="myr-container">
@@ -73,6 +93,7 @@ const MyRentals = () => {
 
   return (
     <div className="myr-page">
+      {toast && <div className="myr-toast">{toast}</div>}
       <div className="myr-container">
 
         {/* Header */}
@@ -207,6 +228,15 @@ const MyRentals = () => {
                       >
                         📞 Call Dealer
                       </a>
+                    )}
+                    {rental.status === 'pending' && (
+                      <button
+                        className="myr-btn danger"
+                        onClick={() => handleCancel(rental.id)}
+                        disabled={cancelling === rental.id}
+                      >
+                        {cancelling === rental.id ? 'Cancelling…' : '❌ Cancel'}
+                      </button>
                     )}
                   </div>
                 </div>

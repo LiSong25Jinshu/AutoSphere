@@ -1,28 +1,47 @@
-/* AutoSphere Advanced Landing Page - Grey, White, Black Theme */
+/* ============================================================
+   AutoSphere Landing Page — Responsive Stylesheet
+   Breakpoints:
+     Mobile  : ≤ 767px
+     Tablet  : 768px – 1023px
+     Desktop : ≥ 1024px
+   ============================================================ */
+
+/* ── Base ─────────────────────────────────────────────────── */
 .autosphere-landing-page {
   min-height: 100vh;
   font-family: var(--autosphere-font-primary);
+  overflow-x: hidden;   /* prevent any child from blowing out */
+  width: 100%;
 }
 
-/* Enhanced Hero Section with Slideshow */
+/* ── Container (used by all sections) ─────────────────────── */
+.autosphere-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 4vw, 48px);
+  box-sizing: border-box;
+}
+
+/* ============================================================
+   HERO / SLIDESHOW
+   ============================================================ */
 .autosphere-hero-slideshow {
-  min-height: 100vh;
   position: relative;
   overflow: hidden;
+  width: 100%;
 }
 
 .autosphere-slideshow-container {
   position: relative;
   width: 100%;
-  height: 100vh;
+  height: 100svh;          /* svh = safe viewport height (iOS fix) */
+  min-height: 480px;
 }
 
 .autosphere-slide {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   opacity: 0;
   transition: opacity 1s ease-in-out;
   display: flex;
@@ -32,59 +51,60 @@
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  width: 100%;
 }
 
-.autosphere-slide.active {
-  opacity: 1;
-}
+.autosphere-slide.active { opacity: 1; }
 
+/* Hero content */
 .autosphere-hero-content {
   position: relative;
   z-index: 2;
+  width: 100%;
   max-width: 900px;
   margin: 0 auto;
-  padding: 0 var(--autosphere-space-6);
+  padding: 80px clamp(16px, 5vw, 48px) 60px;
   color: var(--autosphere-white);
+  box-sizing: border-box;
 }
 
 .autosphere-hero-title {
-  font-size: clamp(3rem, 8vw, 6rem);
+  font-size: clamp(2rem, 6vw, 5.5rem);
   font-weight: var(--autosphere-weight-bold);
-  line-height: var(--autosphere-leading-tight);
+  line-height: 1.15;
   letter-spacing: -0.02em;
-  margin-bottom: var(--autosphere-space-6);
+  margin-bottom: clamp(12px, 2vw, 24px);
   background: linear-gradient(135deg, #ffffff 0%, #e6e6e6 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  word-break: break-word;
 }
 
 .autosphere-hero-subtitle {
-  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  font-size: clamp(1.1rem, 3vw, 2rem);
   font-weight: var(--autosphere-weight-medium);
-  margin-bottom: var(--autosphere-space-4);
+  margin-bottom: clamp(8px, 1.5vw, 16px);
   opacity: 0.95;
   color: var(--autosphere-platinum);
 }
 
 .autosphere-hero-description {
-  font-size: var(--autosphere-text-lg);
-  font-weight: var(--autosphere-weight-regular);
-  margin-bottom: var(--autosphere-space-12);
-  max-width: 700px;
-  margin-left: auto;
-  margin-right: auto;
-  line-height: var(--autosphere-leading-relaxed);
+  font-size: clamp(0.95rem, 2vw, 1.125rem);
+  line-height: 1.65;
+  margin: 0 auto clamp(24px, 4vw, 48px);
+  max-width: 680px;
   opacity: 0.9;
   color: var(--autosphere-silver);
 }
 
+/* Hero buttons */
 .autosphere-hero-buttons {
   display: flex;
   justify-content: center;
-  gap: var(--autosphere-space-6);
-  flex-wrap: wrap;
   align-items: center;
+  gap: clamp(10px, 2vw, 24px);
+  flex-wrap: wrap;
 }
 
 .autosphere-hero-btn-secondary {
@@ -92,18 +112,12 @@
   color: var(--autosphere-white);
   border-color: var(--autosphere-white);
 }
-
 .autosphere-hero-btn-secondary:hover {
   background-color: var(--autosphere-white);
   color: var(--autosphere-dark-grey);
-  border-color: var(--autosphere-white);
 }
 
-.autosphere-ml-2 {
-  margin-left: var(--autosphere-space-2);
-}
-
-/* Slideshow Controls */
+/* Slideshow controls */
 .autosphere-slideshow-controls {
   position: absolute;
   top: 50%;
@@ -111,20 +125,21 @@
   width: 100%;
   display: flex;
   justify-content: space-between;
-  padding: 0 var(--autosphere-space-6);
+  padding: 0 clamp(8px, 2vw, 24px);
   z-index: 3;
   pointer-events: none;
+  box-sizing: border-box;
 }
 
 .autosphere-slide-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255,255,255,0.2);
+  border: 2px solid rgba(255,255,255,0.3);
   color: var(--autosphere-white);
-  width: 50px;
-  height: 50px;
+  width: clamp(36px, 5vw, 50px);
+  height: clamp(36px, 5vw, 50px);
   border-radius: 50%;
-  font-size: var(--autosphere-text-2xl);
-  font-weight: var(--autosphere-weight-bold);
+  font-size: 1.5rem;
+  font-weight: 700;
   cursor: pointer;
   transition: var(--autosphere-transition-fast);
   display: flex;
@@ -132,185 +147,186 @@
   justify-content: center;
   pointer-events: all;
   backdrop-filter: blur(10px);
+  flex-shrink: 0;
 }
-
 .autosphere-slide-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255,255,255,0.35);
   transform: scale(1.1);
 }
 
-/* Slide Indicators */
+/* Slide indicators */
 .autosphere-slide-indicators {
   position: absolute;
-  bottom: var(--autosphere-space-8);
+  bottom: clamp(16px, 3vw, 32px);
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: var(--autosphere-space-3);
+  gap: 10px;
   z-index: 3;
 }
 
 .autosphere-slide-indicator {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.4);
-  border: 2px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255,255,255,0.4);
+  border: 2px solid rgba(255,255,255,0.6);
   cursor: pointer;
   transition: var(--autosphere-transition-fast);
+  padding: 0;
 }
-
 .autosphere-slide-indicator.active {
   background: var(--autosphere-white);
   border-color: var(--autosphere-white);
   transform: scale(1.2);
 }
 
-.autosphere-slide-indicator:hover {
-  background: rgba(255, 255, 255, 0.7);
-  transform: scale(1.1);
-}
-
-/* Hero Badge */
+/* Hero badge */
 .autosphere-hero-badge {
   position: absolute;
-  top: var(--autosphere-space-8);
-  left: var(--autosphere-space-8);
-  background: rgba(255, 255, 255, 0.1);
+  top: clamp(12px, 2.5vw, 32px);
+  left: clamp(12px, 2.5vw, 32px);
+  background: rgba(255,255,255,0.12);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255,255,255,0.25);
   border-radius: var(--autosphere-radius-full);
-  padding: var(--autosphere-space-3) var(--autosphere-space-5);
+  padding: 8px 16px;
   display: flex;
   align-items: center;
-  gap: var(--autosphere-space-2);
+  gap: 8px;
   color: var(--autosphere-white);
-  font-size: var(--autosphere-text-sm);
+  font-size: 0.8125rem;
   font-weight: var(--autosphere-weight-medium);
   z-index: 3;
+  white-space: nowrap;
+  max-width: calc(100% - 24px);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Enhanced Stats Section */
+/* Utility */
+.autosphere-ml-2 { margin-left: 8px; }
+
+/* ============================================================
+   STATS SECTION
+   ============================================================ */
 .autosphere-stats-section {
-  padding: var(--autosphere-space-20) 0;
+  padding: clamp(40px, 6vw, 80px) 0;
   background: var(--autosphere-white);
   border-bottom: 1px solid var(--autosphere-platinum);
 }
 
 .autosphere-stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: var(--autosphere-space-12);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: clamp(16px, 3vw, 48px);
   text-align: center;
 }
 
 .autosphere-stat-item {
-  padding: var(--autosphere-space-8);
+  padding: clamp(20px, 3vw, 32px);
   background: var(--autosphere-white);
   border-radius: var(--autosphere-radius-xl);
   box-shadow: var(--autosphere-shadow-sm);
   border: 1px solid var(--autosphere-platinum);
   transition: var(--autosphere-transition-all);
 }
-
 .autosphere-stat-item:hover {
   transform: translateY(-4px);
   box-shadow: var(--autosphere-shadow-lg);
-  border-color: var(--autosphere-silver);
 }
 
 .autosphere-stat-number {
-  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-size: clamp(2rem, 4vw, 3.5rem);
   font-weight: var(--autosphere-weight-bold);
   color: var(--autosphere-dark-grey);
-  margin-bottom: var(--autosphere-space-3);
-  line-height: var(--autosphere-leading-tight);
-  background: linear-gradient(135deg, var(--autosphere-dark-grey) 0%, var(--autosphere-medium-grey) 100%);
+  margin-bottom: 8px;
+  line-height: 1.1;
+  background: linear-gradient(135deg, var(--autosphere-dark-grey), var(--autosphere-medium-grey));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .autosphere-stat-label {
-  font-size: var(--autosphere-text-base);
+  font-size: 0.875rem;
   color: var(--autosphere-medium-grey);
   font-weight: var(--autosphere-weight-medium);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
-/* Enhanced Features Section - Combined Layout */
+/* ============================================================
+   FEATURES SECTION
+   ============================================================ */
 .autosphere-features-section {
-  padding: var(--autosphere-space-24) 0;
+  padding: clamp(48px, 7vw, 96px) 0;
   background: var(--autosphere-white);
 }
 
-/* Features Content */
-.autosphere-features-content {
-  margin-bottom: var(--autosphere-space-20);
-}
+.autosphere-features-content { width: 100%; }
 
 .autosphere-features-title {
   text-align: center;
-  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-size: clamp(1.75rem, 4vw, 3.5rem);
   font-weight: var(--autosphere-weight-bold);
-  margin-bottom: var(--autosphere-space-5);
+  margin-bottom: 16px;
   color: var(--autosphere-charcoal);
   letter-spacing: -0.02em;
 }
 
 .autosphere-features-subtitle {
   text-align: center;
-  font-size: var(--autosphere-text-xl);
+  font-size: clamp(1rem, 2vw, 1.25rem);
   color: var(--autosphere-medium-grey);
-  margin-bottom: var(--autosphere-space-16);
-  max-width: 700px;
+  margin-bottom: clamp(32px, 5vw, 64px);
+  max-width: 680px;
   margin-left: auto;
   margin-right: auto;
-  font-weight: var(--autosphere-weight-regular);
-  line-height: var(--autosphere-leading-relaxed);
+  line-height: 1.65;
 }
 
+/* ← Key fix: was minmax(350px,1fr) which caused overflow on mobile */
 .autosphere-features-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: var(--autosphere-space-8);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: clamp(16px, 2.5vw, 32px);
 }
 
 .autosphere-feature-card {
   background: var(--autosphere-white);
-  padding: var(--autosphere-space-10);
+  padding: clamp(20px, 3vw, 40px);
   border-radius: var(--autosphere-radius-2xl);
-  transition: var(--autosphere-transition-all);
   border: 1px solid var(--autosphere-silver);
   box-shadow: var(--autosphere-shadow-sm);
+  transition: var(--autosphere-transition-all);
+  box-sizing: border-box;
+  width: 100%;
 }
-
 .autosphere-feature-card:hover {
-  transform: translateY(-8px);
+  transform: translateY(-6px);
   box-shadow: var(--autosphere-shadow-xl);
-  border-color: var(--autosphere-light-grey);
 }
 
 .autosphere-feature-header {
   display: flex;
   align-items: center;
-  margin-bottom: var(--autosphere-space-6);
+  margin-bottom: clamp(12px, 2vw, 24px);
+  gap: clamp(12px, 2vw, 20px);
 }
 
 .autosphere-feature-icon {
-  margin-right: var(--autosphere-space-5);
-  padding: var(--autosphere-space-3);
+  padding: 10px;
   background: var(--autosphere-platinum);
   border-radius: var(--autosphere-radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .autosphere-feature-title {
-  font-size: var(--autosphere-text-2xl);
+  font-size: clamp(1.05rem, 2vw, 1.5rem);
   font-weight: var(--autosphere-weight-semibold);
   margin: 0;
   color: var(--autosphere-charcoal);
@@ -318,450 +334,127 @@
 
 .autosphere-feature-description {
   color: var(--autosphere-medium-grey);
-  line-height: var(--autosphere-leading-relaxed);
+  line-height: 1.65;
   margin: 0;
-  font-size: var(--autosphere-text-base);
-  font-weight: var(--autosphere-weight-regular);
+  font-size: clamp(0.9rem, 1.5vw, 1rem);
 }
 
-
-
-/* User Roles Content */
-.autosphere-roles-content {
-  margin-bottom: var(--autosphere-space-12);
-}
-
-.autosphere-roles-title {
-  text-align: center;
-  font-size: clamp(2.5rem, 5vw, 4rem);
-  font-weight: var(--autosphere-weight-bold);
-  margin-bottom: var(--autosphere-space-5);
-  color: var(--autosphere-charcoal);
-  letter-spacing: -0.02em;
-}
-
-.autosphere-roles-subtitle {
-  text-align: center;
-  font-size: var(--autosphere-text-xl);
-  color: var(--autosphere-medium-grey);
-  margin-bottom: var(--autosphere-space-16);
-  font-weight: var(--autosphere-weight-regular);
-  line-height: var(--autosphere-leading-relaxed);
-  max-width: 700px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.autosphere-roles-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: var(--autosphere-space-6);
-}
-
-.autosphere-role-card {
-  background: var(--autosphere-white);
-  border: 2px solid var(--autosphere-platinum);
-  border-radius: var(--autosphere-radius-2xl);
-  padding: var(--autosphere-space-8);
-  text-align: center;
-  transition: var(--autosphere-transition-normal);
-  position: relative;
-  overflow: hidden;
-}
-
-.autosphere-role-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, var(--autosphere-dark-grey), var(--autosphere-medium-grey));
-  transform: scaleX(0);
-  transition: var(--autosphere-transition-normal);
-}
-
-.autosphere-role-card:hover::before {
-  transform: scaleX(1);
-}
-
-.autosphere-role-card:hover {
-  transform: translateY(-6px);
-  box-shadow: var(--autosphere-shadow-lg);
-  border-color: var(--autosphere-light-grey);
-}
-
-.autosphere-role-icon {
-  font-size: 3rem;
-  margin-bottom: var(--autosphere-space-4);
-  display: block;
-}
-
-.autosphere-role-card h3 {
-  font-size: var(--autosphere-text-xl);
-  font-weight: var(--autosphere-weight-semibold);
-  color: var(--autosphere-charcoal);
-  margin-bottom: var(--autosphere-space-3);
-}
-
-.autosphere-role-card p {
-  color: var(--autosphere-medium-grey);
-  line-height: var(--autosphere-leading-relaxed);
-  margin: 0;
-  font-size: var(--autosphere-text-base);
-}
-
-/* AI Section */
-.autosphere-ai-section {
-  padding: var(--autosphere-space-24) 0;
+/* ============================================================
+   WHY AUTOSPHERE SECTION
+   ============================================================ */
+.autosphere-why-section {
+  padding: clamp(48px, 7vw, 96px) 0;
   background: var(--autosphere-platinum);
 }
 
-.autosphere-ai-content {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--autosphere-space-16);
-  align-items: center;
-}
-
-.autosphere-ai-title {
-  font-size: clamp(2.5rem, 5vw, 4rem);
+.autosphere-section-title {
+  text-align: center;
+  font-size: clamp(1.5rem, 3.5vw, 3rem);
   font-weight: var(--autosphere-weight-bold);
-  margin-bottom: var(--autosphere-space-6);
   color: var(--autosphere-charcoal);
+  margin-bottom: 12px;
   letter-spacing: -0.02em;
 }
 
-.autosphere-ai-description {
-  font-size: var(--autosphere-text-lg);
-  color: var(--autosphere-medium-grey);
-  line-height: var(--autosphere-leading-relaxed);
-  margin-bottom: var(--autosphere-space-8);
-}
-
-.autosphere-ai-features {
-  display: flex;
-  flex-direction: column;
-  gap: var(--autosphere-space-4);
-}
-
-.autosphere-ai-feature {
-  display: flex;
-  align-items: center;
-  gap: var(--autosphere-space-3);
-  color: var(--autosphere-dark-grey);
-  font-weight: var(--autosphere-weight-medium);
-}
-
-.autosphere-ai-visual {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.autosphere-ai-graphic {
-  position: relative;
-  width: 300px;
-  height: 300px;
-}
-
-.autosphere-ai-circle {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 120px;
-  height: 120px;
-  background: linear-gradient(135deg, var(--autosphere-dark-grey) 0%, var(--autosphere-charcoal) 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--autosphere-white);
-  box-shadow: var(--autosphere-shadow-xl);
-}
-
-.autosphere-ai-orbits {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-.autosphere-ai-orbit {
-  position: absolute;
-  width: 60px;
-  height: 60px;
-  background: var(--autosphere-white);
-  border: 2px solid var(--autosphere-silver);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--autosphere-dark-grey);
-  box-shadow: var(--autosphere-shadow-md);
-  animation: orbit 10s linear infinite;
-}
-
-.autosphere-ai-orbit.orbit-1 {
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  animation-delay: 0s;
-}
-
-.autosphere-ai-orbit.orbit-2 {
-  top: 50%;
-  right: 20px;
-  transform: translateY(-50%);
-  animation-delay: -3.33s;
-}
-
-.autosphere-ai-orbit.orbit-3 {
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  animation-delay: -6.66s;
-}
-
-@keyframes orbit {
-  from {
-    transform: rotate(0deg) translateX(120px) rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg) translateX(120px) rotate(-360deg);
-  }
-}
-
-/* Enhanced Showcase Section */
-.autosphere-showcase-section {
-  padding: var(--autosphere-space-24) 0;
-  background: var(--autosphere-white);
-}
-
-.autosphere-showcase-title {
+.autosphere-section-subtitle {
   text-align: center;
-  font-size: clamp(2.5rem, 5vw, 4rem);
-  font-weight: var(--autosphere-weight-bold);
-  margin-bottom: var(--autosphere-space-5);
-  color: var(--autosphere-charcoal);
-  letter-spacing: -0.02em;
-}
-
-.autosphere-showcase-subtitle {
-  text-align: center;
-  font-size: var(--autosphere-text-xl);
+  font-size: clamp(0.95rem, 2vw, 1.125rem);
   color: var(--autosphere-medium-grey);
-  margin-bottom: var(--autosphere-space-16);
-  font-weight: var(--autosphere-weight-regular);
-  line-height: var(--autosphere-leading-relaxed);
+  margin-bottom: clamp(28px, 4vw, 48px);
 }
 
-.autosphere-showcase-grid {
+/* ← Key fix: was minmax(200px,1fr) — fine but needed min() guard */
+.autosphere-why-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: var(--autosphere-space-10);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: clamp(12px, 2vw, 24px);
 }
 
-.autosphere-showcase-card {
+.autosphere-why-card {
   background: var(--autosphere-white);
-  border-radius: var(--autosphere-radius-2xl);
-  overflow: hidden;
-  transition: var(--autosphere-transition-all);
-  border: 1px solid var(--autosphere-platinum);
-  box-shadow: var(--autosphere-shadow-md);
-}
-
-.autosphere-showcase-card:hover {
-  transform: translateY(-8px);
-  box-shadow: var(--autosphere-shadow-2xl);
-  border-color: var(--autosphere-silver);
-}
-
-.autosphere-showcase-image-container {
-  position: relative;
-  overflow: hidden;
-  height: 280px;
-}
-
-.autosphere-showcase-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: var(--autosphere-transition-slow);
-}
-
-.autosphere-showcase-card:hover .autosphere-showcase-image {
-  transform: scale(1.05);
-}
-
-.autosphere-showcase-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(44, 44, 44, 0.7) 0%,
-    rgba(26, 26, 26, 0.8) 100%
-  );
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: var(--autosphere-transition-normal);
-}
-
-.autosphere-showcase-card:hover .autosphere-showcase-overlay {
-  opacity: 1;
-}
-
-.autosphere-showcase-overlay-content {
-  text-align: center;
-  color: var(--autosphere-white);
-}
-
-.autosphere-showcase-overlay-content h4 {
-  font-size: var(--autosphere-text-2xl);
-  font-weight: var(--autosphere-weight-semibold);
-  margin-bottom: var(--autosphere-space-2);
-}
-
-.autosphere-showcase-overlay-content p {
-  font-size: var(--autosphere-text-base);
-  opacity: 0.9;
-}
-
-.autosphere-showcase-content {
-  padding: var(--autosphere-space-8);
-}
-
-.autosphere-showcase-card-title {
-  font-size: var(--autosphere-text-2xl);
-  font-weight: var(--autosphere-weight-semibold);
-  margin: 0 0 var(--autosphere-space-4) 0;
-  color: var(--autosphere-charcoal);
-}
-
-.autosphere-showcase-description {
-  color: var(--autosphere-medium-grey);
-  line-height: var(--autosphere-leading-relaxed);
-  margin: 0 0 var(--autosphere-space-6) 0;
-  font-weight: var(--autosphere-weight-regular);
-}
-
-.autosphere-showcase-link {
-  display: inline-flex;
-  align-items: center;
-  color: var(--autosphere-dark-grey);
-  text-decoration: none;
-  font-weight: var(--autosphere-weight-medium);
-  font-size: var(--autosphere-text-sm);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  transition: var(--autosphere-transition-all);
-}
-
-.autosphere-showcase-link:hover {
-  color: var(--autosphere-charcoal);
-  transform: translateX(4px);
-}
-
-/* Enhanced Testimonials Section */
-.autosphere-testimonials-section {
-  padding: var(--autosphere-space-24) 0;
-  background: var(--autosphere-platinum);
-}
-
-.autosphere-testimonials-title {
-  text-align: center;
-  font-size: clamp(2.5rem, 5vw, 4rem);
-  font-weight: var(--autosphere-weight-bold);
-  margin-bottom: var(--autosphere-space-5);
-  color: var(--autosphere-charcoal);
-  letter-spacing: -0.02em;
-}
-
-.autosphere-testimonials-subtitle {
-  text-align: center;
-  font-size: var(--autosphere-text-xl);
-  color: var(--autosphere-medium-grey);
-  margin-bottom: var(--autosphere-space-16);
-  font-weight: var(--autosphere-weight-regular);
-  line-height: var(--autosphere-leading-relaxed);
-}
-
-.autosphere-testimonials-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: var(--autosphere-space-8);
-}
-
-.autosphere-testimonial-card {
-  background: var(--autosphere-white);
-  padding: var(--autosphere-space-10);
-  border-radius: var(--autosphere-radius-2xl);
+  border-radius: var(--autosphere-radius-xl);
+  padding: clamp(20px, 3vw, 32px);
   text-align: center;
   border: 1px solid var(--autosphere-silver);
   box-shadow: var(--autosphere-shadow-sm);
+  box-sizing: border-box;
+  width: 100%;
   transition: var(--autosphere-transition-all);
 }
-
-.autosphere-testimonial-card:hover {
+.autosphere-why-card:hover {
   transform: translateY(-4px);
   box-shadow: var(--autosphere-shadow-lg);
-  border-color: var(--autosphere-light-grey);
 }
 
-.autosphere-testimonial-rating {
-  margin-bottom: var(--autosphere-space-6);
-  display: flex;
-  justify-content: center;
-  gap: var(--autosphere-space-1);
+.autosphere-why-icon {
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  display: block;
+  margin-bottom: 12px;
 }
 
-.autosphere-testimonial-star {
-  color: #fbbf24;
-}
-
-.autosphere-testimonial-comment {
-  font-style: italic;
+.autosphere-why-card p {
   color: var(--autosphere-medium-grey);
-  margin-bottom: var(--autosphere-space-8);
-  line-height: var(--autosphere-leading-relaxed);
-  font-size: var(--autosphere-text-lg);
-  font-weight: var(--autosphere-weight-regular);
-}
-
-.autosphere-testimonial-author {
-  border-top: 1px solid var(--autosphere-platinum);
-  padding-top: var(--autosphere-space-6);
-}
-
-.autosphere-testimonial-name {
-  font-weight: var(--autosphere-weight-semibold);
-  color: var(--autosphere-charcoal);
-  margin-bottom: var(--autosphere-space-2);
-  font-size: var(--autosphere-text-lg);
-}
-
-.autosphere-testimonial-role {
-  color: var(--autosphere-medium-grey);
-  font-size: var(--autosphere-text-sm);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: var(--autosphere-space-1);
-}
-
-.autosphere-testimonial-location {
-  color: var(--autosphere-light-grey);
-  font-size: var(--autosphere-text-sm);
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  line-height: 1.65;
   margin: 0;
 }
 
-/* Enhanced CTA Section */
+/* ============================================================
+   JOIN AUTOSPHERE SECTION
+   ============================================================ */
+.autosphere-join-section {
+  padding: clamp(48px, 7vw, 96px) 0;
+  background: var(--autosphere-white);
+}
+
+/* ← Key fix: same guard */
+.autosphere-join-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: clamp(12px, 2vw, 24px);
+  margin-bottom: clamp(28px, 4vw, 48px);
+}
+
+.autosphere-join-card {
+  background: var(--autosphere-charcoal);
+  border-radius: var(--autosphere-radius-xl);
+  padding: clamp(20px, 3vw, 32px);
+  text-align: center;
+  color: var(--autosphere-white);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.autosphere-join-icon {
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  display: block;
+  margin-bottom: 12px;
+}
+
+.autosphere-join-card p {
+  color: rgba(255,255,255,0.85);
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  line-height: 1.65;
+  margin: 0;
+}
+
+.autosphere-join-cta { text-align: center; }
+
+.autosphere-btn-dark {
+  background: var(--autosphere-charcoal);
+  color: var(--autosphere-white);
+  border-color: var(--autosphere-charcoal);
+}
+.autosphere-btn-dark:hover {
+  background: var(--autosphere-dark-grey);
+  border-color: var(--autosphere-dark-grey);
+}
+
+/* ============================================================
+   CTA SECTION
+   ============================================================ */
 .autosphere-cta-section {
-  min-height: 80vh;
+  min-height: clamp(340px, 50vw, 640px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -770,55 +463,51 @@
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  overflow: hidden;
 }
 
 .autosphere-cta-section::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(44, 44, 44, 0.9) 0%,
-    rgba(26, 26, 26, 0.95) 100%
-  );
+  inset: 0;
+  background: linear-gradient(135deg, rgba(44,44,44,0.9) 0%, rgba(26,26,26,0.95) 100%);
   z-index: 1;
 }
 
 .autosphere-cta-container {
   position: relative;
   z-index: 2;
+  width: 100%;
   max-width: 900px;
   margin: 0 auto;
-  padding: 0 var(--autosphere-space-6);
+  padding: clamp(32px, 5vw, 80px) clamp(16px, 5vw, 48px);
   color: var(--autosphere-white);
+  box-sizing: border-box;
 }
 
 .autosphere-cta-title {
-  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-size: clamp(1.5rem, 4.5vw, 4rem);
   font-weight: var(--autosphere-weight-bold);
-  margin-bottom: var(--autosphere-space-6);
+  margin-bottom: clamp(12px, 2vw, 24px);
   letter-spacing: -0.02em;
-  line-height: var(--autosphere-leading-tight);
+  line-height: 1.2;
+  word-break: break-word;
 }
 
 .autosphere-cta-description {
-  font-size: var(--autosphere-text-xl);
-  margin-bottom: var(--autosphere-space-12);
+  font-size: clamp(0.95rem, 2vw, 1.25rem);
+  margin-bottom: clamp(24px, 4vw, 48px);
   opacity: 0.95;
-  line-height: var(--autosphere-leading-relaxed);
-  font-weight: var(--autosphere-weight-regular);
+  line-height: 1.65;
   color: var(--autosphere-silver);
 }
 
 .autosphere-cta-buttons {
   display: flex;
   justify-content: center;
-  gap: var(--autosphere-space-6);
-  flex-wrap: wrap;
   align-items: center;
+  gap: clamp(10px, 2vw, 24px);
+  flex-wrap: wrap;
 }
 
 .autosphere-cta-btn-secondary {
@@ -826,243 +515,40 @@
   color: var(--autosphere-white);
   border-color: var(--autosphere-white);
 }
-
 .autosphere-cta-btn-secondary:hover {
   background-color: var(--autosphere-white);
   color: var(--autosphere-dark-grey);
-  border-color: var(--autosphere-white);
 }
 
-/* AutoSphere Responsive Design */
-@media (max-width: 768px) {
-  .autosphere-hero-buttons,
-  .autosphere-cta-buttons {
-    flex-direction: column;
-    align-items: center;
-    gap: var(--autosphere-space-4);
-  }
-  
-  .autosphere-hero-buttons .autosphere-btn,
-  .autosphere-cta-buttons .autosphere-btn {
-    width: 100%;
-    max-width: 300px;
-  }
-  
-  .autosphere-stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--autosphere-space-6);
-  }
-  
-  .autosphere-features-grid,
-  .autosphere-testimonials-grid,
-  .autosphere-showcase-grid,
-  .autosphere-roles-grid {
-    grid-template-columns: 1fr;
-    gap: var(--autosphere-space-6);
-  }
-  
-  .autosphere-showcase-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .autosphere-showcase-card {
-    min-width: unset;
-  }
-  
-  .autosphere-hero-content,
-  .autosphere-cta-container {
-    padding: 0 var(--autosphere-space-4);
-  }
-  
-  .autosphere-feature-card,
-  .autosphere-testimonial-card,
-  .autosphere-role-card {
-    padding: var(--autosphere-space-6);
-  }
-  
-  .autosphere-showcase-content {
-    padding: var(--autosphere-space-6);
-  }
-  
-  /* Slideshow controls for mobile */
-  .autosphere-slideshow-controls {
-    padding: 0 var(--autosphere-space-4);
-  }
-  
-  .autosphere-slide-btn {
-    width: 40px;
-    height: 40px;
-    font-size: var(--autosphere-text-lg);
-  }
-  
-  /* Steps for mobile */
-  .autosphere-steps-container {
-    flex-direction: column;
-    gap: var(--autosphere-space-6);
-  }
-  
-  .autosphere-step-connector {
-    transform: rotate(90deg);
-    margin: var(--autosphere-space-2) 0;
-  }
-
-  /* Combined sections for mobile */
-  .autosphere-how-it-works-content {
-    margin-left: var(--autosphere-space-3);
-    margin-right: var(--autosphere-space-3);
-    padding: var(--autosphere-space-12) var(--autosphere-space-6);
-  }
-
-  .autosphere-features-content,
-  .autosphere-how-it-works-content,
-  .autosphere-roles-content {
-    margin-bottom: var(--autosphere-space-16);
-  }
-  
-  /* AI section for mobile */
-  .autosphere-ai-content {
-    grid-template-columns: 1fr;
-    gap: var(--autosphere-space-8);
-    text-align: center;
-  }
-  
-  .autosphere-ai-graphic {
-    width: 250px;
-    height: 250px;
-  }
-  
-  .autosphere-ai-circle {
-    width: 100px;
-    height: 100px;
-  }
-  
-  .autosphere-ai-orbit {
-    width: 50px;
-    height: 50px;
-  }
-  
-  @keyframes orbit {
-    from {
-      transform: rotate(0deg) translateX(100px) rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg) translateX(100px) rotate(-360deg);
-    }
-  }
-}
-
-@media (max-width: 480px) {
-  .autosphere-stats-grid {
-    grid-template-columns: 1fr;
-    gap: var(--autosphere-space-4);
-  }
-  
-  .autosphere-stat-item {
-    padding: var(--autosphere-space-6);
-  }
-  
-  .autosphere-feature-card,
-  .autosphere-testimonial-card,
-  .autosphere-role-card {
-    padding: var(--autosphere-space-5);
-  }
-  
-  .autosphere-showcase-content {
-    padding: var(--autosphere-space-4);
-  }
-  
-  .autosphere-hero-title {
-    font-size: clamp(2rem, 8vw, 3.5rem);
-  }
-  
-  .autosphere-hero-subtitle {
-    font-size: clamp(1.25rem, 4vw, 1.75rem);
-  }
-  
-  .autosphere-features-title,
-  .autosphere-showcase-title,
-  .autosphere-testimonials-title,
-  .autosphere-cta-title,
-  .autosphere-how-it-works-title,
-  .autosphere-ai-title,
-  .autosphere-roles-title {
-    font-size: clamp(2rem, 6vw, 3rem);
-  }
-  
-  .autosphere-hero-badge {
-    position: static;
-    margin-bottom: var(--autosphere-space-4);
-    align-self: center;
-  }
-  
-  .autosphere-slide {
-    padding: var(--autosphere-space-4);
-  }
-  
-  .autosphere-ai-graphic {
-    width: 200px;
-    height: 200px;
-  }
-  
-  .autosphere-ai-circle {
-    width: 80px;
-    height: 80px;
-  }
-  
-  .autosphere-ai-orbit {
-    width: 40px;
-    height: 40px;
-  }
-  
-  @keyframes orbit {
-    from {
-      transform: rotate(0deg) translateX(80px) rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg) translateX(80px) rotate(-360deg);
-    }
-  }
-}
-
-/* Animation Enhancements */
+/* ============================================================
+   ANIMATION HELPERS
+   ============================================================ */
 @media (prefers-reduced-motion: no-preference) {
   .autosphere-fade-in {
-    animation: autosphereFadeIn 0.8s ease-out;
+    animation: lp-fadeIn 0.8s ease-out;
   }
-  
   .autosphere-hover-lift {
     transition: var(--autosphere-transition-all);
   }
-  
   .autosphere-hover-lift:hover {
     transform: translateY(-6px);
     box-shadow: var(--autosphere-shadow-xl);
   }
-  
-  @keyframes autosphereFadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  @keyframes lp-fadeIn {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 }
 
-/* High contrast mode support */
+/* High contrast */
 @media (prefers-contrast: high) {
   .autosphere-hero-title,
   .autosphere-features-title,
-  .autosphere-showcase-title,
-  .autosphere-testimonials-title,
   .autosphere-cta-title {
     -webkit-text-fill-color: unset;
     background: unset;
     color: var(--autosphere-charcoal);
   }
-  
   .autosphere-stat-number {
     -webkit-text-fill-color: unset;
     background: unset;
@@ -1070,115 +556,71 @@
   }
 }
 
-/* Why AutoSphere Section */
-.autosphere-why-section {
-  padding: var(--autosphere-space-24) 0;
-  background: var(--autosphere-platinum);
+/* ============================================================
+   TABLET  768px – 1023px
+   ============================================================ */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .autosphere-features-grid { grid-template-columns: repeat(2, 1fr); }
+  .autosphere-why-grid      { grid-template-columns: repeat(2, 1fr); }
+  .autosphere-join-grid     { grid-template-columns: repeat(3, 1fr); }
+  .autosphere-stats-grid    { grid-template-columns: repeat(2, 1fr); }
 }
 
-.autosphere-section-title {
-  text-align: center;
-  font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: var(--autosphere-weight-bold);
-  color: var(--autosphere-charcoal);
-  margin-bottom: var(--autosphere-space-4);
-  letter-spacing: -0.02em;
-}
+/* ============================================================
+   MOBILE  ≤ 767px
+   ============================================================ */
+@media (max-width: 767px) {
+  /* Hero */
+  .autosphere-slideshow-container { height: 100svh; min-height: 480px; }
+  .autosphere-hero-content { padding: 70px 16px 48px; }
 
-.autosphere-section-subtitle {
-  text-align: center;
-  font-size: var(--autosphere-text-lg);
-  color: var(--autosphere-medium-grey);
-  margin-bottom: var(--autosphere-space-12);
-}
+  .autosphere-hero-buttons {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto;
+  }
+  .autosphere-hero-buttons .autosphere-btn {
+    width: 100%;
+    justify-content: center;
+  }
 
-.autosphere-why-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--autosphere-space-6);
-}
+  /* Badge repositioned so it doesn't clip */
+  .autosphere-hero-badge {
+    top: 10px;
+    left: 10px;
+    font-size: 0.75rem;
+    padding: 6px 12px;
+  }
 
-.autosphere-why-card {
-  background: var(--autosphere-white);
-  border-radius: var(--autosphere-radius-xl);
-  padding: var(--autosphere-space-8);
-  text-align: center;
-  border: 1px solid var(--autosphere-silver);
-  box-shadow: var(--autosphere-shadow-sm);
-}
+  /* Grids → single column */
+  .autosphere-features-grid { grid-template-columns: 1fr; }
+  .autosphere-why-grid      { grid-template-columns: 1fr 1fr; }
+  .autosphere-join-grid     { grid-template-columns: 1fr 1fr; }
+  .autosphere-stats-grid    { grid-template-columns: 1fr 1fr; gap: 12px; }
 
-.autosphere-why-icon {
-  font-size: 2.5rem;
-  display: block;
-  margin-bottom: var(--autosphere-space-4);
-}
-
-.autosphere-why-card p {
-  color: var(--autosphere-medium-grey);
-  font-size: var(--autosphere-text-base);
-  line-height: var(--autosphere-leading-relaxed);
-  margin: 0;
-}
-
-/* Join AutoSphere Section */
-.autosphere-join-section {
-  padding: var(--autosphere-space-24) 0;
-  background: var(--autosphere-white);
-}
-
-.autosphere-join-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--autosphere-space-6);
-  margin-bottom: var(--autosphere-space-12);
-}
-
-.autosphere-join-card {
-  background: var(--autosphere-charcoal);
-  border-radius: var(--autosphere-radius-xl);
-  padding: var(--autosphere-space-8);
-  text-align: center;
-  color: var(--autosphere-white);
-}
-
-.autosphere-join-icon {
-  font-size: 2.5rem;
-  display: block;
-  margin-bottom: var(--autosphere-space-4);
-}
-
-.autosphere-join-card p {
-  color: rgba(255, 255, 255, 0.85);
-  font-size: var(--autosphere-text-base);
-  line-height: var(--autosphere-leading-relaxed);
-  margin: 0;
-}
-
-.autosphere-join-cta {
-  text-align: center;
-}
-
-.autosphere-btn-dark {
-  background: var(--autosphere-charcoal);
-  color: var(--autosphere-white);
-  border-color: var(--autosphere-charcoal);
-}
-
-.autosphere-btn-dark:hover {
-  background: var(--autosphere-dark-grey);
-  border-color: var(--autosphere-dark-grey);
-}
-
-@media (max-width: 768px) {
-  .autosphere-why-grid,
-  .autosphere-join-grid {
-    grid-template-columns: 1fr 1fr;
+  /* CTA buttons */
+  .autosphere-cta-buttons {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto;
+  }
+  .autosphere-cta-buttons .autosphere-btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 
-@media (max-width: 480px) {
-  .autosphere-why-grid,
-  .autosphere-join-grid {
-    grid-template-columns: 1fr;
-  }
+/* ============================================================
+   EXTRA SMALL  ≤ 479px
+   ============================================================ */
+@media (max-width: 479px) {
+  .autosphere-why-grid  { grid-template-columns: 1fr; }
+  .autosphere-join-grid { grid-template-columns: 1fr; }
+  .autosphere-stats-grid{ grid-template-columns: 1fr; }
 }
