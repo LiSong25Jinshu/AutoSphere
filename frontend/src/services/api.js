@@ -84,6 +84,13 @@ export const adminAPI = {
   getModerationItems: (params = {}) => axios.get('/api/admin/moderation', { params }),
   moderateContent: (id, action, reason = '') =>
     axios.post(`/api/admin/moderation/${id}`, { action, reason }),
+  // ─── Reports ───────────────────────────────────────────────────────────────
+  getBookingsReport:     (params = {}) => axios.get('/api/admin/reports/bookings',     { params }),
+  getUsersReport:        (params = {}) => axios.get('/api/admin/reports/users',        { params }),
+  getVehiclesReport:     (params = {}) => axios.get('/api/admin/reports/vehicles',     { params }),
+  getRentalsReport:      (params = {}) => axios.get('/api/admin/reports/rentals',      { params }),
+  getProvidersReport:    (params = {}) => axios.get('/api/admin/reports/providers',    { params }),
+  getRecommendationsReport: (params = {}) => axios.get('/api/admin/reports/recommendations', { params }),
 };
 
 // ─── Services (Service Provider) ─────────────────────────────────────────────

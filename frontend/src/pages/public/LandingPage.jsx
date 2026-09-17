@@ -17,7 +17,7 @@ const LandingPage = () => {
       title: "Premium Vehicle Marketplace",
       subtitle: "Discover Your Perfect Vehicle",
       description:
-        "Browse thousands of premium vehicles with AI-powered recommendations tailored to your needs and budget.",
+        "Browse thousands of premium vehicles with smart recommendations tailored to your needs and budget.",
     },
     {
       image: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
@@ -245,7 +245,7 @@ const LandingPage = () => {
             {[
               { icon: '🚗', text: 'Access thousands of verified vehicles from trusted dealers' },
               { icon: '🔧', text: 'Book services with certified automotive professionals' },
-              { icon: '🤖', text: 'Get personalized recommendations based on your preferences' },
+              { icon: '✨', text: 'Get personalised vehicle recommendations' },
               { icon: '💬', text: '24/7 customer support for all your automotive needs' },
             ].map((item, i) => (
               <div key={i} className="autosphere-why-card autosphere-hover-lift">
@@ -266,7 +266,7 @@ const LandingPage = () => {
             {[
               { icon: '🏪', text: 'Browse and purchase vehicles from trusted dealers' },
               { icon: '📅', text: 'Book automotive services with service providers' },
-              { icon: '✨', text: 'Get AI-powered vehicle recommendations' },
+              { icon: '✨', text: 'Get personalised vehicle recommendations' },
               { icon: '🤝', text: 'Connect with automotive professionals' },
               { icon: '🎁', text: 'Access exclusive deals and offers' },
             ].map((item, i) => (

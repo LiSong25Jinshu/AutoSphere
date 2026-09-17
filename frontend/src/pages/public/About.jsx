@@ -34,7 +34,7 @@ const About = () => {
     {
       name: 'Mr. Nana A.B Agyapong',
       role: 'CTO',
-      description: 'Expert in AI and machine learning',
+      description: 'Expert in software engineering and systems',
       initials: 'NA'
     },
     {
@@ -53,7 +53,7 @@ const About = () => {
           <h1>About AutoSphere</h1>
           <p>
             We're revolutionizing the automotive industry by connecting car buyers, sellers, 
-            and service providers through innovative technology and AI-powered solutions.
+            and service providers through innovative technology and smart solutions.
           </p>
         </div>
 
@@ -88,7 +88,7 @@ const About = () => {
             </p>
             <p>
               Today, we're proud to offer a comprehensive platform that brings together vehicle 
-              marketplace, service booking, real-time messaging, and AI-powered recommendations. 
+              marketplace, service booking, real-time messaging, and smart vehicle recommendations. 
               Our technology doesn't just connect people; it creates meaningful relationships 
               that drive the automotive industry forward.
             </p>

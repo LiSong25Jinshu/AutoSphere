@@ -5,6 +5,9 @@ import User from '../models/User.js';
 import Vehicle from '../models/Vehicle.js';
 import Booking from '../models/Booking.js';
 import Conversation from '../models/Conversation.js';
+import ServiceOffering from '../models/ServiceOffering.js';
+import UserVehicleInteraction from '../models/UserVehicleInteraction.js';
+import FavoriteVehicle from '../models/FavoriteVehicle.js';
 
 const router = express.Router();
 
@@ -304,6 +307,516 @@ router.post('/moderation/:id', authenticateToken, requireAdmin, async (req, res)
     res.json({ success: true, message: `Content ${action}d successfully` });
   } catch (err) {
     console.error('Moderation action error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// ─── Report helpers ───────────────────────────────────────────────────────────
+
+/**
+ * Parse ?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD query params into a
+ * Sequelize `createdAt` where clause. Falls back to the last 30 days.
+ */
+const buildDateRange = (query) => {
+  let start, end;
+
+  if (query.startDate && query.endDate) {
+    start = new Date(query.startDate);
+    start.setHours(0, 0, 0, 0);
+    end = new Date(query.endDate);
+    end.setHours(23, 59, 59, 999);
+  } else {
+    const days = parseInt(query.days) || 30;
+    end = new Date();
+    start = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  }
+
+  return { start, end };
+};
+
+// ─── GET /api/admin/reports/bookings ─────────────────────────────────────────
+router.get('/reports/bookings', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { start, end } = buildDateRange(req.query);
+
+    const [total, byStatus, records] = await Promise.all([
+      // summary counts
+      Booking.count({ where: { createdAt: { [Op.between]: [start, end] } } }),
+      Booking.findAll({
+        attributes: [
+          'status',
+          [Booking.sequelize.fn('COUNT', Booking.sequelize.col('id')), 'count'],
+          [Booking.sequelize.fn('SUM', Booking.sequelize.col('actual_cost')), 'revenue'],
+        ],
+        where: { createdAt: { [Op.between]: [start, end] } },
+        group: ['status'],
+        raw: true,
+      }),
+      // detailed records (max 200)
+      Booking.findAll({
+        where: { createdAt: { [Op.between]: [start, end] } },
+        include: [
+          { model: User, as: 'user', attributes: ['id', 'firstName', 'lastName', 'email'] },
+          { model: User, as: 'serviceProvider', attributes: ['id', 'firstName', 'lastName', 'email'] },
+          { model: Vehicle, as: 'vehicle', attributes: ['id', 'make', 'model', 'year'] },
+        ],
+        order: [['createdAt', 'DESC']],
+        limit: 200,
+      }),
+    ]);
+
+    const totalRevenue = byStatus.reduce((sum, r) => sum + parseFloat(r.revenue || 0), 0);
+    const completed = byStatus.find((r) => r.status === 'completed');
+    const cancelled = byStatus.find((r) => r.status === 'cancelled');
+
+    res.json({
+      success: true,
+      data: {
+        summary: {
+          total,
+          totalRevenue: totalRevenue.toFixed(2),
+          completedCount: parseInt(completed?.count || 0),
+          cancelledCount: parseInt(cancelled?.count || 0),
+          completionRate: total > 0 ? (((parseInt(completed?.count || 0)) / total) * 100).toFixed(1) : '0.0',
+        },
+        byStatus,
+        records: records.map((b) => ({
+          id: b.id,
+          title: b.title,
+          serviceType: b.serviceType,
+          status: b.status,
+          priority: b.priority,
+          scheduledDate: b.scheduledDate,
+          estimatedCost: b.estimatedCost,
+          actualCost: b.actualCost,
+          rating: b.rating,
+          customerName: b.user ? `${b.user.firstName} ${b.user.lastName}` : '—',
+          customerEmail: b.user?.email || '—',
+          providerName: b.serviceProvider ? `${b.serviceProvider.firstName} ${b.serviceProvider.lastName}` : '—',
+          vehicle: b.vehicle ? `${b.vehicle.year} ${b.vehicle.make} ${b.vehicle.model}` : '—',
+          createdAt: b.createdAt,
+        })),
+      },
+    });
+  } catch (err) {
+    console.error('Bookings report error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// ─── GET /api/admin/reports/users ────────────────────────────────────────────
+router.get('/reports/users', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { start, end } = buildDateRange(req.query);
+
+    const [total, byRole, byApproval, records] = await Promise.all([
+      User.count({ where: { createdAt: { [Op.between]: [start, end] } } }),
+      User.findAll({
+        attributes: [
+          'role',
+          [User.sequelize.fn('COUNT', User.sequelize.col('id')), 'count'],
+        ],
+        where: { createdAt: { [Op.between]: [start, end] } },
+        group: ['role'],
+        raw: true,
+      }),
+      User.findAll({
+        attributes: [
+          'approvalStatus',
+          [User.sequelize.fn('COUNT', User.sequelize.col('id')), 'count'],
+        ],
+        where: {
+          createdAt: { [Op.between]: [start, end] },
+          role: { [Op.in]: ['dealer', 'service_provider'] },
+        },
+        group: ['approvalStatus'],
+        raw: true,
+      }),
+      User.findAll({
+        where: { createdAt: { [Op.between]: [start, end] } },
+        attributes: [
+          'id', 'firstName', 'lastName', 'email', 'role',
+          'isVerified', 'isActive', 'approvalStatus',
+          'businessName', 'city', 'createdAt',
+        ],
+        order: [['createdAt', 'DESC']],
+        limit: 200,
+      }),
+    ]);
+
+    const verified = records.filter((u) => u.isVerified).length;
+
+    res.json({
+      success: true,
+      data: {
+        summary: {
+          total,
+          verified,
+          unverified: total - verified,
+          verificationRate: total > 0 ? ((verified / total) * 100).toFixed(1) : '0.0',
+        },
+        byRole,
+        byApproval,
+        records: records.map((u) => ({
+          id: u.id,
+          name: `${u.firstName} ${u.lastName}`,
+          email: u.email,
+          role: u.role,
+          isVerified: u.isVerified,
+          isActive: u.isActive,
+          approvalStatus: u.approvalStatus,
+          businessName: u.businessName || '—',
+          city: u.city || '—',
+          createdAt: u.createdAt,
+        })),
+      },
+    });
+  } catch (err) {
+    console.error('Users report error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// ─── GET /api/admin/reports/vehicles ─────────────────────────────────────────
+router.get('/reports/vehicles', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { start, end } = buildDateRange(req.query);
+
+    const [total, byStatus, byAvailability, byCondition, records] = await Promise.all([
+      Vehicle.count({ where: { createdAt: { [Op.between]: [start, end] } } }),
+      Vehicle.findAll({
+        attributes: [
+          'status',
+          [Vehicle.sequelize.fn('COUNT', Vehicle.sequelize.col('id')), 'count'],
+        ],
+        where: { createdAt: { [Op.between]: [start, end] } },
+        group: ['status'],
+        raw: true,
+      }),
+      Vehicle.findAll({
+        attributes: [
+          'availabilityType',
+          [Vehicle.sequelize.fn('COUNT', Vehicle.sequelize.col('id')), 'count'],
+        ],
+        where: { createdAt: { [Op.between]: [start, end] } },
+        group: ['availabilityType'],
+        raw: true,
+      }),
+      Vehicle.findAll({
+        attributes: [
+          'condition',
+          [Vehicle.sequelize.fn('COUNT', Vehicle.sequelize.col('id')), 'count'],
+          [Vehicle.sequelize.fn('AVG', Vehicle.sequelize.col('price')), 'avgPrice'],
+        ],
+        where: { createdAt: { [Op.between]: [start, end] } },
+        group: ['condition'],
+        raw: true,
+      }),
+      Vehicle.findAll({
+        where: { createdAt: { [Op.between]: [start, end] } },
+        include: [
+          { model: User, as: 'dealer', attributes: ['id', 'firstName', 'lastName', 'email'] },
+        ],
+        order: [['createdAt', 'DESC']],
+        limit: 200,
+      }),
+    ]);
+
+    const totalViews = records.reduce((s, v) => s + (v.viewCount || 0), 0);
+
+    res.json({
+      success: true,
+      data: {
+        summary: {
+          total,
+          totalViews,
+          avgViews: total > 0 ? (totalViews / total).toFixed(1) : '0.0',
+        },
+        byStatus,
+        byAvailability,
+        byCondition: byCondition.map((r) => ({
+          ...r,
+          avgPrice: parseFloat(r.avgPrice || 0).toFixed(2),
+        })),
+        records: records.map((v) => ({
+          id: v.id,
+          name: `${v.year} ${v.make} ${v.model}`,
+          make: v.make,
+          model: v.model,
+          year: v.year,
+          price: v.price,
+          condition: v.condition,
+          status: v.status,
+          availabilityType: v.availabilityType,
+          fuelType: v.fuelType,
+          transmission: v.transmission,
+          bodyType: v.bodyType,
+          viewCount: v.viewCount,
+          dealerName: v.dealer ? `${v.dealer.firstName} ${v.dealer.lastName}` : '—',
+          dealerEmail: v.dealer?.email || '—',
+          createdAt: v.createdAt,
+        })),
+      },
+    });
+  } catch (err) {
+    console.error('Vehicles report error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// ─── GET /api/admin/reports/rentals ──────────────────────────────────────────
+// Rentals are stored as Bookings where customerNotes starts with '[RENTAL]'
+router.get('/reports/rentals', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { start, end } = buildDateRange(req.query);
+
+    const rentalWhere = {
+      createdAt: { [Op.between]: [start, end] },
+      customerNotes: { [Op.like]: '[RENTAL]%' },
+    };
+
+    const [total, byStatus, records] = await Promise.all([
+      Booking.count({ where: rentalWhere }),
+      Booking.findAll({
+        attributes: [
+          'status',
+          [Booking.sequelize.fn('COUNT', Booking.sequelize.col('id')), 'count'],
+          [Booking.sequelize.fn('SUM', Booking.sequelize.col('estimated_cost')), 'totalEstimated'],
+        ],
+        where: rentalWhere,
+        group: ['status'],
+        raw: true,
+      }),
+      Booking.findAll({
+        where: rentalWhere,
+        include: [
+          { model: User, as: 'user', attributes: ['id', 'firstName', 'lastName', 'email'] },
+          { model: User, as: 'serviceProvider', attributes: ['id', 'firstName', 'lastName', 'email'] },
+          { model: Vehicle, as: 'vehicle', attributes: ['id', 'make', 'model', 'year'] },
+        ],
+        order: [['createdAt', 'DESC']],
+        limit: 200,
+      }),
+    ]);
+
+    const totalRevenue = byStatus.reduce((sum, r) => sum + parseFloat(r.totalEstimated || 0), 0);
+
+    const parseRentalMeta = (notes) => {
+      try {
+        return JSON.parse((notes || '').replace(/^\[RENTAL\]\s*/, ''));
+      } catch { return {}; }
+    };
+
+    res.json({
+      success: true,
+      data: {
+        summary: {
+          total,
+          totalEstimatedRevenue: totalRevenue.toFixed(2),
+          completedCount: parseInt(byStatus.find((r) => r.status === 'completed')?.count || 0),
+          pendingCount: parseInt(byStatus.find((r) => r.status === 'pending')?.count || 0),
+        },
+        byStatus,
+        records: records.map((b) => {
+          const meta = parseRentalMeta(b.customerNotes);
+          return {
+            id: b.id,
+            vehicleName: meta.vehicleName || b.title,
+            vehicle: b.vehicle ? `${b.vehicle.year} ${b.vehicle.make} ${b.vehicle.model}` : '—',
+            startDate: meta.startDate || b.scheduledDate,
+            endDate: meta.endDate || '—',
+            days: meta.days || '—',
+            dailyRate: meta.dailyRate || '—',
+            estimatedTotal: meta.estimatedTotal || b.estimatedCost || '—',
+            status: b.status,
+            customerName: b.user ? `${b.user.firstName} ${b.user.lastName}` : '—',
+            customerEmail: b.user?.email || '—',
+            dealerName: b.serviceProvider ? `${b.serviceProvider.firstName} ${b.serviceProvider.lastName}` : '—',
+            createdAt: b.createdAt,
+          };
+        }),
+      },
+    });
+  } catch (err) {
+    console.error('Rentals report error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// ─── GET /api/admin/reports/providers ────────────────────────────────────────
+router.get('/reports/providers', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { start, end } = buildDateRange(req.query);
+
+    // All service providers registered in the period
+    const providers = await User.findAll({
+      where: {
+        role: 'service_provider',
+        createdAt: { [Op.between]: [start, end] },
+      },
+      attributes: [
+        'id', 'firstName', 'lastName', 'email', 'phone',
+        'businessName', 'businessType', 'city', 'approvalStatus', 'isActive', 'createdAt',
+      ],
+      order: [['createdAt', 'DESC']],
+      limit: 200,
+    });
+
+    // For each provider, get booking stats in the same period
+    const providerIds = providers.map((p) => p.id);
+
+    const bookingStats = providerIds.length > 0 ? await Booking.findAll({
+      attributes: [
+        'serviceProviderId',
+        [Booking.sequelize.fn('COUNT', Booking.sequelize.col('Booking.id')), 'totalBookings'],
+        [Booking.sequelize.fn('SUM', Booking.sequelize.col('actual_cost')), 'totalRevenue'],
+        [Booking.sequelize.fn('AVG', Booking.sequelize.col('rating')), 'avgRating'],
+      ],
+      where: {
+        serviceProviderId: { [Op.in]: providerIds },
+        createdAt: { [Op.between]: [start, end] },
+        customerNotes: { [Op.not]: { [Op.like]: '[RENTAL]%' } },
+      },
+      group: ['serviceProviderId'],
+      raw: true,
+    }) : [];
+
+    const statsMap = {};
+    bookingStats.forEach((s) => {
+      statsMap[s.serviceProviderId] = {
+        totalBookings: parseInt(s.totalBookings || 0),
+        totalRevenue: parseFloat(s.totalRevenue || 0).toFixed(2),
+        avgRating: s.avgRating ? parseFloat(s.avgRating).toFixed(1) : null,
+      };
+    });
+
+    // Also get services offered count
+    const serviceCounts = providerIds.length > 0 ? await ServiceOffering.findAll({
+      attributes: [
+        'providerId',
+        [ServiceOffering.sequelize.fn('COUNT', ServiceOffering.sequelize.col('id')), 'serviceCount'],
+      ],
+      where: { providerId: { [Op.in]: providerIds } },
+      group: ['providerId'],
+      raw: true,
+    }) : [];
+
+    const serviceCountMap = {};
+    serviceCounts.forEach((s) => { serviceCountMap[s.providerId] = parseInt(s.serviceCount || 0); });
+
+    res.json({
+      success: true,
+      data: {
+        summary: {
+          total: providers.length,
+          approved: providers.filter((p) => p.approvalStatus === 'approved').length,
+          pending: providers.filter((p) => p.approvalStatus === 'pending').length,
+          active: providers.filter((p) => p.isActive).length,
+        },
+        records: providers.map((p) => ({
+          id: p.id,
+          name: `${p.firstName} ${p.lastName}`,
+          email: p.email,
+          phone: p.phone || '—',
+          businessName: p.businessName || '—',
+          businessType: p.businessType || '—',
+          city: p.city || '—',
+          approvalStatus: p.approvalStatus,
+          isActive: p.isActive,
+          serviceCount: serviceCountMap[p.id] || 0,
+          ...(statsMap[p.id] || { totalBookings: 0, totalRevenue: '0.00', avgRating: null }),
+          createdAt: p.createdAt,
+        })),
+      },
+    });
+  } catch (err) {
+    console.error('Providers report error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// ─── GET /api/admin/reports/recommendations ───────────────────────────────────
+router.get('/reports/recommendations', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { start, end } = buildDateRange(req.query);
+
+    const interactionWhere = { createdAt: { [Op.between]: [start, end] } };
+
+    const [total, byType, topViewed, topSaved, topBooked, favoritesTotal] = await Promise.all([
+      UserVehicleInteraction.count({ where: interactionWhere }),
+      UserVehicleInteraction.findAll({
+        attributes: [
+          'interactionType',
+          [UserVehicleInteraction.sequelize.fn('COUNT', UserVehicleInteraction.sequelize.col('id')), 'count'],
+        ],
+        where: interactionWhere,
+        group: ['interactionType'],
+        raw: true,
+      }),
+      // Top 10 viewed vehicles
+      UserVehicleInteraction.findAll({
+        attributes: [
+          'vehicleId',
+          [UserVehicleInteraction.sequelize.fn('COUNT', UserVehicleInteraction.sequelize.col('UserVehicleInteraction.id')), 'count'],
+        ],
+        where: { ...interactionWhere, interactionType: 'view' },
+        include: [{ model: Vehicle, as: 'vehicle', attributes: ['make', 'model', 'year'] }],
+        group: ['vehicleId', 'vehicle.id'],
+        order: [[UserVehicleInteraction.sequelize.fn('COUNT', UserVehicleInteraction.sequelize.col('UserVehicleInteraction.id')), 'DESC']],
+        limit: 10,
+      }),
+      // Top 10 saved vehicles
+      UserVehicleInteraction.findAll({
+        attributes: [
+          'vehicleId',
+          [UserVehicleInteraction.sequelize.fn('COUNT', UserVehicleInteraction.sequelize.col('UserVehicleInteraction.id')), 'count'],
+        ],
+        where: { ...interactionWhere, interactionType: 'save' },
+        include: [{ model: Vehicle, as: 'vehicle', attributes: ['make', 'model', 'year'] }],
+        group: ['vehicleId', 'vehicle.id'],
+        order: [[UserVehicleInteraction.sequelize.fn('COUNT', UserVehicleInteraction.sequelize.col('UserVehicleInteraction.id')), 'DESC']],
+        limit: 10,
+      }),
+      // Top 10 booked vehicles
+      UserVehicleInteraction.findAll({
+        attributes: [
+          'vehicleId',
+          [UserVehicleInteraction.sequelize.fn('COUNT', UserVehicleInteraction.sequelize.col('UserVehicleInteraction.id')), 'count'],
+        ],
+        where: { ...interactionWhere, interactionType: 'booking' },
+        include: [{ model: Vehicle, as: 'vehicle', attributes: ['make', 'model', 'year'] }],
+        group: ['vehicleId', 'vehicle.id'],
+        order: [[UserVehicleInteraction.sequelize.fn('COUNT', UserVehicleInteraction.sequelize.col('UserVehicleInteraction.id')), 'DESC']],
+        limit: 10,
+      }),
+      FavoriteVehicle.count({ where: interactionWhere }),
+    ]);
+
+    const formatTopList = (rows) =>
+      rows.map((r) => ({
+        vehicleId: r.vehicleId,
+        vehicleName: r.vehicle ? `${r.vehicle.year} ${r.vehicle.make} ${r.vehicle.model}` : `Vehicle #${r.vehicleId}`,
+        count: parseInt(r.dataValues.count),
+      }));
+
+    res.json({
+      success: true,
+      data: {
+        summary: {
+          totalInteractions: total,
+          favoritesAdded: favoritesTotal,
+          views: parseInt(byType.find((t) => t.interactionType === 'view')?.count || 0),
+          saves: parseInt(byType.find((t) => t.interactionType === 'save')?.count || 0),
+          bookingInteractions: parseInt(byType.find((t) => t.interactionType === 'booking')?.count || 0),
+        },
+        byType,
+        topViewed: formatTopList(topViewed),
+        topSaved: formatTopList(topSaved),
+        topBooked: formatTopList(topBooked),
+      },
+    });
+  } catch (err) {
+    console.error('Recommendations report error:', err);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });

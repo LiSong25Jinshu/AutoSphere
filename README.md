@@ -1,11 +1,11 @@
 # AutoSphere Web
 
-AutoSphere Web is a comprehensive automotive platform that integrates vehicle sales, rentals, maintenance booking, and car wash services into a unified web application. The system leverages AI-powered recommendations to enhance user decision-making and provides seamless communication between customers, dealers, and service providers.
+AutoSphere Web is a comprehensive automotive platform that integrates vehicle sales, rentals, maintenance booking, and car wash services into a unified web application. The system provides smart vehicle recommendations to enhance user decision-making and enables seamless communication between customers, dealers, and service providers.
 
 ## Features
 
 - **Vehicle Marketplace**: Browse and search vehicles for sale or rental
-- **AI Recommendations**: Personalized vehicle suggestions based on preferences
+- **Smart Recommendations**: Personalised vehicle suggestions based on preferences
 - **Service Booking**: Schedule maintenance and car wash appointments
 - **Real-time Communication**: Chat with dealers and service providers
 - **Multi-role Support**: User, Dealer, Service Provider, and Admin roles

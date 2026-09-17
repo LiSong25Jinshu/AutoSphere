@@ -1,12 +1,12 @@
 /**
- * AI Car Finder
+ * Smart Car Finder
  *
- * The backend /api/recommendations endpoint now resolves all AI vehicle IDs
+ * The backend /api/recommendations endpoint resolves all vehicle IDs
  * (including "kaggle_N" synthetic IDs) to real PostgreSQL integer IDs and
  * sets canInteract=true|false on each recommendation.
  *
  * - canInteract: true  → vehicle exists in DB; all buttons work
- * - canInteract: false → vehicle only exists in AI CSV data; show info only
+ * - canInteract: false → vehicle only exists in CSV data; show info only
  */
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -168,7 +168,7 @@ const AICarFinder = () => {
       const { data } = await axios.get(`/api/recommendations/${userId}`, { params });
 
       if (!data.success && data.source === 'unavailable') {
-        setError('AI recommendations are temporarily unavailable. Please try again later.');
+        setError('Recommendations are temporarily unavailable. Please try again later.');
         setRecommendations([]);
         return;
       }
@@ -259,9 +259,9 @@ const AICarFinder = () => {
       {toast && <div style={styles.toast}>{toast}</div>}
 
       <div className="dashboard-page-header">
-        <h1 className="dashboard-page-title">🤖 AI Car Finder</h1>
+        <h1 className="dashboard-page-title">🔍 Smart Car Finder</h1>
         <p className="dashboard-page-subtitle">
-          Let our AI help you find the perfect car based on your preferences and lifestyle
+          Find the perfect car based on your preferences and lifestyle
         </p>
       </div>
 
@@ -320,7 +320,7 @@ const AICarFinder = () => {
                 <button onClick={handleFindCars} disabled={isLoading}
                   className="autosphere-btn-primary"
                   style={{ width:'100%', padding:16, fontSize:16, opacity: isLoading ? 0.7 : 1 }}>
-                  {isLoading ? '🤖 AI is thinking…' : '🔍 Find My Perfect Car'}
+                  {isLoading ? '🔍 Finding your match…' : '🔍 Find My Perfect Car'}
                 </button>
               </div>
             </div>
@@ -329,7 +329,7 @@ const AICarFinder = () => {
           {/* Results */}
           <div className="dashboard-card">
             <div className="dashboard-card-header">
-              <h2 className="dashboard-card-title">AI Recommendations</h2>
+              <h2 className="dashboard-card-title">Recommendations</h2>
               {recommendations.length > 0 && (
                 <span style={{ background:'#00cc66', color:'#fff', padding:'4px 12px', borderRadius:16, fontSize:14 }}>
                   {recommendations.length} match{recommendations.length !== 1 ? 'es' : ''} found
@@ -345,9 +345,9 @@ const AICarFinder = () => {
 
               {isLoading ? (
                 <div style={{ textAlign:'center', padding:'60px 20px' }}>
-                  <div style={{ fontSize:48, marginBottom:16 }}>🤖</div>
-                  <h3>AI is analysing your preferences…</h3>
-                  <p style={{ color:'#666', marginTop:8 }}>Comparing thousands of vehicles to find your perfect match</p>
+                  <div style={{ fontSize:48, marginBottom:16 }}>🔍</div>
+                  <h3>Analysing your preferences…</h3>
+                  <p style={{ color:'#666', marginTop:8 }}>Comparing vehicles to find your perfect match</p>
                 </div>
               ) : recommendations.length > 0 ? (
                 <div style={{ display:'flex', flexDirection:'column', gap:24 }}>

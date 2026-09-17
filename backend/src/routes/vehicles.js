@@ -355,7 +355,7 @@ router.get('/:id', async (req, res) => {
       });
     }
 
-    // Log the view interaction for AI recommendations
+    // Log the view interaction for recommendations
     if (req.user?.id) {
       await UserVehicleInteraction.create({
         userId: req.user.id,

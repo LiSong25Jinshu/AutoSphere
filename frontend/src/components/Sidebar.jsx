@@ -8,7 +8,7 @@ const NAV_BY_ROLE = {
     { path: '/vehicles',        label: 'Vehicles',      icon: 'car' },
     { path: '/rent-vehicle',    label: 'Rent a Vehicle', icon: 'key' },
     { path: '/my-rentals',      label: 'My Rentals',    icon: 'list' },
-    { path: '/ai-car-finder',   label: 'AI Car Finder', icon: 'search' },
+    { path: '/ai-car-finder',   label: 'Smart Car Finder', icon: 'search' },
     { path: '/appointments',    label: 'Appointments',  icon: 'calendar' },
     { path: '/inventory',       label: 'My Vehicles',   icon: 'box' },
     { path: '/user-messages',   label: 'Messages',      icon: 'message' },

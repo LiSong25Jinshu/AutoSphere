@@ -363,7 +363,7 @@ router.post('/', [
 
     const booking = await Booking.create(bookingData);
 
-    // Log booking interaction for AI recommendations
+    // Log booking interaction for recommendations
     if (req.body.vehicleId) {
       await UserVehicleInteraction.create({
         userId: req.user.id,

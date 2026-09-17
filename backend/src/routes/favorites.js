@@ -59,7 +59,7 @@ router.post('/:vehicleId', authenticateToken, async (req, res) => {
       where: { userId: req.user.id, vehicleId },
     });
 
-    // Log a 'save' interaction for AI recommendations
+    // Log a 'save' interaction for recommendations
     if (created) {
       await UserVehicleInteraction.findOrCreate({
         where: { userId: req.user.id, vehicleId, interactionType: 'save' },
